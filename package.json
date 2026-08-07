@@ -1,0 +1,12 @@
+{
+  "name": "carepodhub",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:backend": "cd backend && php artisan serve --port=8000",
+    "dev:frontend": "npm run dev --prefix frontend -- --port=5173"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.4"
+  }
+}
