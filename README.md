@@ -1,4 +1,4 @@
-# CarePodHub
+# RedCloak Collective
 
 A Medium-style blogging platform for special needs caregivers and special needs people to share their stories.
 

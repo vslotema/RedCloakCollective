@@ -6,7 +6,7 @@
     <v-app-bar color="primary" flat>
       <v-app-bar-title>
         <router-link to="/" class="text-white text-decoration-none">
-          CarePodHub
+          RedCloak Collective
         </router-link>
       </v-app-bar-title>
     </v-app-bar>

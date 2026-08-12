@@ -18,7 +18,7 @@ onMounted(async () => {
   <v-container class="py-10">
     <v-row justify="center">
       <v-col cols="12" md="8" lg="6">
-        <h1 class="text-h4 font-weight-bold mb-2">CarePodHub</h1>
+        <h1 class="text-h4 font-weight-bold mb-2">RedCloak Collective</h1>
         <p class="text-body-1 text-medium-emphasis mb-6">
           A place for special needs caregivers and special needs people to share their
           stories.

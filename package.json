@@ -1,5 +1,5 @@
 {
-  "name": "carepodhub",
+  "name": "redcloak-collective",
   "private": true,
   "scripts": {
     "dev": "concurrently -n backend,frontend -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
