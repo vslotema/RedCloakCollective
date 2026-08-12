@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import RichTextEditor from '@/components/editor/RichTextEditor.vue'
+import RichTextEditor from './components/RichTextEditor.vue'
 
 const title = ref('')
 const content = ref('<p>Start writing your story…</p>')
