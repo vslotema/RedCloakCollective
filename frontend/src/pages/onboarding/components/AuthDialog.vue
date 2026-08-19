@@ -90,15 +90,15 @@ async function handleSignUp() {
           v-model="mode"
         >
           <v-tab 
-          :value="'signin'" 
-          width="50%"
-          hide-slider
-          :class="mode === 'signin' ? 'tab-active' : 'tab-inactive'">Sign in</v-tab>
+            :value="'signin'" 
+            width="50%"
+            hide-slider
+            :class="mode === 'signin' ? 'tab-active' : 'tab-inactive'">Sign in</v-tab>
           <v-tab 
-          :value="'signup'" 
-          width="50%"
-          hide-slider
-          :class="mode === 'signup' ? 'tab-active' : 'tab-inactive'">Get started</v-tab>
+            :value="'signup'" 
+            width="50%"
+            hide-slider
+            :class="mode === 'signup' ? 'tab-active' : 'tab-inactive'">Get started</v-tab>
         </v-tabs>
       </div>
 

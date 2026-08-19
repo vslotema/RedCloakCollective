@@ -23,7 +23,12 @@ function openAuth(mode: 'signin' | 'signup') {
           class="text-black mr-6 text-decoration-none"
           @click.prevent="openAuth('signin')"
         >Sign in</a>
-        <v-btn class="font-weight-bold" color="black" @click="openAuth('signup')">Join the community</v-btn>
+        <v-btn 
+        class="font-weight-bold" 
+        color="black" 
+        @click="openAuth('signup')"
+        rounded="pill"
+        >Join the community</v-btn>
       </div>
     </div>
     <v-divider color="black"></v-divider>
@@ -32,7 +37,12 @@ function openAuth(mode: 'signin' | 'signup') {
       <p class="text-subtitle-1 mb-6 text-center">
         Real stories, honest perspectives, and shared experiences from people with special needs, their families, caregivers, and communities.
       </p>
-      <v-btn class="primary-btn font-weight-bold" color="primary" large @click="openAuth('signup')">
+      <v-btn 
+      class="primary-btn font-weight-bold" 
+      color="primary" 
+      large 
+      rounded="pill" 
+      @click="openAuth('signup')">
         Get Started
       </v-btn>
     </div>
