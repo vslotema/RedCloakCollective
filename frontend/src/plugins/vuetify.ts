@@ -8,9 +8,9 @@ import { createVuetify, type ThemeDefinition } from 'vuetify'
 const light: ThemeDefinition = {
   dark: false,
   colors: {
-    background: '#f8f6f1',
-    surface: '#ebddc5',
-    'surface-variant': '#dcd3c4',
+    background: '#F3F2F2',
+    surface: '#EAE9E9',
+    'surface-variant': '#F8F4F4',
     'on-surface-variant': '#474238',
     primary: '#de0038',
     'primary-darken-1': '#b8002f',
@@ -55,7 +55,6 @@ export default createVuetify({
   },
   defaults: {
     VBtn: {
-      rounded: 'pill',
       class: 'text-none',
       elevation: 0,
     },
@@ -67,11 +66,11 @@ export default createVuetify({
     },
     VTextField: {
       variant: 'outlined',
-      rounded: 'pill',
+      rounded: 'lg',
     },
     VSelect: {
       variant: 'outlined',
-      rounded: 'pill',
+      rounded: 'lg',
     },
     VTextarea: {
       variant: 'outlined',
