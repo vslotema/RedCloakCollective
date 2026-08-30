@@ -97,20 +97,20 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-.nav-list-item.is-active :deep(.v-list-item__overlay) {
-  opacity: 0;
-}
+.nav-list-item {
 
-.nav-list-item:hover {
-  color: black;
-}
+  &.is-active :deep(.v-list-item__overlay),
+  &:hover :deep(.v-list-item__overlay) {
+    opacity: 0;
+  }
 
-.nav-list-item:hover :deep(.v-list-item__prepend > .v-icon) {
-  opacity: 1;
-}
+  &:hover {
+    color: black;
 
-.nav-list-item:hover :deep(.v-list-item__overlay) {
-  opacity: 0.03;
+    :deep(.v-list-item__prepend > .v-icon) {
+      opacity: 1;
+    }
+  }
 }
 
 .v-list-item--density-comfortable.v-list-item--one-line {

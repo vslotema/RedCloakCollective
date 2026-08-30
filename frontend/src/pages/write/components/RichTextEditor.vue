@@ -72,15 +72,18 @@ onBeforeUnmount(() => {
 .rich-text-editor {
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 4px;
-}
-.rich-text-editor__toolbar {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-.rich-text-editor__content {
-  padding: 16px;
-  min-height: 240px;
-}
-.rich-text-editor__content :deep(.ProseMirror) {
-  outline: none;
+
+  &__toolbar {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  &__content {
+    padding: 16px;
+    min-height: 240px;
+
+    :deep(.ProseMirror) {
+      outline: none;
+    }
+  }
 }
 </style>
