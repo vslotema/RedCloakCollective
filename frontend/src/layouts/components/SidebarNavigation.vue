@@ -58,11 +58,14 @@ defineExpose({
       prepend-gap="1rem"
       class="nav-list-item"
     >
-      <v-tooltip :text="item.title" :disabled="wider">
-        <template v-slot:activator="{ props }">
-          <v-list-item-title v-bind="props" class="text-gray"> {{ item.title }} </v-list-item-title>
-        </template>
-      </v-tooltip>
+      <v-list-item-title class="text-gray"> {{ item.title }} </v-list-item-title>
+      <v-tooltip
+        activator="parent"
+        location="end"
+        content-class="navbar-tooltip"
+        :text="item.title"
+        :disabled="wider"
+      />
     </v-list-item>
 
     <div class="my-6 px-4">
@@ -77,6 +80,13 @@ defineExpose({
       class="nav-list-item"
     >
       <v-list-item-title class="text-gray">Following</v-list-item-title>
+       <v-tooltip
+        activator="parent"
+        location="end"
+        content-class="navbar-tooltip"
+        text="Following"
+        :disabled="wider"
+      />
     </v-list-item>
 
     <v-list>
@@ -89,6 +99,13 @@ defineExpose({
       class="following-item"
     >
       <v-list-item-title class="text-gray text-small"> {{ user.name }} </v-list-item-title>
+       <v-tooltip
+        activator="parent"
+        location="end"
+        content-class="navbar-tooltip"
+        :text="user.name"
+        :disabled="wider"
+      />
     </v-list-item>
     </v-list>
 
@@ -115,5 +132,15 @@ defineExpose({
 
 .v-list-item--density-comfortable.v-list-item--one-line {
   min-height: 35px;
+}
+</style>
+
+<style lang="scss">
+// Tooltip content is teleported to <body>, so it must be targeted outside the scoped block.
+.v-tooltip > .navbar-tooltip.v-overlay__content {
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: .5rem;
+  padding: .25rem .75rem;
 }
 </style>
