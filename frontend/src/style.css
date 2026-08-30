@@ -53,6 +53,21 @@ h6,
   letter-spacing: -0.015em;
 }
 
+.v-theme--light h1,
+.v-theme--light h2,
+.v-theme--light h3,
+.v-theme--light h4,
+.v-theme--light h5,
+.v-theme--light h6,
+.v-theme--light .text-h1,
+.v-theme--light .text-h2,
+.v-theme--light .text-h3,
+.v-theme--light .text-h4,
+.v-theme--light .text-h5,
+.v-theme--light .text-h6 {
+  color: #000 !important;
+}
+
 .v-application {
   font-family: var(--font-body) !important;
   letter-spacing: normal;

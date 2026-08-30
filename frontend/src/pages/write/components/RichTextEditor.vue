@@ -34,31 +34,31 @@ onBeforeUnmount(() => {
       class="rich-text-editor__toolbar"
     >
       <v-btn
-        icon="mdi-format-bold"
+        icon="bold"
         size="small"
         :variant="editor.isActive('bold') ? 'tonal' : 'text'"
         @click="editor.chain().focus().toggleBold().run()"
       />
       <v-btn
-        icon="mdi-format-italic"
+        icon="italic"
         size="small"
         :variant="editor.isActive('italic') ? 'tonal' : 'text'"
         @click="editor.chain().focus().toggleItalic().run()"
       />
       <v-btn
-        icon="mdi-format-header-2"
+        icon="type"
         size="small"
         :variant="editor.isActive('heading', { level: 2 }) ? 'tonal' : 'text'"
         @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
       />
       <v-btn
-        icon="mdi-format-list-bulleted"
+        icon="list"
         size="small"
         :variant="editor.isActive('bulletList') ? 'tonal' : 'text'"
         @click="editor.chain().focus().toggleBulletList().run()"
       />
       <v-btn
-        icon="mdi-format-quote-close"
+        icon="message-square"
         size="small"
         :variant="editor.isActive('blockquote') ? 'tonal' : 'text'"
         @click="editor.chain().focus().toggleBlockquote().run()"

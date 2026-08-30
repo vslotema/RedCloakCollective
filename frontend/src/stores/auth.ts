@@ -6,6 +6,8 @@ export interface User {
   id: number
   name: string
   email: string
+  country: string | null
+  state: string | null
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -23,11 +25,16 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('auth_token', newToken)
   }
 
+  async function updateLocation(country: string, state: string | null) {
+    const { data } = await api.patch<{ user: User }>('/user/location', { country, state })
+    user.value = data.user
+  }
+
   function logout() {
     token.value = null
     user.value = null
     localStorage.removeItem('auth_token')
   }
 
-  return { user, token, fetchUser, setToken, logout }
+  return { user, token, fetchUser, setToken, updateLocation, logout }
 })

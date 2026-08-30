@@ -32,7 +32,7 @@ const router = createRouter({
           component: () => import('@/pages/explore/ExploreView.vue'),
         },
         {
-          path: 'article/:slug',
+          path: 'article/:slug?',
           name: 'article',
           component: () => import('@/pages/article/ArticleView.vue'),
         },

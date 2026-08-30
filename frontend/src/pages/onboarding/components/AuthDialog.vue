@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
+import { countries } from '@/lib/countries'
+import { usStates } from '@/lib/usStates'
+import { renderGoogleButton } from '@/lib/googleIdentity'
+import CompleteProfileDialog from './CompleteProfileDialog.vue'
 
 const model = defineModel<boolean>({ default: false })
 const mode = defineModel<'signin' | 'signup'>('mode', { default: 'signup' })
@@ -12,6 +16,8 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const errorMessage = ref('')
+const googleButton = ref<HTMLElement | null>(null)
+const completeProfile = ref(false)
 
 const signInForm = ref({
   email: '',
@@ -23,19 +29,18 @@ const signUpForm = ref({
   email: '',
   password: '',
   passwordConfirmation: '',
+  country: null as string | null,
+  state: null as string | null,
 })
 
+const isUs = computed(() => signUpForm.value.country === 'US')
+
 const rules = {
-  required: (v: string) => !!v || 'This field is required',
+  required: (v: string | null) => !!v || 'This field is required',
   email: (v: string) => /.+@.+\..+/.test(v) || 'Enter a valid email',
   minLength: (v: string) => v.length >= 8 || 'Must be at least 8 characters',
   matchesPassword: (v: string) =>
     v === signUpForm.value.password || 'Passwords do not match',
-}
-
-function switchMode(next: 'signin' | 'signup') {
-  mode.value = next
-  errorMessage.value = ''
 }
 
 function close() {
@@ -68,6 +73,8 @@ async function handleSignUp() {
       email: signUpForm.value.email,
       password: signUpForm.value.password,
       password_confirmation: signUpForm.value.passwordConfirmation,
+      country: signUpForm.value.country,
+      state: isUs.value ? signUpForm.value.state : null,
     })
     authStore.setToken(data.token)
     await authStore.fetchUser()
@@ -79,6 +86,37 @@ async function handleSignUp() {
     loading.value = false
   }
 }
+
+async function handleGoogleCredential(credential: string) {
+  loading.value = true
+  errorMessage.value = ''
+  try {
+    const { data } = await api.post<{ token: string }>('/auth/google', { credential })
+    authStore.setToken(data.token)
+    await authStore.fetchUser()
+    close()
+    if (authStore.user && authStore.user.country === null) {
+      completeProfile.value = true
+    } else {
+      router.push({ name: 'home' })
+    }
+  } catch {
+    errorMessage.value = 'Could not sign in with Google. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(
+  [model, googleButton],
+  async ([isOpen, el]) => {
+    if (isOpen && el) {
+      await nextTick()
+      renderGoogleButton(el, handleGoogleCredential)
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -194,6 +232,34 @@ async function handleSignUp() {
           :rules="[rules.required, rules.matchesPassword]"
         />
 
+        <span class="field-label">Country</span>
+        <v-autocomplete
+          v-model="signUpForm.country"
+          :items="countries"
+          item-title="name"
+          item-value="code"
+          placeholder="Select your country"
+          variant="outlined"
+          rounded="lg"
+          density="compact"
+          :rules="[rules.required]"
+        />
+
+        <template v-if="isUs">
+          <span class="field-label">State</span>
+          <v-autocomplete
+            v-model="signUpForm.state"
+            :items="usStates"
+            item-title="name"
+            item-value="code"
+            placeholder="Select your state"
+            variant="outlined"
+            rounded="lg"
+            density="compact"
+            :rules="[rules.required]"
+          />
+        </template>
+
         <v-btn
           type="submit"
           color="primary"
@@ -212,17 +278,11 @@ async function handleSignUp() {
         <v-divider />
       </div>
 
-      <v-btn
-        variant="outlined"
-        color="black"
-        rounded="pill"
-        block
-        class="font-weight-bold google-btn"
-      >
-        Continue with Google
-      </v-btn>
+      <div ref="googleButton" class="google-btn-container d-flex justify-center"></div>
     </v-card>
   </v-dialog>
+
+  <CompleteProfileDialog v-model="completeProfile" />
 </template>
 
 <style scoped>

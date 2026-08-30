@@ -1,7 +1,7 @@
 import 'vuetify/styles'
-import '@mdi/font/css/materialdesignicons.css'
 
 import { createVuetify, type ThemeDefinition } from 'vuetify'
+import { aliases, feather } from './iconsets/feather'
 
 // Design system — Cormorant Garamond / system-ui, red
 // on a warm paper ground, sage as the secondary accent.
@@ -11,6 +11,8 @@ const light: ThemeDefinition = {
     background: '#F3F2F2',
     surface: '#EAE9E9',
     'surface-variant': '#F8F4F4',
+    'on-background': '#6b6b6b',
+    'on-surface': '#6b6b6b',
     'on-surface-variant': '#474238',
     primary: '#de0038',
     'primary-darken-1': '#b8002f',
@@ -46,6 +48,13 @@ const dark: ThemeDefinition = {
 }
 
 export default createVuetify({
+  icons: {
+    defaultSet: 'feather',
+    aliases,
+    sets: {
+      feather,
+    },
+  },
   theme: {
     defaultTheme: 'light',
     themes: {
