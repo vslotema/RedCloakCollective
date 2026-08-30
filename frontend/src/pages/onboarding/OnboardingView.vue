@@ -15,7 +15,7 @@ function openAuth(mode: 'signin' | 'signup') {
   <div class="onboarding-view d-flex flex-column h-screen">
     <div class="header d-flex flex-row align-center justify-space-between px-8 py-6 w-100">
       <div class="logo">
-        <h1 class="text-h5 font-weight-bold mb-0"><span class="text-primary">R</span>EDCLOACK COLLECTIVE</h1>
+        <h1 class="text-h5 font-weight-bold mb-0"><span class="text-primary">R</span>EDCLOAK COLLECTIVE</h1>
       </div>
       <div class="actions d-flex align-center">
         <a

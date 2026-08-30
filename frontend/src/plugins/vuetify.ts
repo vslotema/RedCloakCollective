@@ -48,6 +48,9 @@ const dark: ThemeDefinition = {
 }
 
 export default createVuetify({
+  display: {
+    mobileBreakpoint: 'sm',
+  },
   icons: {
     defaultSet: 'feather',
     aliases,
@@ -63,6 +66,9 @@ export default createVuetify({
     },
   },
   defaults: {
+    VListItem: {
+      VIcon: { size: 20 },
+    },
     VBtn: {
       class: 'text-none',
       elevation: 0,

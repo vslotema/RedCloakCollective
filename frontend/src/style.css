@@ -24,6 +24,12 @@ body,
   --radius-sm: 0.5rem;
   --radius-md: 1rem;
   --radius-lg: 1.75rem;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
 }
 
 body,
@@ -75,4 +81,24 @@ h6,
 
 .v-btn {
   letter-spacing: normal !important;
+}
+
+.text-x-small {
+  font-size: var(--text-xs) !important;
+}
+
+.text-small {
+  font-size: var(--text-sm) !important;
+}
+
+.text-medium {
+  font-size: var(--text-md) !important;
+}
+
+.text-large {
+  font-size: var(--text-lg) !important;
+}
+
+.text-x-large {
+  font-size: var(--text-xl) !important;
 }
