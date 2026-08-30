@@ -94,7 +94,7 @@ async function submit() {
   </v-dialog>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .auth-card {
   border: 1px solid #e0e0e0;
 }

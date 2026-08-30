@@ -9,27 +9,23 @@ body,
   margin: 0;
 }
 
+// CSS custom properties generated from the Sass tokens in src/styles/_variables.scss.
 :root {
-  --font-heading: 'Cormorant Garamond', system-ui, serif;
-  --font-heading-weight: 600;
-  --font-body: system-ui, sans-serif;
+  --font-heading: #{$font-heading};
+  --font-heading-weight: #{$font-heading-weight};
+  --font-body: #{$font-body};
 
-  --space-1: 0.275rem;
-  --space-2: 0.55rem;
-  --space-3: 0.825rem;
-  --space-4: 1.1rem;
-  --space-6: 1.65rem;
-  --space-8: 2.2rem;
+  @each $step, $value in $spacing {
+    --space-#{$step}: #{$value};
+  }
 
-  --radius-sm: 0.5rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.75rem;
+  @each $name, $value in $radii {
+    --radius-#{$name}: #{$value};
+  }
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-md: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
+  @each $name, $value in $text-sizes {
+    --text-#{$name}: #{$value};
+  }
 }
 
 body,
@@ -83,22 +79,17 @@ h6,
   letter-spacing: normal !important;
 }
 
-.text-x-small {
-  font-size: var(--text-xs) !important;
-}
+// Font-size utilities, keyed by class suffix -> token name.
+$_text-utilities: (
+  'x-small': 'xs',
+  'small': 'sm',
+  'medium': 'md',
+  'large': 'lg',
+  'x-large': 'xl',
+);
 
-.text-small {
-  font-size: var(--text-sm) !important;
-}
-
-.text-medium {
-  font-size: var(--text-md) !important;
-}
-
-.text-large {
-  font-size: var(--text-lg) !important;
-}
-
-.text-x-large {
-  font-size: var(--text-xl) !important;
+@each $suffix, $token in $_text-utilities {
+  .text-#{$suffix} {
+    font-size: var(--text-#{$token}) !important;
+  }
 }

@@ -1,0 +1,27 @@
+@use 'sass:map';
+@use 'variables' as *;
+
+// Min-width media query for a named breakpoint.
+//   @include respond-to('md') { ... }
+@mixin respond-to($name) {
+  @if not map.has-key($breakpoints, $name) {
+    @error "Unknown breakpoint `#{$name}`. Known: #{map.keys($breakpoints)}.";
+  }
+  @media (min-width: map.get($breakpoints, $name)) {
+    @content;
+  }
+}
+
+@mixin flex-center($direction: row) {
+  display: flex;
+  flex-direction: $direction;
+  align-items: center;
+  justify-content: center;
+}
+
+// Truncate text to a single line with an ellipsis.
+@mixin truncate {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

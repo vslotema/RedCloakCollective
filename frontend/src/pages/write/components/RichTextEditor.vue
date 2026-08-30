@@ -68,7 +68,7 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .rich-text-editor {
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 4px;

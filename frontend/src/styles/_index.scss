@@ -1,0 +1,5 @@
+// Barrel forwarded into every SFC / .scss file via
+// vite.config.ts -> css.preprocessorOptions.scss.additionalData.
+// Only @forward / @use here — this file must emit no CSS.
+@forward 'variables';
+@forward 'mixins';

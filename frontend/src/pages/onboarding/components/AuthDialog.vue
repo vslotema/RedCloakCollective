@@ -285,7 +285,7 @@ watch(
   <CompleteProfileDialog v-model="completeProfile" />
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .auth-card {
   border: 1px solid #e0e0e0;
 }

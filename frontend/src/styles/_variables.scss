@@ -1,0 +1,67 @@
+// Compile-time Sass tokens — the single source of truth for the scale.
+// src/style.scss loops over these maps to emit the matching CSS custom
+// properties (var(--space-4), var(--text-sm), …), so prefer the custom
+// properties in normal rules and reach for these when you need a value at
+// build time (@media conditions, mixin args, Sass math).
+@use 'sass:map';
+
+// Typography ----------------------------------------------------------------
+$font-heading: 'Cormorant Garamond', system-ui, serif;
+$font-heading-weight: 600;
+$font-body: system-ui, sans-serif;
+
+$text-sizes: (
+  'xs': 0.75rem,
+  'sm': 0.875rem,
+  'md': 1rem,
+  'lg': 1.125rem,
+  'xl': 1.25rem,
+);
+
+$text-xs: map.get($text-sizes, 'xs');
+$text-sm: map.get($text-sizes, 'sm');
+$text-md: map.get($text-sizes, 'md');
+$text-lg: map.get($text-sizes, 'lg');
+$text-xl: map.get($text-sizes, 'xl');
+
+// Spacing -----------------------------------------------------------------------
+$spacing: (
+  1: 0.275rem,
+  2: 0.55rem,
+  3: 0.825rem,
+  4: 1.1rem,
+  6: 1.65rem,
+  8: 2.2rem,
+);
+
+$space-1: map.get($spacing, 1);
+$space-2: map.get($spacing, 2);
+$space-3: map.get($spacing, 3);
+$space-4: map.get($spacing, 4);
+$space-6: map.get($spacing, 6);
+$space-8: map.get($spacing, 8);
+
+// Radius ----------------------------------------------------------------------
+$radii: (
+  'sm': 0.5rem,
+  'md': 1rem,
+  'lg': 1.75rem,
+);
+
+$radius-sm: map.get($radii, 'sm');
+$radius-md: map.get($radii, 'md');
+$radius-lg: map.get($radii, 'lg');
+
+// Brand colours (kept in sync with the Vuetify theme in src/plugins/vuetify.ts)
+$color-primary: #de0038;
+$color-primary-darken-1: #b8002f;
+$color-secondary: #35ab45;
+$color-tertiary: #535fc1;
+
+// Breakpoints (aligned with Vuetify's defaults) ------------------------------
+$breakpoints: (
+  'sm': 600px,
+  'md': 960px,
+  'lg': 1280px,
+  'xl': 1920px,
+);

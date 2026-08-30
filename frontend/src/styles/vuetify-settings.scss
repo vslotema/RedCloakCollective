@@ -1,0 +1,10 @@
+// Vuetify SASS variable overrides.
+// Wired via vite.config.ts -> vuetify({ styles: { configFile: ... } }).
+// Using a configFile makes the plugin recompile Vuetify's styles from source
+// (slower cold start) in exchange for being able to override these variables.
+@use 'variables' as tokens;
+
+@forward 'vuetify/settings' with (
+  $body-font-family: tokens.$font-body,
+  $border-radius-root: 6px
+);
