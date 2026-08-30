@@ -29,7 +29,6 @@ body,
 }
 
 body,
-
 button,
 input,
 select,
@@ -92,4 +91,14 @@ $_text-utilities: (
   .text-#{$suffix} {
     font-size: var(--text-#{$token}) !important;
   }
+}
+
+// Shared tooltip style for the app navigation (sidebar + topbar).
+// Tooltip content is teleported to <body>, so it lives in the global sheet
+// rather than a component's scoped block. Opt in with content-class="navbar-tooltip".
+.v-tooltip > .navbar-tooltip.v-overlay__content {
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
 }

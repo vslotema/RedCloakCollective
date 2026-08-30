@@ -8,8 +8,8 @@ import { aliases, feather } from './iconsets/feather'
 const light: ThemeDefinition = {
   dark: false,
   colors: {
-    background: '#F3F2F2',
-    surface: '#EAE9E9',
+    background: '#FFFFFF',
+    surface: '#f5f5f5',
     'surface-variant': '#F8F4F4',
     'on-background': '#6b6b6b',
     'on-surface': '#6b6b6b',

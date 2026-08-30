@@ -1,6 +1,9 @@
 import { h } from 'vue'
 import VueFeather from 'vue-feather'
+import featherIcons from 'feather-icons/dist/icons.json'
 import type { IconAliases, IconSet } from 'vuetify'
+
+const FALLBACK_ICON = 'help-circle'
 
 // Feather has no exact match for these Vuetify internal glyphs:
 // - ratingEmpty/Full/Half all resolve to the same "star" outline (Feather has no filled star)
@@ -73,9 +76,17 @@ export const aliases: Partial<IconAliases> = {
 }
 
 export const feather: IconSet = {
-  component: (props) =>
-    h(VueFeather, {
-      type: props.icon as string,
+  component: (props) => {
+    const name = props.icon as string
+    // vue-feather's `type` prop validator THROWS on an unknown name, which
+    // crashes the whole render. Guard against typos / non-Feather names.
+    const isKnown = Object.prototype.hasOwnProperty.call(featherIcons, name)
+    if (!isKnown && import.meta.env.DEV) {
+      console.warn(`[feather iconset] unknown icon "${name}" — falling back to "${FALLBACK_ICON}"`)
+    }
+    return h(VueFeather, {
+      type: isKnown ? name : FALLBACK_ICON,
       size: 20,
-    }),
+    })
+  },
 }
