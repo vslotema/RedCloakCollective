@@ -1,20 +1,33 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import type { User } from '@/types/user'
 
+interface MenuItem {
+  title: string
+  route: string
+  icon: string
+  // Route names that should also keep this item highlighted (e.g. Home's tabs).
+  match?: string[]
+}
+
+const route = useRoute()
 const drawer = ref(true)
 const rail = ref(true)
 const wider = ref(true)
 const { mobile, width } = useDisplay()
 const fullWidthNav = computed(() => (mobile.value ? width.value : 250))
-const menuItems = ref([
-  { title: 'Home', route: '/', icon: 'home' },
+const menuItems = ref<MenuItem[]>([
+  { title: 'Home', route: '/', icon: 'home', match: ['home', 'explore'] },
   { title: 'Library', route: '/library', icon: 'bookmark' },
   { title: 'Profile', route: '/profile', icon: 'user' },
-  { title: 'Your Articles', route: '/article', icon: 'book-open' },
-  { title: 'Equipment Lists', route: '/explore', icon: 'package' },
+  { title: 'Your Articles', route: '/articles', icon: 'book-open' },
+  { title: 'Equipment Lists', route: '/equipment-lists', icon: 'package' },
 ])
+
+const isActive = (item: MenuItem) =>
+  item.match ? item.match.includes(route.name as string) : route.path.startsWith(item.route)
 const following = ref<Pick<User, 'id' | 'name' | 'avatar'>[]>([
   { id: 5, name: 'Ethan Wright', avatar: 'https://i.pravatar.cc/150?img=5' },
   { id: 6, name: 'Mia Chen', avatar: 'https://i.pravatar.cc/150?img=6' },
@@ -50,7 +63,7 @@ defineExpose({
         v-for="item in menuItems"
         :key="item.title"
         :to="item.route"
-        :exact="item.route === '/'"
+        :active="isActive(item)"
         :prepend-icon="item.icon"
         active-color="black"
         active-class="is-active"

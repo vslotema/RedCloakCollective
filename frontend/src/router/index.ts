@@ -23,18 +23,44 @@ const router = createRouter({
       children: [
         {
           path: '',
-          name: 'home',
           component: () => import('@/pages/home/HomeView.vue'),
+          children: [
+            {
+              path: '',
+              name: 'home',
+              component: () => import('@/pages/home/ForYouView.vue'),
+            },
+            {
+              path: 'explore',
+              name: 'explore',
+              component: () => import('@/pages/home/ExploreView.vue'),
+            },
+          ],
         },
         {
-          path: 'explore',
-          name: 'explore',
-          component: () => import('@/pages/explore/ExploreView.vue'),
+          path: 'library',
+          name: 'library',
+          component: () => import('@/pages/library/LibraryView.vue'),
+        },
+        {
+          path: 'profile',
+          name: 'profile',
+          component: () => import('@/pages/profile/ProfileView.vue'),
+        },
+        {
+          path: 'articles',
+          name: 'articles',
+          component: () => import('@/pages/articles/ArticlesView.vue'),
         },
         {
           path: 'article/:slug?',
           name: 'article',
           component: () => import('@/pages/article/ArticleView.vue'),
+        },
+        {
+          path: 'equipment-lists',
+          name: 'equipment-lists',
+          component: () => import('@/pages/equipment-lists/EquipmentListsView.vue'),
         },
         {
           path: 'write',

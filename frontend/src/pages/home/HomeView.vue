@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import api from '@/lib/api'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
-const apiStatus = ref<'checking' | 'ok' | 'down'>('checking')
-
-onMounted(async () => {
-  try {
-    await api.get('/health')
-    apiStatus.value = 'ok'
-  } catch {
-    apiStatus.value = 'down'
-  }
-})
+const route = useRoute()
+const activeTab = computed(() => (route.name === 'explore' ? 'explore' : 'home'))
 </script>
 
 <template>
-  <div></div>
+  <div>
+    <v-tabs :model-value="activeTab" color="primary">
+      <v-tab value="home" :to="{ name: 'home' }">For you</v-tab>
+      <v-tab value="explore" :to="{ name: 'explore' }">Explore</v-tab>
+    </v-tabs>
+    <router-view />
+  </div>
 </template>

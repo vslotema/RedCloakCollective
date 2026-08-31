@@ -9,7 +9,7 @@ const sidebar = ref<InstanceType<typeof SidebarNavigation> | null>(null)
 <template>
   <TopbarNavigation @toggle-navigation="sidebar?.toggleNavigation()" />
   <SidebarNavigation ref="sidebar" />
-  <v-main>
+  <v-main class="my-8 mx-10">
     <router-view />
   </v-main>
 </template>
