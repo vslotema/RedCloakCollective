@@ -39,8 +39,7 @@ const rules = {
   required: (v: string | null) => !!v || 'This field is required',
   email: (v: string) => /.+@.+\..+/.test(v) || 'Enter a valid email',
   minLength: (v: string) => v.length >= 8 || 'Must be at least 8 characters',
-  matchesPassword: (v: string) =>
-    v === signUpForm.value.password || 'Passwords do not match',
+  matchesPassword: (v: string) => v === signUpForm.value.password || 'Passwords do not match',
 }
 
 function close() {
@@ -123,29 +122,25 @@ watch(
   <v-dialog v-model="model" max-width="400">
     <v-card rounded="lg" color="white" elevation="0" class="pa-10 auth-card">
       <div class="tab-switch d-flex mb-4">
-        <v-tabs
-          width="100%"
-          v-model="mode"
-        >
-          <v-tab 
-            :value="'signin'" 
+        <v-tabs width="100%" v-model="mode">
+          <v-tab
+            :value="'signin'"
             width="50%"
             hide-slider
-            :class="mode === 'signin' ? 'tab-active' : 'tab-inactive'">Sign in</v-tab>
-          <v-tab 
-            :value="'signup'" 
+            :class="mode === 'signin' ? 'tab-active' : 'tab-inactive'"
+            >Sign in</v-tab
+          >
+          <v-tab
+            :value="'signup'"
             width="50%"
             hide-slider
-            :class="mode === 'signup' ? 'tab-active' : 'tab-inactive'">Get started</v-tab>
+            :class="mode === 'signup' ? 'tab-active' : 'tab-inactive'"
+            >Get started</v-tab
+          >
         </v-tabs>
       </div>
 
-      <v-alert
-        v-if="errorMessage"
-        type="error"
-        variant="tonal"
-        density="compact"
-      >
+      <v-alert v-if="errorMessage" type="error" variant="tonal" density="compact">
         {{ errorMessage }}
       </v-alert>
 
