@@ -1,7 +1,13 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+interface Props {
+  width?: string
+}
+
+const { width = '350px' } = defineProps<Props>()
+</script>
 
 <template>
-  <div class="panel-container">
+  <div class="panel-container" :style="{ width }">
     <!-- Stub content: topic/user recommendation data is not wired up yet. -->
     <section class="mb-8">
       <h2 class="text-h6 font-heading mb-4">Recommended topics</h2>
