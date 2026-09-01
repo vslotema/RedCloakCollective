@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import PageContainer from '@/components/content/PageContainer.vue'
 import { useAuthStore } from '@/stores/auth'
+import PageContainer from '@/components/content/PageContainer.vue'
 import RecommendationPanel from './components/RecommendationPanel.vue'
+import ContentList from '@/components/content/ContentList.vue'
 
 const authStore = useAuthStore()
 const hasFollows = computed(() => authStore.user?.hasFollows ?? false)
@@ -17,8 +18,7 @@ const hasFollows = computed(() => authStore.user?.hasFollows ?? false)
   </PageContainer>
   <div v-else class="for-you">
     <PageContainer variant="wide" class="feed">
-      <!-- Stub content: feed data is not wired up yet. -->
-      <h1 class="text-h4 font-weight-bold mb-2">For you</h1>
+      <ContentList :items=""/>
     </PageContainer>
     <RecommendationPanel />
   </div>
@@ -31,7 +31,8 @@ const hasFollows = computed(() => authStore.user?.hasFollows ?? false)
 }
 .for-you {
   display: flex;
-  min-height: 100%;
+  height: 100%;
+  flex: 1;
 }
 .feed {
   flex: 1 1 auto;
