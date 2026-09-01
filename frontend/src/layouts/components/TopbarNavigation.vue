@@ -13,7 +13,7 @@ defineEmits<{
         class="menu-btn"
         icon="menu"
         size="small"
-        color="black"
+        color="ink"
         @click="$emit('toggleNavigation')"
       >
       </v-btn>
@@ -57,7 +57,7 @@ defineEmits<{
 }
 
 // Icon uses the same color as a non-active navigation item's text
-// (Vuetify's theme "on-surface" token), while the label stays black.
+// (Vuetify's theme "on-surface" token), while the label stays high-emphasis.
 .action-btn :deep(.v-icon) {
   color: rgb(var(--v-theme-on-surface));
 }

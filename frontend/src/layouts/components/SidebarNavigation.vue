@@ -65,7 +65,7 @@ defineExpose({
         :to="item.route"
         :active="isActive(item)"
         :prepend-icon="item.icon"
-        active-color="black"
+        active-color="ink"
         active-class="is-active"
         prepend-gap="1rem"
         class="nav-list-item"
@@ -86,7 +86,7 @@ defineExpose({
       <v-list-item
         prepend-icon="users"
         prepend-gap="1rem"
-        active-color="black"
+        active-color="ink"
         active-class="is-active"
         density="compact"
         class="nav-list-item"
@@ -132,7 +132,7 @@ defineExpose({
   }
 
   &:hover {
-    color: black;
+    color: rgb(var(--v-theme-ink));
 
     :deep(.v-list-item__prepend > .v-icon) {
       opacity: 1;

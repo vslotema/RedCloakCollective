@@ -54,19 +54,19 @@ h6,
   letter-spacing: -0.015em;
 }
 
-.v-theme--light h1,
-.v-theme--light h2,
-.v-theme--light h3,
-.v-theme--light h4,
-.v-theme--light h5,
-.v-theme--light h6,
-.v-theme--light .text-h1,
-.v-theme--light .text-h2,
-.v-theme--light .text-h3,
-.v-theme--light .text-h4,
-.v-theme--light .text-h5,
-.v-theme--light .text-h6 {
-  color: #000 !important;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.text-h1,
+.text-h2,
+.text-h3,
+.text-h4,
+.text-h5,
+.text-h6 {
+  color: rgb(var(--v-theme-ink)) !important;
 }
 
 .v-application {
