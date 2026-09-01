@@ -8,10 +8,17 @@ const activeTab = computed(() => (route.name === 'explore' ? 'explore' : 'home')
 
 <template>
   <div>
-    <v-tabs :model-value="activeTab" color="primary">
-      <v-tab value="home" :to="{ name: 'home' }">For you</v-tab>
-      <v-tab value="explore" :to="{ name: 'explore' }">Explore</v-tab>
+    <v-tabs :model-value="activeTab" color="ink">
+      <v-tab value="home" :to="{ name: 'home' }" :ripple="false">For you</v-tab>
+      <v-tab value="explore" :to="{ name: 'explore' }" :ripple="false">Explore</v-tab>
     </v-tabs>
+    <v-divider></v-divider>
     <router-view />
   </div>
 </template>
+
+<style scoped lang="scss">
+.v-tab:hover :deep(.v-btn__overlay) {
+  opacity: 0;
+}
+</style>
