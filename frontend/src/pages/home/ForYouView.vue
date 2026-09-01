@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import PageContainer from '@/components/content/PageContainer.vue'
 import RecommendationPanel from './components/RecommendationPanel.vue'
 import ContentList from '@/components/content/ContentList.vue'
+import { mockContentItems } from '@/mocks/contentItems'
 
 const authStore = useAuthStore()
 const hasFollows = computed(() => authStore.user?.hasFollows ?? false)
@@ -18,7 +19,7 @@ const hasFollows = computed(() => authStore.user?.hasFollows ?? false)
   </PageContainer>
   <div v-else class="for-you">
     <PageContainer variant="wide" class="feed">
-      <ContentList :items=""/>
+      <ContentList :items="mockContentItems" />
     </PageContainer>
     <RecommendationPanel />
   </div>
