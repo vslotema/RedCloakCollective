@@ -27,13 +27,16 @@ defineProps<{
           <v-card-subtitle class="text-medium">{{ subtitle }}</v-card-subtitle>
         </div>
 
-        <v-card-actions class="text-x-small px-4 align-end gap-8">
-          <span v-if="responses_count" class="d-inline-flex align-end"
-            ><v-icon size="small" icon="thumbs-up" class="mr-1"></v-icon>{{ responses_count }}</span
-          >
-          <span v-if="likes" class="d-inline-flex align-end"
-            ><v-icon size="small" icon="message-circle" class="mr-1" />{{ likes }}</span
-          >
+        <v-card-actions class="text-x-small px-4 pt-4">
+          <v-btn v-if="responses_count" :ripple="false" prepend-icon="thumbs-up" size="small">{{
+            likes
+          }}</v-btn>
+          <v-btn v-if="responses_count" :ripple="false" prepend-icon="message-circle" size="small">{{
+            responses_count
+          }}</v-btn>
+
+          <v-spacer />
+          <v-btn :ripple="false" icon="bookmark" size="x-small"></v-btn>
         </v-card-actions>
       </div>
       <v-img :width="125" :aspect-ratio="16 / 9" :src="preview_image"></v-img>
@@ -57,7 +60,16 @@ defineProps<{
     }
   }
   :deep(.v-card-actions) {
-    gap: 1rem;
+
+    .v-btn {
+      .v-btn__overlay {
+        opacity: 0;
+      }
+
+      &:hover {
+        color: rgb(var(--v-theme-ink));
+      }
+    }
   }
 }
 </style>
