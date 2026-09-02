@@ -13,14 +13,14 @@ export interface BaseContent {
 
 export interface Article extends BaseContent {
   type: 'article';
-  "preview-image": string;
+  preview_image: string;
   likes: number;
-  "read-duration": string | number;
+  read_duration: string | number;
 }
 
 export interface EquipmentList extends BaseContent {
   type: 'equipment';
-  "preview-images": string[];
+  preview_images: string[];
   saves: number;
 }
 

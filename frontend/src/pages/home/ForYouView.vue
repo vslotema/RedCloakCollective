@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import PageContainer from '@/components/content/PageContainer.vue'
-import RecommendationPanel from './components/RecommendationPanel.vue'
 import ContentList from '@/components/content/ContentList.vue'
 import { mockContentItems } from '@/mocks/contentItems'
 
@@ -11,17 +10,12 @@ const hasFollows = computed(() => authStore.user?.hasFollows ?? false)
 </script>
 
 <template>
-  <PageContainer v-if="false" variant="wide">
-    <div class="onboarding">
-      <!-- Stub content: topic-picker and people-worth-following data is not wired up yet. -->
-      <h1 class="text-h4 font-weight-bold mb-2">Pick a few topics to get started</h1>
-    </div>
-  </PageContainer>
-  <div v-else class="for-you">
-    <PageContainer variant="wide" class="feed">
-      <ContentList :items="mockContentItems" />
-    </PageContainer>
-    <RecommendationPanel />
+  <div v-if="hasFollows" class="onboarding">
+    <!-- Stub content: topic-picker and people-worth-following data is not wired up yet. -->
+    <h1 class="text-h4 font-weight-bold mb-2">Pick a few topics to get started</h1>
+  </div>
+  <div v-else>
+    <ContentList :items="mockContentItems" />
   </div>
 </template>
 
@@ -29,13 +23,5 @@ const hasFollows = computed(() => authStore.user?.hasFollows ?? false)
 .onboarding {
   max-width: 600px;
   margin: 0 auto;
-}
-.for-you {
-  display: flex;
-  height: 100%;
-  flex: 1;
-}
-.feed {
-  flex: 1 1 auto;
 }
 </style>

@@ -7,9 +7,9 @@ export const mockContentItems: ContentItem[] = [
     title: 'The first time she asked for help without being asked to',
     subtitle: 'On the quiet, unglamorous moments that count as progress.',
     creator: { id: 101, name: 'Dana Wu' },
-    'preview-image': 'https://picsum.photos/seed/redcloak-1/640/360',
+    preview_image: 'https://picsum.photos/seed/redcloak-1/640/360',
     likes: 42,
-    'read-duration': 4,
+    read_duration: 4,
   },
   {
     id: 2,
@@ -17,9 +17,9 @@ export const mockContentItems: ContentItem[] = [
     title: 'What I wish I knew before my first IEP meeting',
     subtitle: 'A caregiver-to-caregiver script for staying calm and specific.',
     creator: { id: 102, name: 'Marcus Reid' },
-    'preview-image': 'https://picsum.photos/seed/redcloak-2/640/360',
+    preview_image: 'https://picsum.photos/seed/redcloak-2/640/360',
     likes: 87,
-    'read-duration': 7,
+    read_duration: 7,
   },
   {
     id: 3,
@@ -27,7 +27,7 @@ export const mockContentItems: ContentItem[] = [
     title: 'Grip and grasp favourites',
     subtitle: 'Hand-training tools our family actually still uses.',
     creator: { id: 103, name: 'Priya Anand' },
-    'preview-images': [
+    preview_images: [
       'https://picsum.photos/seed/redcloak-3a/320/320',
       'https://picsum.photos/seed/redcloak-3b/320/320',
       'https://picsum.photos/seed/redcloak-3c/320/320',
@@ -40,9 +40,9 @@ export const mockContentItems: ContentItem[] = [
     title: 'Our slow, boring, very successful approach to oral feeding',
     subtitle: 'No tricks, no gimmicks — just consistency over 18 months.',
     creator: { id: 104, name: 'Sofia Bianchi' },
-    'preview-image': 'https://picsum.photos/seed/redcloak-4/640/360',
+    preview_image: 'https://picsum.photos/seed/redcloak-4/640/360',
     likes: 65,
-    'read-duration': 6,
+    read_duration: 6,
   },
   {
     id: 5,
@@ -50,9 +50,9 @@ export const mockContentItems: ContentItem[] = [
     title: 'Low-cost sensory setups for small apartments',
     subtitle: 'Big sensory input, tiny footprint.',
     creator: { id: 105, name: 'Leah Kim' },
-    'preview-image': 'https://picsum.photos/seed/redcloak-5/640/360',
+    preview_image: 'https://picsum.photos/seed/redcloak-5/640/360',
     likes: 31,
-    'read-duration': 5,
+    read_duration: 5,
   },
   {
     id: 6,
@@ -60,7 +60,7 @@ export const mockContentItems: ContentItem[] = [
     title: 'Home physio starter kit',
     subtitle: 'Everything we bought before the therapist told us what actually mattered.',
     creator: { id: 106, name: 'Renée Okafor' },
-    'preview-images': [
+    preview_images: [
       'https://picsum.photos/seed/redcloak-6a/320/320',
       'https://picsum.photos/seed/redcloak-6b/320/320',
     ],
