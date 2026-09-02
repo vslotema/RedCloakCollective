@@ -10,7 +10,7 @@ const { variant = 'centered' } = defineProps<Props>()
   <div class="page-container">
     <v-container :fluid="variant === 'wide'">
       <v-row v-if="variant === 'centered'" justify="center">
-        <v-col cols="12" md="10" lg="8">
+        <v-col cols="12" lg="10" xl="8">
           <slot />
         </v-col>
       </v-row>
@@ -22,5 +22,8 @@ const { variant = 'centered' } = defineProps<Props>()
 <style scoped lang="scss">
 .page-container {
   padding: var(--space-2) 0;
+  :deep(.v-col-12) {
+    padding: 0;
+  }
 }
 </style>

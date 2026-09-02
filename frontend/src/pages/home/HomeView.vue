@@ -15,8 +15,8 @@ const showRecommendations = computed(
 
 <template>
   <div class="home">
-    <PageContainer class="content" variant="centered">
-      <div class="main">
+    <PageContainer class="content" variant="wide">
+      <div class="main px-8">
         <v-tabs :model-value="activeTab" color="ink">
           <v-tab value="home" :to="{ name: 'home' }" :ripple="false">For you</v-tab>
           <v-tab value="explore" :to="{ name: 'explore' }" :ripple="false">Explore</v-tab>
@@ -38,6 +38,7 @@ const showRecommendations = computed(
   height: 100%;
   .content {
     flex: 1;
+    min-width: 0;
     .main {
       flex: 1 1 auto;
       min-width: 0;
