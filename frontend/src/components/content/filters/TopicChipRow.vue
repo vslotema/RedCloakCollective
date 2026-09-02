@@ -40,6 +40,10 @@ function scrollNext() {
   overflow-x: auto;
   scrollbar-width: none;
 
+  $fade: 2.5rem;
+  mask-image: linear-gradient(to right, #000 calc(100% - #{$fade}), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - #{$fade}), transparent 100%);
+
   &::-webkit-scrollbar {
     display: none;
   }
