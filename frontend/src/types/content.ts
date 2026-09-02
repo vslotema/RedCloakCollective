@@ -1,6 +1,7 @@
 export interface Creator {
   id: string | number;
   name: string;
+  avatar: string;
 }
 
 export interface BaseContent {
@@ -9,13 +10,15 @@ export interface BaseContent {
   title: string;
   subtitle: string;
   creator: Creator;
+  published_at: string;
+  tags: string[];
+  responses_count: number;
 }
 
 export interface Article extends BaseContent {
   type: 'article';
   preview_image: string;
   likes: number;
-  read_duration: string | number;
 }
 
 export interface EquipmentList extends BaseContent {

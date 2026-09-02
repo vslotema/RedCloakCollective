@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import PageContainer from '@/components/content/PageContainer.vue'
 </script>
 
 <template>
-  <PageContainer>
+  <div>
     <h1 class="text-h4 font-weight-bold mb-2">Explore</h1>
-  </PageContainer>
+  </div>
 </template>

@@ -21,7 +21,7 @@ const showRecommendations = computed(
           <v-tab value="home" :to="{ name: 'home' }" :ripple="false">For you</v-tab>
           <v-tab value="explore" :to="{ name: 'explore' }" :ripple="false">Explore</v-tab>
         </v-tabs>
-        <v-divider></v-divider>
+        <v-divider class="mb-12"></v-divider>
         <router-view />
       </div>
     </PageContainer>

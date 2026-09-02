@@ -110,7 +110,7 @@ defineExpose({
           density="comfortable"
           class="following-item"
         >
-          <v-list-item-title class="text-gray text-small"> {{ user.name }} </v-list-item-title>
+          <v-list-item-title class="text-gray text-sm"> {{ user.name }} </v-list-item-title>
           <v-tooltip
             activator="parent"
             location="end"

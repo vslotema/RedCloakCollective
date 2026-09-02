@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import PageContainer from '@/components/content/PageContainer.vue'
 import ContentList from '@/components/content/ContentList.vue'
 import { mockContentItems } from '@/mocks/contentItems'
 

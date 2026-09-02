@@ -16,6 +16,7 @@ $text-sizes: (
   'md': 1rem,
   'lg': 1.125rem,
   'xl': 1.25rem,
+  'xxl': 1.5rem,
 );
 
 $text-xs: map.get($text-sizes, 'xs');
@@ -23,6 +24,7 @@ $text-sm: map.get($text-sizes, 'sm');
 $text-md: map.get($text-sizes, 'md');
 $text-lg: map.get($text-sizes, 'lg');
 $text-xl: map.get($text-sizes, 'xl');
+$text-xxl: map.get($text-sizes, 'xxl');
 
 // Spacing -----------------------------------------------------------------------
 $spacing: (

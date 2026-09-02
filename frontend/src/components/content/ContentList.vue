@@ -9,7 +9,7 @@ defineProps<{
 </script>
 
 <template>
-  <div v-for="item in items" :key="item.id" >
+  <div v-for="item in items" :key="item.id">
     <ArticleListItem
       v-if="item.type === 'article'"
       :title="item.title"
@@ -17,7 +17,8 @@ defineProps<{
       :creator="item.creator"
       :preview_image="item.preview_image"
       :likes="item.likes"
-      :read_duration="item.read_duration"
+      :published_at="item.published_at"
+      :responses_count="item.responses_count"
     />
     <EquipmentListItem
       v-else
@@ -27,7 +28,7 @@ defineProps<{
       :preview_images="item.preview_images"
       :saves="item.saves"
     />
-    <v-divider></v-divider>
+    <v-divider class="my-8"></v-divider>
   </div>
 </template>
-A
+

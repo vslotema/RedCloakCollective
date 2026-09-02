@@ -85,6 +85,7 @@ $_text-utilities: (
   'medium': 'md',
   'large': 'lg',
   'x-large': 'xl',
+  'xxl': 'xxl',
 );
 
 @each $suffix, $token in $_text-utilities {
