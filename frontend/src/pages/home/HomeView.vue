@@ -8,9 +8,7 @@ import PageContainer from '@/components/content/PageContainer.vue'
 const route = useRoute()
 const authStore = useAuthStore()
 const activeTab = computed(() => (route.name === 'explore' ? 'explore' : 'home'))
-const showRecommendations = computed(
-  () => activeTab.value === 'home' && (authStore.user?.hasFollows ?? true),
-)
+const canShowRecommendations = computed(() => authStore.user?.hasFollows ?? true)
 </script>
 
 <template>
@@ -22,10 +20,16 @@ const showRecommendations = computed(
           <v-tab value="explore" :to="{ name: 'explore' }" :ripple="false">Explore</v-tab>
         </v-tabs>
         <v-divider class="mb-8"></v-divider>
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component :is="Component" />
+          </keep-alive>
+        </router-view>
       </div>
     </PageContainer>
-    <RecommendationPanel v-if="showRecommendations" />
+    <template v-if="canShowRecommendations">
+      <RecommendationPanel v-show="activeTab === 'home'" />
+    </template>
   </div>
 </template>
 

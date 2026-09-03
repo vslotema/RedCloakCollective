@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import OnboardingLayout from '@/layouts/OnboardingLayout.vue'
+import ForYouView from '@/pages/home/ForYouView.vue'
+import ExploreView from '@/pages/home/ExploreView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -28,12 +30,12 @@ const router = createRouter({
             {
               path: '',
               name: 'home',
-              component: () => import('@/pages/home/ForYouView.vue'),
+              component: ForYouView,
             },
             {
               path: 'explore',
               name: 'explore',
-              component: () => import('@/pages/home/ExploreView.vue'),
+              component: ExploreView,
             },
           ],
         },
