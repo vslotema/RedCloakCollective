@@ -9,6 +9,7 @@ defineProps<{
 
 defineEmits<{
   toggle: [topic: string]
+  all: []
 }>()
 
 const scroller = useTemplateRef('scroller')
@@ -21,6 +22,7 @@ function scrollNext() {
 <template>
   <div class="d-flex align-center">
     <div ref="scroller" class="chip-scroller d-flex ga-2">
+      <TopicChip label="All" :selected="selected.length === 0" @click="$emit('all')" />
       <TopicChip
         v-for="topic in topics"
         :key="topic"

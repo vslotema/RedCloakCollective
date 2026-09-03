@@ -40,7 +40,12 @@ function clearTopics() {
 
 <template>
   <div class="content-filter-bar">
-    <TopicChipRow :topics="topics" :selected="selectedTopics" @toggle="toggleTopic" />
+    <TopicChipRow
+      :topics="topics"
+      :selected="selectedTopics"
+      @toggle="toggleTopic"
+      @all="clearTopics"
+    />
 
     <div class="d-flex align-center justify-space-between mt-4">
       <ResultsSummary :count="resultsCount" :show-clear-btn="showClearBtn" @clear="clearTopics" />
