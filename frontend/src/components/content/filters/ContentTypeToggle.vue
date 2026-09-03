@@ -4,8 +4,14 @@ const model = defineModel<'all' | 'stories' | 'lists'>({ default: 'all' })
 
 <template>
   <v-btn-toggle v-model="model" mandatory color="ink" density="compact" variant="plain">
-    <v-btn value="all">All</v-btn>
-    <v-btn value="stories">Stories</v-btn>
-    <v-btn value="lists">Lists</v-btn>
+    <v-btn :ripple="false" value="all">All</v-btn>
+    <v-btn :ripple="false" value="stories">Stories</v-btn>
+    <v-btn :ripple="false" value="lists">Lists</v-btn>
   </v-btn-toggle>
 </template>
+
+<style lang="scss" scoped>
+ :deep(.v-btn__content) {
+  font-weight: 400;
+ }
+</style>
