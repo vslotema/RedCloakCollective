@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import ContentFilterBar from '@/components/content/filters/ContentFilterBar.vue'
+import PageContainer from '@/components/content/PageContainer.vue'
 </script>
 
 <template>
-  <div>
-    <h1 class="text-h4 font-weight-bold mb-2">Explore</h1>
-  </div>
+  <PageContainer variant="centered">
+    <ContentFilterBar show-content-type-toggle />
+    <v-divider></v-divider>
+  </PageContainer>
 </template>

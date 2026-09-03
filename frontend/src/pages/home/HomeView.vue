@@ -15,11 +15,13 @@ const canShowRecommendations = computed(() => authStore.user?.hasFollows ?? true
   <div class="home">
     <PageContainer class="content" variant="wide">
       <div class="main px-8">
-        <v-tabs :model-value="activeTab" color="ink">
-          <v-tab value="home" :to="{ name: 'home' }" :ripple="false">For you</v-tab>
-          <v-tab value="explore" :to="{ name: 'explore' }" :ripple="false">Explore</v-tab>
-        </v-tabs>
-        <v-divider class="mb-8"></v-divider>
+        <div class="tabs-bar">
+          <v-tabs :model-value="activeTab" color="ink">
+            <v-tab value="home" :to="{ name: 'home' }" :ripple="false">For you</v-tab>
+            <v-tab value="explore" :to="{ name: 'explore' }" :ripple="false">Explore</v-tab>
+          </v-tabs>
+          <v-divider class="mb-8"></v-divider>
+        </div>
         <router-view v-slot="{ Component }">
           <keep-alive>
             <component :is="Component" />
@@ -28,7 +30,7 @@ const canShowRecommendations = computed(() => authStore.user?.hasFollows ?? true
       </div>
     </PageContainer>
     <template v-if="canShowRecommendations">
-      <RecommendationPanel v-show="activeTab === 'home'" />
+      <RecommendationPanel v-show="activeTab === 'home'" class="sidebar" />
     </template>
   </div>
 </template>
@@ -49,6 +51,21 @@ const canShowRecommendations = computed(() => authStore.user?.hasFollows ?? true
       display: flex;
       flex-direction: column;
     }
+  }
+
+  .tabs-bar {
+    position: sticky;
+    top: var(--v-layout-top, 64px);
+    z-index: 3;
+    background: rgb(var(--v-theme-background));
+  }
+
+  .sidebar {
+    align-self: flex-start;
+    position: sticky;
+    top: var(--v-layout-top, 64px);
+    max-height: calc(100dvh - var(--v-layout-top, 64px));
+    overflow-y: auto;
   }
 }
 </style>
