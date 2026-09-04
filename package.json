@@ -1,12 +1,21 @@
 {
   "name": "redcloak-collective",
   "private": true,
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "public-web",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "concurrently -n backend,frontend -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev": "concurrently -n backend,frontend,public-web,proxy -c blue,green,magenta,yellow \"npm:dev:backend\" \"npm:dev:frontend\" \"npm:dev:public-web\" \"npm:dev:proxy\"",
     "dev:backend": "cd backend && php artisan serve --port=8000",
-    "dev:frontend": "npm run dev --prefix frontend -- --port=5173"
+    "dev:frontend": "npm run dev --workspace frontend -- --port=5173",
+    "dev:public-web": "npm run dev --workspace public-web -- --port 3000",
+    "dev:proxy": "node dev-proxy/server.js"
   },
   "devDependencies": {
-    "concurrently": "^10.0.4"
+    "concurrently": "^10.0.4",
+    "http-proxy": "^1.18.1"
   }
 }

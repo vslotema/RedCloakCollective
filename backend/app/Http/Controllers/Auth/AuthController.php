@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -17,6 +20,30 @@ class AuthController extends Controller
             'country' => ['required', 'string', 'size:2'],
             'state' => ['nullable', 'string', 'size:2', 'required_if:country,US'],
         ];
+    }
+
+    /**
+     * Log the user into the "web" session guard (in addition to issuing a
+     * bearer token) so the Nuxt app's SSR can identify the viewer via cookie.
+     */
+    private function startSession(Request $request, User $user): void
+    {
+        Auth::login($user);
+        $request->session()->regenerate();
+    }
+
+    private function generateUsername(string $name): string
+    {
+        $base = Str::slug($name) ?: 'user';
+        $username = $base;
+        $suffix = 1;
+
+        while (DB::table('users')->where('username', $username)->exists()) {
+            $suffix++;
+            $username = "{$base}-{$suffix}";
+        }
+
+        return $username;
     }
 
     public function register(Request $request)
@@ -30,11 +57,14 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $data['name'],
+            'username' => $this->generateUsername($data['name']),
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'country' => $data['country'],
             'state' => $data['state'] ?? null,
         ]);
+
+        $this->startSession($request, $user);
 
         return response()->json([
             'token' => $user->createToken('api')->plainTextToken,
@@ -57,6 +87,8 @@ class AuthController extends Controller
             ]);
         }
 
+        $this->startSession($request, $user);
+
         return response()->json([
             'token' => $user->createToken('api')->plainTextToken,
             'user' => $user,
@@ -66,6 +98,10 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
+
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->noContent();
     }
@@ -103,13 +139,17 @@ class AuthController extends Controller
                 $user->forceFill(['google_id' => $payload['sub']])->save();
             }
         } else {
+            $name = $payload['name'] ?? $payload['email'];
             $user = User::create([
-                'name' => $payload['name'] ?? $payload['email'],
+                'name' => $name,
+                'username' => $this->generateUsername($name),
                 'email' => $payload['email'],
                 'google_id' => $payload['sub'],
                 'email_verified_at' => now(),
             ]);
         }
+
+        $this->startSession($request, $user);
 
         return response()->json([
             'token' => $user->createToken('api')->plainTextToken,
