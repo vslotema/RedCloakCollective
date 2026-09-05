@@ -1,7 +1,3 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import api from '@/lib/api'
-
 export interface User {
   id: number
   name: string
@@ -12,6 +8,8 @@ export interface User {
 }
 
 export const useAuthStore = defineStore('auth', () => {
+  const api = useApi()
+
   const user = ref<User | null>(null)
   // This store is instantiated on every page (app.vue calls useAuthStore()
   // unconditionally), including SSR'd public pages where localStorage doesn't
@@ -20,8 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function fetchUser() {
     if (!token.value) return
-    const { data } = await api.get<User>('/user')
-    user.value = data
+    user.value = await api<User>('/user')
   }
 
   function setToken(newToken: string) {
@@ -30,8 +27,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function updateLocation(country: string, state: string | null) {
-    const { data } = await api.patch<{ user: User }>('/user/location', { country, state })
-    user.value = data.user
+    const { user: updated } = await api<{ user: User }>('/user/location', {
+      method: 'PATCH',
+      body: { country, state },
+    })
+    user.value = updated
   }
 
   function logout() {

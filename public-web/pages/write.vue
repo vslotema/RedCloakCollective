@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import PageContainer from '@/components/content/PageContainer.vue'
-import RichTextEditor from '@/components/write/RichTextEditor.vue'
-
 definePageMeta({ layout: 'default', middleware: 'auth' })
 
 const title = ref('')

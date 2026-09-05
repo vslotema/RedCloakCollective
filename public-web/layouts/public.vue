@@ -1,7 +1,3 @@
-<script setup lang="ts">
-import PublicHeader from '@/components/nav/PublicHeader.vue'
-</script>
-
 <template>
   <div class="page">
     <PublicHeader />

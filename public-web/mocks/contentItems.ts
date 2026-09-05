@@ -1,4 +1,4 @@
-import type { ContentItem } from '@/types/content'
+import type { ContentItem } from '~/types/content'
 
 export const mockContentItems: ContentItem[] = [
   {

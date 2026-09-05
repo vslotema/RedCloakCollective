@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { mockContentItems } from '@/mocks/contentItems'
-import TopicChipRow from './TopicChipRow.vue'
-import ResultsSummary from './ResultsSummary.vue'
-import ContentTypeToggle from './ContentTypeToggle.vue'
+import { mockContentItems } from '~/mocks/contentItems'
 
 const {
   showContentTypeToggle = false,

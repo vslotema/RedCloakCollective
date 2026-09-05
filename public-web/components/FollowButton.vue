@@ -8,14 +8,8 @@ const api = useApi()
 const following = ref(props.initialFollowing)
 const loading = ref(false)
 
-function authHeaders(): Record<string, string> {
-  const token = import.meta.client ? localStorage.getItem('auth_token') : null
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 async function toggle() {
-  const token = localStorage.getItem('auth_token')
-  if (!token) {
+  if (!localStorage.getItem('auth_token')) {
     // No SPA session in this browser — send them to sign in there.
     window.location.href = '/'
     return
@@ -25,7 +19,6 @@ async function toggle() {
   try {
     const result = await api<{ following: boolean }>(`/users/${props.username}/follow`, {
       method: following.value ? 'DELETE' : 'POST',
-      headers: authHeaders(),
     })
     following.value = result.following
   } finally {

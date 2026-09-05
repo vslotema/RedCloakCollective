@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 
 const search = ref<string | null>(null)
 const foundItems = ref<string[]>([])

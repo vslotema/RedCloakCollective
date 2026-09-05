@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { useDisplay } from 'vuetify'
-import type { User } from '@/types/user'
+import type { User } from '~/types/user'
 
 interface MenuItem {
   title: string

@@ -1,11 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import ContentList from '@/components/content/ContentList.vue'
-import ContentFilterBar from '@/components/content/filters/ContentFilterBar.vue'
-import { mockContentItems } from '@/mocks/contentItems'
-import PageContainer from '@/components/content/PageContainer.vue'
-import RecommendationPanel from '@/components/home/RecommendationPanel.vue'
+import { mockContentItems } from '~/mocks/contentItems'
 
 definePageMeta({ layout: 'default', middleware: 'auth' })
 
@@ -25,7 +19,7 @@ const hasFollows = computed(() => authStore.user?.hasFollows ?? true)
           <v-divider class="mb-8"></v-divider>
         </div>
 
-        <div v-if="!hasFollows" class="onboarding">
+        <div v-if="false" class="onboarding">
           <!-- Stub content: topic-picker and people-worth-following data is not wired up yet. -->
           <h1 class="text-h4 font-weight-bold mb-2">Pick a few topics to get started</h1>
         </div>
@@ -37,7 +31,7 @@ const hasFollows = computed(() => authStore.user?.hasFollows ?? true)
         </div>
       </div>
     </PageContainer>
-    <template v-if="hasFollows">
+    <template v-if="true">
       <RecommendationPanel class="sidebar" />
     </template>
   </div>

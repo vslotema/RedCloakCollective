@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import RecommendedTopicChip from './RecommendedTopicChip.vue'
-import SuggestedFollowItem from './SuggestedFollowItem.vue'
-import { mockRecommendedTopics } from '@/mocks/recommendedTopics'
-import { mockSuggestedFollows } from '@/mocks/suggestedFollows'
+import { mockRecommendedTopics } from '~/mocks/recommendedTopics'
+import { mockSuggestedFollows } from '~/mocks/suggestedFollows'
 
 interface Props {
   width?: string

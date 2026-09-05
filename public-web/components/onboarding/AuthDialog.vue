@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import api from '@/lib/api'
-import { useAuthStore } from '@/stores/auth'
-import { countries } from '@/lib/countries'
-import { usStates } from '@/lib/usStates'
-import { renderGoogleButton } from '@/lib/googleIdentity'
-import CompleteProfileDialog from './CompleteProfileDialog.vue'
+import { countries } from '~/lib/countries'
+import { usStates } from '~/lib/usStates'
+import { renderGoogleButton } from '~/lib/googleIdentity'
 
 const model = defineModel<boolean>({ default: false })
 const mode = defineModel<'signin' | 'signup'>('mode', { default: 'signup' })
@@ -14,6 +9,7 @@ const mode = defineModel<'signin' | 'signup'>('mode', { default: 'signup' })
 const router = useRouter()
 const authStore = useAuthStore()
 const config = useRuntimeConfig()
+const api = useApi()
 
 const loading = ref(false)
 const errorMessage = ref('')
@@ -52,8 +48,11 @@ async function handleSignIn() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const { data } = await api.post<{ token: string }>('/login', signInForm.value)
-    authStore.setToken(data.token)
+    const { token } = await api<{ token: string }>('/login', {
+      method: 'POST',
+      body: signInForm.value,
+    })
+    authStore.setToken(token)
     await authStore.fetchUser()
     close()
     router.push('/')
@@ -68,15 +67,18 @@ async function handleSignUp() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const { data } = await api.post<{ token: string }>('/register', {
-      name: signUpForm.value.name,
-      email: signUpForm.value.email,
-      password: signUpForm.value.password,
-      password_confirmation: signUpForm.value.passwordConfirmation,
-      country: signUpForm.value.country,
-      state: isUs.value ? signUpForm.value.state : null,
+    const { token } = await api<{ token: string }>('/register', {
+      method: 'POST',
+      body: {
+        name: signUpForm.value.name,
+        email: signUpForm.value.email,
+        password: signUpForm.value.password,
+        password_confirmation: signUpForm.value.passwordConfirmation,
+        country: signUpForm.value.country,
+        state: isUs.value ? signUpForm.value.state : null,
+      },
     })
-    authStore.setToken(data.token)
+    authStore.setToken(token)
     await authStore.fetchUser()
     close()
     router.push('/')
@@ -91,8 +93,11 @@ async function handleGoogleCredential(credential: string) {
   loading.value = true
   errorMessage.value = ''
   try {
-    const { data } = await api.post<{ token: string }>('/auth/google', { credential })
-    authStore.setToken(data.token)
+    const { token } = await api<{ token: string }>('/auth/google', {
+      method: 'POST',
+      body: { credential },
+    })
+    authStore.setToken(token)
     await authStore.fetchUser()
     close()
     if (authStore.user && authStore.user.country === null) {

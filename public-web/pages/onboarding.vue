@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import AuthDialog from '@/components/onboarding/AuthDialog.vue'
-
 definePageMeta({ layout: 'onboarding', middleware: 'guest' })
 
 const authDialog = ref(false)

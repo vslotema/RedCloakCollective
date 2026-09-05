@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import PageContainer from '@/components/content/PageContainer.vue'
-
 definePageMeta({ layout: 'default', middleware: 'auth' })
 </script>
 

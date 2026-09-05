@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { useTemplateRef } from 'vue'
-import TopicChip from './TopicChip.vue'
-
 defineProps<{
   topics: string[]
   selected: string[]

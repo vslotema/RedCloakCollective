@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import type { ContentItem } from '@/types/content'
-import ArticleListItem from '@/components/content/articles/ArticleListItem.vue'
-import EquipmentListItem from '@/components/content/equipment/EquipmentListItem.vue'
+import type { ContentItem } from '~/types/content'
 
 defineProps<{
   items: ContentItem[]

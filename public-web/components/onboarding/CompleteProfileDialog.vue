@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { countries } from '@/lib/countries'
-import { usStates } from '@/lib/usStates'
+import { countries } from '~/lib/countries'
+import { usStates } from '~/lib/usStates'
 
 const model = defineModel<boolean>({ default: false })
 

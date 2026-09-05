@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import TopbarNavigation from '@/components/nav/TopbarNavigation.vue'
-import SidebarNavigation from '@/components/nav/SidebarNavigation.vue'
-
-const sidebar = ref<InstanceType<typeof SidebarNavigation> | null>(null)
+const sidebar = useTemplateRef('sidebar')
 </script>
 
 <template>

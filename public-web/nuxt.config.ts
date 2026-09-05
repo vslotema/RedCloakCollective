@@ -10,6 +10,12 @@ export default defineNuxtConfig({
 
   ssr: true,
 
+  // Components are auto-imported by filename only (no directory prefix), so
+  // `components/content/filters/ContentFilterBar.vue` is `<ContentFilterBar>`.
+  // The filenames are already descriptively prefixed, so the path-based names
+  // would just be redundant (`<ContentFiltersContentFilterBar>`).
+  components: [{ path: '~/components', pathPrefix: false }],
+
   css: ['~/assets/styles/style.scss'],
 
   vite: {

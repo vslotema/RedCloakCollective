@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import SearchBar from './SearchBar.vue'
-
 defineEmits<{
   toggleNavigation: []
 }>()

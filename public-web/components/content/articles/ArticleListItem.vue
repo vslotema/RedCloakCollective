@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { Creator } from '@/types/content'
-import { formatPublishedDate } from '@/utils/formatPublishedDate'
+import type { Creator } from '~/types/content'
 
 defineProps<{
   title: string

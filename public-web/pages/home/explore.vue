@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import ExploreContent from '@/components/content/ExploreContent.vue'
-import PageContainer from '@/components/content/PageContainer.vue'
-
 definePageMeta({ layout: 'default', middleware: 'auth' })
 
 useSeoMeta({ title: 'Explore' })
@@ -9,7 +6,7 @@ useSeoMeta({ title: 'Explore' })
 
 <template>
   <div class="home">
-    <PageContainer class="content" variant="centered">
+    <PageContainer class="content" variant="wide">
       <div class="main px-8">
         <div class="tabs-bar">
           <v-tabs model-value="explore" color="ink">
