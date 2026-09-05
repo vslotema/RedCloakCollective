@@ -3,19 +3,14 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "frontend",
-    "public-web",
-    "packages/*"
+    "public-web"
   ],
   "scripts": {
-    "dev": "concurrently -n backend,frontend,public-web,proxy -c blue,green,magenta,yellow \"npm:dev:backend\" \"npm:dev:frontend\" \"npm:dev:public-web\" \"npm:dev:proxy\"",
+    "dev": "concurrently -n backend,public-web -c blue,magenta \"npm:dev:backend\" \"npm:dev:public-web\"",
     "dev:backend": "cd backend && php artisan serve --port=8000",
-    "dev:frontend": "npm run dev --workspace frontend -- --port=5173",
-    "dev:public-web": "npm run dev --workspace public-web -- --port 3000",
-    "dev:proxy": "node dev-proxy/server.js"
+    "dev:public-web": "npm run dev --workspace public-web -- --port 3000"
   },
   "devDependencies": {
-    "concurrently": "^10.0.4",
-    "http-proxy": "^1.18.1"
+    "concurrently": "^10.0.4"
   }
 }
