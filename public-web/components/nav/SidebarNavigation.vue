@@ -19,7 +19,7 @@ const wider = ref(true)
 const { mobile, width } = useDisplay()
 const fullWidthNav = computed(() => (mobile.value ? width.value : 250))
 const menuItems = ref<MenuItem[]>([
-  { title: 'Home', route: '/', icon: 'home', match: ['index', 'explore'] },
+  { title: 'Home', route: '/', icon: 'home', match: ['index', 'home-explore'] },
   { title: 'Library', route: '/library', icon: 'bookmark' },
   { title: 'Profile', route: '/profile', icon: 'user' },
   // These are the author's own dashboard (drafts/scheduled/published) — a

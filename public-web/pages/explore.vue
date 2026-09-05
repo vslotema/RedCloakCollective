@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ContentFilterBar from '@/components/content/filters/ContentFilterBar.vue'
+import ExploreContent from '@/components/content/ExploreContent.vue'
 import PageContainer from '@/components/content/PageContainer.vue'
 
 definePageMeta({ layout: 'public' })
@@ -12,7 +12,6 @@ useSeoMeta({
 
 <template>
   <PageContainer variant="centered">
-    <ContentFilterBar show-content-type-toggle />
-    <v-divider></v-divider>
+    <ExploreContent />
   </PageContainer>
 </template>

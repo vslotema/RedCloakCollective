@@ -57,6 +57,7 @@ export default defineNuxtConfig({
 
     // --- Authenticated app: plain CSR, same behavior as the old SPA ---
     '/': { ssr: false },
+    '/home/explore': { ssr: false },
     '/library': { ssr: false },
     '/profile': { ssr: false },
     '/dashboard/**': { ssr: false },
@@ -93,6 +94,15 @@ export default defineNuxtConfig({
     // Everything here is one Nuxt app now, so the module's automatic route
     // discovery would otherwise also list the authenticated app's pages —
     // exclude those explicitly; only the public surface should be indexed.
-    exclude: ['/', '/library', '/profile', '/settings', '/write', '/onboarding', '/dashboard/**'],
+    exclude: [
+      '/',
+      '/home/explore',
+      '/library',
+      '/profile',
+      '/settings',
+      '/write',
+      '/onboarding',
+      '/dashboard/**',
+    ],
   },
 })

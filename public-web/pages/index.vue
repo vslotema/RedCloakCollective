@@ -20,7 +20,7 @@ const hasFollows = computed(() => authStore.user?.hasFollows ?? true)
         <div class="tabs-bar">
           <v-tabs model-value="home" color="ink">
             <v-tab value="home" :ripple="false">For you</v-tab>
-            <v-tab value="explore" to="/explore" :ripple="false">Explore</v-tab>
+            <v-tab value="explore" to="/home/explore" :ripple="false">Explore</v-tab>
           </v-tabs>
           <v-divider class="mb-8"></v-divider>
         </div>
