@@ -73,6 +73,11 @@ export default defineNuxtConfig({
   },
 
   vuetify: {
+    // Vuetify's `useLayout` collides with Nuxt's built-in auto-import of the
+    // same name — prefix just that one to `useVLayout` to clear the warning.
+    moduleOptions: {
+      prefixComposables: ['useLayout'],
+    },
     vuetifyOptions: {
       display: { mobileBreakpoint: 'sm' },
       // Real icon config is injected in plugins/vuetify-icons.ts via the
