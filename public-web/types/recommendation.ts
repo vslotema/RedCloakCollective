@@ -1,7 +1,10 @@
-export interface RecommendedTopic {
+export interface Topic {
   id: number
   name: string
   slug: string
+}
+
+export interface RecommendedTopic extends Topic {
   following: boolean
 }
 

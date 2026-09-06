@@ -34,7 +34,7 @@ const showFeed = computed(() => !showQuestionnaire.value && !showPersonalize.val
           <PersonalizeFeed />
         </div>
         <div v-else class="mt-8">
-          <ContentFilterBar />
+          <ContentFilterBar followed />
           <v-divider class="mb-12"></v-divider>
           <ContentList :items="mockContentItems" />
         </div>
@@ -107,7 +107,9 @@ const showFeed = computed(() => !showQuestionnaire.value && !showPersonalize.val
     align-self: flex-start;
     position: sticky;
     top: var(--v-layout-top, 64px);
-    max-height: calc(100dvh - var(--v-layout-top, 64px));
+    // Always exactly the viewport height below the topbar, so the panel's
+    // left divider runs top-to-bottom regardless of how little content it holds.
+    height: calc(100dvh - var(--v-layout-top, 64px));
     overflow-y: auto;
   }
 }

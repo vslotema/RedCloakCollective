@@ -57,4 +57,17 @@ class TopicFollowTest extends TestCase
 
         $this->postJson('/api/topics/autism/follow')->assertUnauthorized();
     }
+
+    public function test_it_lists_the_users_followed_topics(): void
+    {
+        $user = User::factory()->create();
+        $followed = Topic::factory()->create(['name' => 'Autism', 'slug' => 'autism']);
+        Topic::factory()->create(['name' => 'Feeding', 'slug' => 'feeding-nutrition']);
+        $user->followedTopics()->attach($followed);
+
+        Sanctum::actingAs($user);
+        $this->getJson('/api/topics/following')
+            ->assertOk()
+            ->assertExactJson([['id' => $followed->id, 'name' => 'Autism', 'slug' => 'autism']]);
+    }
 }

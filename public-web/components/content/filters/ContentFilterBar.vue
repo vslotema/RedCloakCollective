@@ -1,17 +1,32 @@
 <script setup lang="ts">
 import { mockContentItems } from '~/mocks/contentItems'
+import type { Topic } from '~/types/recommendation'
 
 const {
   showContentTypeToggle = false,
   showClearBtn = false,
   multiSelect = false,
+  followed = false,
 } = defineProps<{
   showContentTypeToggle?: boolean
   showClearBtn?: boolean
   multiSelect?: boolean
+  /** Show the topics the viewer follows instead of the mock tag catalogue. */
+  followed?: boolean
 }>()
 
-const topics = [...new Set(mockContentItems.flatMap((item) => item.tags))]
+const api = useApi()
+const mockTopics = [...new Set(mockContentItems.flatMap((item) => item.tags))]
+const followedTopics = ref<Topic[]>([])
+
+const topics = computed(() =>
+  followed ? followedTopics.value.map((t) => t.name) : mockTopics,
+)
+
+onMounted(async () => {
+  if (!followed) return
+  followedTopics.value = await api<Topic[]>('/topics/following')
+})
 
 const selectedTopics = ref<string[]>([])
 const resultsCount = ref(4)

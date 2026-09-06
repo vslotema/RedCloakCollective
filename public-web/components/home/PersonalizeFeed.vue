@@ -109,7 +109,12 @@ const skip = () => submit([], []);
         </div>
       </section>
 
-      <div class="personalize__actions d-flex align-center ga-3 mt-10">
+      <div
+        class="personalize__actions d-flex align-center justify-end ga-3 mt-10"
+      >
+        <v-btn variant="text" :disabled="saving" @click="skip"
+          >Skip for now</v-btn
+        >
         <v-btn
           color="primary"
           rounded="pill"
@@ -119,9 +124,6 @@ const skip = () => submit([], []);
         >
           Follow selected & continue
         </v-btn>
-        <v-btn variant="text" :disabled="saving" @click="skip"
-          >Skip for now</v-btn
-        >
       </div>
     </template>
   </div>

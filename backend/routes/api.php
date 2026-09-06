@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users/{user:username}/follow', [FollowController::class, 'store']);
     Route::delete('/users/{user:username}/follow', [FollowController::class, 'destroy']);
 
+    Route::get('/topics/following', [TopicFollowController::class, 'index']);
     Route::post('/topics/{topic:slug}/follow', [TopicFollowController::class, 'store']);
     Route::delete('/topics/{topic:slug}/follow', [TopicFollowController::class, 'destroy']);
 
