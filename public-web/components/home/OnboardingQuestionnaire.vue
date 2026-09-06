@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { onboardingQuestions, type Question } from '@/types/onboarding'
 import SelectableOption from './SelectableOption.vue'
@@ -10,6 +10,7 @@ const step = ref(0)
 const saving = ref(false)
 const answers = reactive<Record<string, string | string[] | undefined>>({})
 const otherText = reactive<Record<string, string | undefined>>({})
+const otherInput = ref<HTMLInputElement | null>(null)
 
 const totalQuestions = onboardingQuestions.length
 const summaryStep = totalQuestions
@@ -38,6 +39,19 @@ function toggleOption(question: Question, value: string) {
   } else {
     answers[question.key] = answers[question.key] === value ? undefined : value
   }
+
+  const otherOption = question.options.find((o) => o.hasOtherText)
+  if (otherOption?.value === value && isSelected(question, value)) {
+    nextTick(() => {
+      otherInput.value?.focus({ preventScroll: true })
+      otherInput.value?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    })
+  }
+}
+
+function otherColumn(question: Question): number {
+  const index = question.options.findIndex((o) => o.hasOtherText)
+  return (index % 2) + 1
 }
 
 function hasOtherSelected(question: Question): boolean {
@@ -116,24 +130,24 @@ function skip() {
             class="questionnaire__options"
             :class="{ 'questionnaire__options--two-col': currentQuestion.twoColumn }"
           >
-            <SelectableOption
-              v-for="option in currentQuestion.options"
-              :key="option.value"
-              :label="option.label"
-              :multiple="currentQuestion.multiple"
-              :active="isSelected(currentQuestion, option.value)"
-              @toggle="toggleOption(currentQuestion, option.value)"
-            />
+            <template v-for="option in currentQuestion.options" :key="option.value">
+              <SelectableOption
+                :label="option.label"
+                :multiple="currentQuestion.multiple"
+                :active="isSelected(currentQuestion, option.value)"
+                @toggle="toggleOption(currentQuestion, option.value)"
+              />
+              <input
+                v-if="option.hasOtherText && isSelected(currentQuestion, option.value)"
+                :ref="(el) => (otherInput = el as HTMLInputElement | null)"
+                v-model="otherText[currentQuestion.key]"
+                type="text"
+                class="questionnaire__other"
+                placeholder="Tell us more"
+                :style="{ '--other-col': otherColumn(currentQuestion) }"
+              />
+            </template>
           </div>
-          <v-text-field
-            v-if="hasOtherSelected(currentQuestion)"
-            v-model="otherText[currentQuestion.key]"
-            placeholder="Tell us more"
-            variant="outlined"
-            density="compact"
-            class="mt-2"
-            hide-details
-          />
         </template>
 
         <template v-else>
@@ -180,17 +194,11 @@ function skip() {
 
 <style scoped lang="scss">
 .questionnaire {
-  // Fixed width across every step so the questions stay left-aligned and the
-  // action buttons don't shift when a two-column step comes up.
   width: 100%;
   max-width: 940px;
-
-  // Take whatever height is left on screen, capped so the option area is never
-  // taller than 500px. The ~280px reserve covers the app bar, tabs and intro
-  // text above this component.
   display: flex;
   flex-direction: column;
-  height: min(525px, calc(100dvh - 280px));
+  height: min(526px, calc(100dvh - 260px));
   min-height: 360px;
 }
 
@@ -221,7 +229,7 @@ function skip() {
 .questionnaire__viewport {
   flex: 1 1 auto;
   min-height: 0;
-  max-height: 525px;
+  max-height: 526px;
   overflow: hidden;
   padding: .25rem 1rem 0 1rem;
   background: rgb(var(--v-theme-surface));
@@ -245,8 +253,6 @@ function skip() {
   padding-top: var(--space-4);
 }
 
-// On mobile the questionnaire fills the rest of the screen and the action row
-// is pinned to the bottom of the viewport.
 @media (max-width: 600px) {
   .questionnaire {
     max-width: none;
@@ -260,12 +266,10 @@ function skip() {
   }
 
   .questionnaire__slide {
-    // Clear the fixed action bar so the last option isn't hidden behind it.
     padding-bottom: calc(var(--space-6) + 56px);
   }
 
   .questionnaire__dots {
-    // Sit just above the fixed action bar instead of behind it.
     position: fixed;
     left: 0;
     right: 0;
@@ -291,8 +295,6 @@ function skip() {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-
-  // Two columns, filled row by row so the left and right options line up.
   &--two-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -301,6 +303,36 @@ function skip() {
     @media (max-width: 700px) {
       grid-template-columns: 1fr;
     }
+
+    .questionnaire__other {
+      grid-column: var(--other-col, 1) / span 1;
+
+      @media (max-width: 700px) {
+        grid-column: 1;
+      }
+    }
+  }
+}
+
+.questionnaire__other {
+  box-sizing: border-box;
+  align-self: start;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid rgb(var(--v-theme-border-color));
+  border-radius: var(--radius-sm);
+  background: rgb(var(--v-theme-background));
+  color: rgb(var(--v-theme-ink));
+  font-size: var(--text-sm);
+  line-height: 18px;
+
+  &::placeholder {
+    color: rgb(var(--v-theme-on-surface));
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgb(var(--v-theme-secondary));
   }
 }
 </style>
