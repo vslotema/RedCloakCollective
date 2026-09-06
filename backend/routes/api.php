@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\FollowController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Public\ArticleController;
 use App\Http\Controllers\Public\EquipmentListController;
 use App\Http\Controllers\Public\ProfileController;
@@ -31,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         $user = $request->user();
         $user->hasFollows = $user->following()->exists() || $user->followedTopics()->exists();
+        $user->topicsOnboarded = $user->topics_onboarded_at !== null;
 
         return $user;
     });
@@ -40,4 +42,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/users/{user:username}/follow', [FollowController::class, 'store']);
     Route::delete('/users/{user:username}/follow', [FollowController::class, 'destroy']);
+
+    Route::post('/onboarding', [OnboardingController::class, 'store']);
 });

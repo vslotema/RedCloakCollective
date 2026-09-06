@@ -5,6 +5,8 @@ export interface User {
   country: string | null
   state: string | null
   hasFollows: boolean
+  topicsOnboarded: boolean
+  onboarding_answers: Record<string, unknown> | null
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -34,11 +36,20 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = updated
   }
 
+  async function saveOnboardingAnswers(answers: Record<string, unknown> | null) {
+    const { user: updated } = await api<{ user: User }>('/onboarding', {
+      method: 'POST',
+      body: { answers },
+    })
+    user.value = updated
+    return updated
+  }
+
   function logout() {
     token.value = null
     user.value = null
     if (import.meta.client) localStorage.removeItem('auth_token')
   }
 
-  return { user, token, fetchUser, setToken, updateLocation, logout }
+  return { user, token, fetchUser, setToken, updateLocation, saveOnboardingAnswers, logout }
 })
