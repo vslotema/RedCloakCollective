@@ -32,7 +32,23 @@ class User extends Authenticatable
             'password' => 'hashed',
             'topics_onboarded_at' => 'datetime',
             'onboarding_answers' => 'array',
+            'feed_personalized_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Stamp the non-persisted flags the Nuxt app reads off the user payload
+     * (onboarding progress + whether the feed has been personalised). Anything
+     * that returns the current user to the frontend store should call this so
+     * the flags never come back undefined.
+     */
+    public function withDashboardFlags(): static
+    {
+        $this->hasFollows = $this->following()->exists() || $this->followedTopics()->exists();
+        $this->topicsOnboarded = $this->topics_onboarded_at !== null;
+        $this->feedPersonalized = $this->feed_personalized_at !== null;
+
+        return $this;
     }
 
     public function articles(): HasMany

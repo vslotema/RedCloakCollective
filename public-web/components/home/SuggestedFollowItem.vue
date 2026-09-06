@@ -1,19 +1,31 @@
 <script setup lang="ts">
-import type { SuggestedFollow } from '~/types/recommendation'
+import type { RecommendedPerson } from '~/types/recommendation'
 
-defineProps<{
-  person: SuggestedFollow
+const props = defineProps<{
+  person: RecommendedPerson
+  selected: boolean
 }>()
 
-const following = ref(false)
+defineEmits<{
+  toggle: []
+}>()
+
+const initials = computed(() =>
+  props.person.name
+    .split(/\s+/)
+    .map((part) => part[0] ?? '')
+    .slice(0, 2)
+    .join('')
+    .toUpperCase(),
+)
 </script>
 
 <template>
   <div class="follow-item d-flex ga-3">
-    <v-avatar size="44" :image="person.avatar" />
+    <v-avatar size="44" color="secondary">{{ initials }}</v-avatar>
     <div class="follow-item__body">
       <div class="text-ink font-weight-bold text-small">{{ person.name }}</div>
-      <p class="follow-item__bio text-x-small">{{ person.bio }}</p>
+      <p class="follow-item__meta text-x-small">@{{ person.username }}</p>
     </div>
     <v-btn
       variant="outlined"
@@ -21,9 +33,9 @@ const following = ref(false)
       size="small"
       color="ink"
       class="follow-item__btn align-self-start"
-      @click="following = !following"
+      @click="$emit('toggle')"
     >
-      {{ following ? 'Following' : 'Follow' }}
+      {{ selected ? 'Following' : 'Follow' }}
     </v-btn>
   </div>
 </template>
@@ -35,14 +47,13 @@ const following = ref(false)
     min-width: 0;
   }
 
-  &__bio {
+  &__meta {
     margin: var(--space-1) 0 0;
     color: rgb(var(--v-theme-on-surface));
     line-height: 1.35;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__btn {

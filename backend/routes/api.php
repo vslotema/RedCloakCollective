@@ -7,6 +7,7 @@ use App\Http\Controllers\Public\ArticleController;
 use App\Http\Controllers\Public\EquipmentListController;
 use App\Http\Controllers\Public\ProfileController;
 use App\Http\Controllers\Public\SitemapController;
+use App\Http\Controllers\TopicFollowController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,13 +30,7 @@ Route::get('/users/{user:username}', [ProfileController::class, 'show']);
 Route::get('/sitemap-urls', [SitemapController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', function (Request $request) {
-        $user = $request->user();
-        $user->hasFollows = $user->following()->exists() || $user->followedTopics()->exists();
-        $user->topicsOnboarded = $user->topics_onboarded_at !== null;
-
-        return $user;
-    });
+    Route::get('/user', fn (Request $request) => $request->user()->withDashboardFlags());
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::patch('/user/location', [AuthController::class, 'updateLocation']);
@@ -43,5 +38,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users/{user:username}/follow', [FollowController::class, 'store']);
     Route::delete('/users/{user:username}/follow', [FollowController::class, 'destroy']);
 
+    Route::post('/topics/{topic:slug}/follow', [TopicFollowController::class, 'store']);
+    Route::delete('/topics/{topic:slug}/follow', [TopicFollowController::class, 'destroy']);
+
     Route::post('/onboarding', [OnboardingController::class, 'store']);
+    Route::get('/onboarding/recommendations', [OnboardingController::class, 'recommendations']);
+    Route::post('/onboarding/personalize', [OnboardingController::class, 'personalize']);
 });

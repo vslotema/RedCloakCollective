@@ -122,6 +122,10 @@ function skip() {
 <template>
   <div class="questionnaire">
     <div class="questionnaire__viewport">
+      <div v-if="saving" class="questionnaire__busy">
+        <v-progress-circular indeterminate color="primary" size="32" />
+        <span>Saving your answers…</span>
+      </div>
       <div class="questionnaire__slide">
         <template v-if="currentQuestion">
           <h2 class="text-large mb-1">{{ currentQuestion.title }}</h2>
@@ -227,6 +231,7 @@ function skip() {
 }
 
 .questionnaire__viewport {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   max-height: 526px;
@@ -234,6 +239,19 @@ function skip() {
   padding: .25rem 1rem 0 1rem;
   background: rgb(var(--v-theme-surface));
   border-radius: 0.5rem;
+}
+
+.questionnaire__busy {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  background: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-on-surface-variant));
 }
 
 .questionnaire__slide {

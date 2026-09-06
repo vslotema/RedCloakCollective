@@ -6,6 +6,7 @@ export interface User {
   state: string | null
   hasFollows: boolean
   topicsOnboarded: boolean
+  feedPersonalized: boolean
   onboarding_answers: Record<string, unknown> | null
 }
 
@@ -45,11 +46,31 @@ export const useAuthStore = defineStore('auth', () => {
     return updated
   }
 
+  // Persist the explicit follow choices from the "Personalize your feed" screen.
+  // Empty arrays are the "skip" path (feed marked personalised, nothing followed).
+  async function personalizeFeed(payload: { topicIds: number[]; usernames: string[] }) {
+    const { user: updated } = await api<{ user: User }>('/onboarding/personalize', {
+      method: 'POST',
+      body: { topic_ids: payload.topicIds, usernames: payload.usernames },
+    })
+    user.value = updated
+    return updated
+  }
+
   function logout() {
     token.value = null
     user.value = null
     if (import.meta.client) localStorage.removeItem('auth_token')
   }
 
-  return { user, token, fetchUser, setToken, updateLocation, saveOnboardingAnswers, logout }
+  return {
+    user,
+    token,
+    fetchUser,
+    setToken,
+    updateLocation,
+    saveOnboardingAnswers,
+    personalizeFeed,
+    logout,
+  }
 })

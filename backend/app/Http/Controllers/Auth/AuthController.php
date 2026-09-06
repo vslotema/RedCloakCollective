@@ -167,6 +167,6 @@ class AuthController extends Controller
             'state' => $data['state'] ?? null,
         ]);
 
-        return response()->json(['user' => $user]);
+        return response()->json(['user' => $user->withDashboardFlags()]);
     }
 }

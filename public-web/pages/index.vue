@@ -4,9 +4,13 @@ import { mockContentItems } from '~/mocks/contentItems'
 definePageMeta({ layout: 'default', middleware: 'auth' })
 
 const authStore = useAuthStore()
-const hasFollows = computed(() => authStore.user?.hasFollows ?? true)
+// Default the flags "done" so a still-loading user never flashes the flow.
 const topicsOnboarded = computed(() => authStore.user?.topicsOnboarded ?? true)
-const showOnboarding = computed(() => !hasFollows.value && !topicsOnboarded.value)
+const feedPersonalized = computed(() => authStore.user?.feedPersonalized ?? true)
+
+const showQuestionnaire = computed(() => !topicsOnboarded.value)
+const showPersonalize = computed(() => topicsOnboarded.value && !feedPersonalized.value)
+const showFeed = computed(() => !showQuestionnaire.value && !showPersonalize.value)
 </script>
 
 <template>
@@ -21,10 +25,13 @@ const showOnboarding = computed(() => !hasFollows.value && !topicsOnboarded.valu
           <v-divider></v-divider>
         </div>
 
-        <div v-if="showOnboarding" class="onboarding mt-8">
+        <div v-if="showQuestionnaire" class="onboarding mt-8">
           <h1 class="text-h5">Welcome. Let's set up your feed.</h1>
           <p>Every answer is optional and stays private. We use them only to suggest topics and people worth following.</p>
-          <OnboardingQuestionnaire  class="mt-4"/>
+          <OnboardingQuestionnaire class="mt-4" />
+        </div>
+        <div v-else-if="showPersonalize" class="onboarding mt-8">
+          <PersonalizeFeed />
         </div>
         <div v-else class="mt-8">
           <ContentFilterBar />
@@ -33,7 +40,7 @@ const showOnboarding = computed(() => !hasFollows.value && !topicsOnboarded.valu
         </div>
       </div>
     </PageContainer>
-    <template v-if="!showOnboarding">
+    <template v-if="showFeed">
       <RecommendationPanel class="sidebar" />
     </template>
   </div>
