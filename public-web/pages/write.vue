@@ -34,6 +34,8 @@ watch(
 
 <template>
   <section aria-label="Document editor" class="editor-main">
+    <HeaderImageField />
+
     <div class="editor-main__title-row">
       <span
         class="editor-main__title-caption"
@@ -76,21 +78,20 @@ watch(
   width: 100%;
   margin: 0 auto;
 
-  // Width reserved for the "Title" caption so the title/body text column
-  // starts at the same x whether or not the caption is currently visible.
-  --title-caption-col: 3.5rem;
-
   &__title-row {
     position: relative;
     flex-shrink: 0;
   }
 
   &__title-caption {
+    // Sits outside editor-main's own box, in the gutter to its left —
+    // right:100% anchors it just past the row's left edge rather than
+    // inside editor-main's padding.
     position: absolute;
-    left: 30px;
+    right: calc(100% + var(--space-3));
     top: 50%;
     transform: translateY(-50%);
-    width: var(--title-caption-col);
+    white-space: nowrap;
     font-size: var(--text-sm);
     color: rgb(var(--v-theme-on-surface));
 
@@ -102,7 +103,6 @@ watch(
   &__title,
   &__body {
     display: block;
-    margin-left: calc(var(--title-caption-col) + var(--space-3));
     font-family: inherit;
     background: transparent;
     border: none;
