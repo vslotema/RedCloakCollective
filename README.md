@@ -45,3 +45,16 @@ App available at `http://localhost:3000`. Server-side fetches (SSR) hit the API 
 `backend/config/cors.php` allows the origins set in `CORS_ALLOWED_ORIGINS` (defaults to
 `http://localhost:3000`, matching the Nuxt dev server), with `supports_credentials` enabled for
 the session cookie.
+
+## Accessible editor (`/write`)
+
+`/write` is being rebuilt in phases into an accessible, voice-first editor (large native controls,
+strong focus/status feedback, eventually switch/gaze/speech input). With the app running, log in
+and visit `http://localhost:3000/write`.
+
+Current phase (structure only): a three-area layout — a tool sidebar, the document editor, and a
+live status/feedback panel — built with native HTML controls and the same design tokens as the
+rest of the app (`public-web/assets/styles/style.scss`, `public-web/theme/index.ts`), extended with
+new accessibility tokens (`--control-min-size*`, `--focus-ring-*`). The editor body is a plain-text
+placeholder for now — rich text (TipTap), real formatting commands, and publishing return in a
+later phase.

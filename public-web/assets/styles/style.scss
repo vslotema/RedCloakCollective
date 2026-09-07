@@ -26,6 +26,22 @@ body,
   @each $name, $value in $text-sizes {
     --text-#{$name}: #{$value};
   }
+
+  // Accessibility tokens (accessible editor, phase 1) — additive to the
+  // scale above, not a parallel system. Intended to roll out platform-wide
+  // once the editor's accessible controls prove out.
+  --control-min-size: 44px;
+  --control-min-size-lg: 56px;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: rgb(var(--v-theme-primary));
+}
+
+// Scoped to the accessible editor for now, rather than a global :focus-visible
+// override, so it can't affect focus styling anywhere else in the app yet.
+.accessible-editor :focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 
 body,

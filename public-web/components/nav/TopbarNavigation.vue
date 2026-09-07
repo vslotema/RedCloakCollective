@@ -1,4 +1,17 @@
 <script setup lang="ts">
+withDefaults(
+  defineProps<{
+    showMenuToggle?: boolean
+    showSearch?: boolean
+    showWriteButton?: boolean
+  }>(),
+  {
+    showMenuToggle: true,
+    showSearch: true,
+    showWriteButton: true,
+  },
+)
+
 defineEmits<{
   toggleNavigation: []
 }>()
@@ -9,6 +22,7 @@ defineEmits<{
     <div class="d-flex align-center">
       <v-btn
         class="menu-btn"
+        :class="{ 'menu-btn--hidden': !showMenuToggle }"
         icon="menu"
         size="small"
         color="ink"
@@ -20,13 +34,21 @@ defineEmits<{
           <span class="text-primary">R</span>EDCLOAK COLLECTIVE
         </h1>
       </div>
-      <SearchBar class="ml-6" />
+      <SearchBar v-if="showSearch" class="ml-6" />
     </div>
 
     <v-spacer />
 
     <div class="d-flex align-center ga-2">
-      <v-btn icon variant="flat" color="white" size="40" class="action-btn border">
+      <v-btn
+        v-if="showWriteButton"
+        icon
+        variant="flat"
+        color="white"
+        size="40"
+        class="action-btn border"
+        to="/write"
+      >
         <v-icon icon="edit" :size="20" />
         <v-tooltip
           activator="parent"
@@ -52,6 +74,13 @@ defineEmits<{
 <style scoped lang="scss">
 .menu-btn {
   margin-right: 0.375rem;
+
+  // Keeps the space reserved (rather than v-if removing it) so the logo
+  // stays in the same spot whether or not the toggle is shown.
+  &--hidden {
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 // Icon uses the same color as a non-active navigation item's text
