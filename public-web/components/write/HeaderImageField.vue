@@ -152,7 +152,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
           'header-image__frame--dragging': dragging,
         }"
         role="group"
-        :tabindex="canPan ? 0 : -1"
+        tabindex="0"
         :aria-label="
           canPan ? 'Header image — drag or use the arrow keys to reposition it' : 'Header image'
         "
@@ -252,7 +252,24 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
   &__actions {
     display: flex;
     gap: var(--space-2);
+    margin-top: 0;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      opacity 0.15s ease,
+      max-height 0.15s ease,
+      margin-top 0.15s ease;
+  }
+
+  // Reveal on focus (keyboard/switch/touch) or hover (mouse) — kept as opacity
+  // + collapsed height rather than display:none/visibility:hidden so the
+  // buttons stay reachable to screen readers regardless of visual state.
+  &__preview:focus-within &__actions,
+  &__preview:hover &__actions {
     margin-top: var(--space-2);
+    max-height: 4rem;
+    opacity: 1;
   }
 
   &__btn {
