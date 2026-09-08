@@ -78,9 +78,6 @@ function removeLink() {
   linkInput.value = "";
 }
 
-// True when the selection touches a blockquote anywhere — caret inside one, or
-// a range that spans one (possibly alongside non-quoted content). isActive()
-// only reports the caret's own block, so it misses the spanning case.
 function selectionHasBlockquote(): boolean {
   const type = editor.schema.nodes.blockquote;
   if (!type) return false;
@@ -92,10 +89,6 @@ function selectionHasBlockquote(): boolean {
   return found;
 }
 
-// Toggling a blockquote off: lift every blockquote the selection touches so the
-// text stays put and the wrapper is removed. toggleBlockquote()/lift() bail out
-// when the selection spans a blockquote plus adjacent content (isActive is
-// false there), and only partially lift a multi-paragraph quote.
 function toggleQuote() {
   if (!selectionHasBlockquote()) {
     editor.chain().focus().wrapIn("blockquote").run();
@@ -113,8 +106,7 @@ function toggleQuote() {
       });
       if (!ranges.length) return false;
       if (!dispatch) return true;
-      // Rightmost first — lifting a blockquote only shifts positions after it,
-      // so earlier ranges stay valid.
+
       ranges.sort((a, b) => b.from - a.from);
       for (const range of ranges) {
         const blockRange = tr.doc

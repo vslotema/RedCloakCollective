@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import type { Editor } from '@tiptap/vue-3'
+
 // Medium-style "+" affordance that sits in the body gutter and fans out the
-// insert actions on hover or keyboard focus. Placeholder this phase — each
-// action just posts a status message.
+// insert actions on hover or keyboard focus. Photo is wired to the editor;
+// the rest still just post a status message this phase.
+const { editor } = defineProps<{ editor: Editor }>()
+
 const editorStore = useEditorStore()
 
 const insertActions = [
@@ -14,6 +18,7 @@ const insertActions = [
 const open = ref(false)
 const rootRef = useTemplateRef<HTMLElement>('rootRef')
 const toggleRef = useTemplateRef<HTMLButtonElement>('toggleRef')
+const fileInputRef = useTemplateRef<HTMLInputElement>('fileInputRef')
 
 function focusedWithin() {
   return !!rootRef.value?.contains(document.activeElement)
@@ -34,7 +39,32 @@ function collapse() {
 }
 
 function choose(label: string) {
+  if (label === 'Photo') {
+    fileInputRef.value?.click()
+    return
+  }
   editorStore.statusMessage = `${label} — not available yet`
+  open.value = false
+}
+
+function onFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  // Let the same file be picked again after it's inserted / removed.
+  input.value = ''
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    editorStore.statusMessage = "That file isn't an image"
+    return
+  }
+
+  // Local preview only this phase — the object URL isn't uploaded, persisted, or
+  // revoked (matches HeaderImageField / the store's headerImageUrl). A real
+  // upload pipeline replaces this later.
+  const src = URL.createObjectURL(file)
+  editor.chain().focus().setImage({ src }).run()
+  editorStore.statusMessage = 'Image added'
   open.value = false
 }
 </script>
@@ -50,6 +80,16 @@ function choose(label: string) {
     @focusout="onFocusOut"
     @keydown.esc="collapse"
   >
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept="image/*"
+      class="insert-menu__file"
+      aria-hidden="true"
+      tabindex="-1"
+      @change="onFileChange"
+    />
+
     <button
       ref="toggleRef"
       type="button"
@@ -86,6 +126,17 @@ function choose(label: string) {
   align-items: center;
   width: var(--control-min-size);
   height: var(--control-min-size);
+
+  &__file {
+    // Kept in the DOM but out of the layout / tab order — the Photo button
+    // drives it.
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 
   &__btn {
     display: flex;

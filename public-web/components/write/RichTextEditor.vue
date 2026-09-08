@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useEditor, EditorContent } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
 import { FloatingMenu, BubbleMenu } from "@tiptap/vue-3/menus";
 import type { JSONContent } from "@tiptap/core";
 import InsertMenu from "./InsertMenu.vue";
@@ -25,6 +26,7 @@ const editor = useEditor({
       // handles editing/removing instead.
       link: { openOnClick: false },
     }),
+    Image,
   ],
   onUpdate: ({ editor }) => {
     content.value = editor.getJSON();
@@ -80,7 +82,7 @@ onBeforeUnmount(() => {
       }"
       style="z-index: 20"
     >
-      <InsertMenu class="insert-menu" />
+      <InsertMenu class="insert-menu" :editor="editor" />
     </FloatingMenu>
     <BubbleMenu
       :editor="editor"
@@ -101,9 +103,6 @@ onBeforeUnmount(() => {
   border-radius: 4px;
 
   &__toolbar {
-    // Pin the formatting bar just below the fixed app bar so it stays reachable
-    // through a long article, not just on the first screen. --v-layout-top is
-    // set by Vuetify to the app-bar height (64px fallback matches the default).
     position: sticky;
     top: var(--v-layout-top, 64px);
     z-index: 3;
@@ -122,8 +121,13 @@ onBeforeUnmount(() => {
     :deep(.ProseMirror) {
       outline: none;
 
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+
       blockquote {
-        border-left: 2px solid rgb(var(--v-theme-primary));
+        border-left: 2px solid rgb(var(--v-theme-ink));
         padding-left: var(--space-4, 1rem);
         margin-inline: 0;
         color: rgb(var(--v-theme-on-surface));
