@@ -6,6 +6,7 @@ const editorStore = useEditorStore()
 const inputRef = useTemplateRef<HTMLInputElement>('inputRef')
 const frameRef = useTemplateRef<HTMLElement>('frameRef')
 const imgRef = useTemplateRef<HTMLImageElement>('imgRef')
+const dropzoneRef = useTemplateRef<HTMLButtonElement>('dropzoneRef')
 
 const dragging = ref(false)
 
@@ -43,6 +44,8 @@ function onDrop(event: DragEvent) {
 function remove() {
   editorStore.clearHeaderImage()
   editorStore.statusMessage = 'Header image removed'
+  // Move focus somewhere sensible now that the preview (and its toolbar) is gone.
+  nextTick(() => dropzoneRef.value?.focus())
 }
 
 // --- repositioning ---------------------------------------------------------
@@ -96,6 +99,11 @@ function onPointerUp(event: PointerEvent) {
 const NUDGE = 4
 
 function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Backspace' || event.key === 'Delete') {
+    event.preventDefault()
+    remove()
+    return
+  }
   const moves: Record<string, [number, number]> = {
     ArrowLeft: [NUDGE, 0],
     ArrowRight: [-NUDGE, 0],
@@ -129,6 +137,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
 
     <button
       v-if="!editorStore.headerImageUrl"
+      ref="dropzoneRef"
       type="button"
       class="header-image__dropzone"
       :class="{ 'header-image__dropzone--dragging': dragging }"
@@ -172,10 +181,30 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
           @load="measureOverflow"
         />
       </div>
-      <figcaption class="header-image__actions">
-        <button type="button" class="header-image__btn" @click="openPicker">Replace</button>
-        <button type="button" class="header-image__btn" @click="remove">Remove</button>
-      </figcaption>
+      <div class="header-image__toolbar" role="toolbar" aria-label="Header image actions">
+        <button
+          type="button"
+          class="header-image__tool"
+          aria-label="Replace image"
+          @click="openPicker"
+        >
+          <v-icon icon="refresh-cw" :size="18" />
+          <v-tooltip activator="parent" location="right" content-class="navbar-tooltip">
+            Replace
+          </v-tooltip>
+        </button>
+        <button
+          type="button"
+          class="header-image__tool"
+          aria-label="Remove image"
+          @click="remove"
+        >
+          <v-icon icon="trash" :size="18" />
+          <v-tooltip activator="parent" location="right" content-class="navbar-tooltip">
+            Remove
+          </v-tooltip>
+        </button>
+      </div>
     </figure>
   </div>
 </template>
@@ -201,14 +230,14 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
     justify-content: center;
     gap: var(--space-2);
     width: 100%;
-    min-height: var(--control-min-size-lg);
+    min-height: 20rem;
     padding: var(--space-4);
     font-size: var(--text-md);
     font-family: inherit;
     color: rgb(var(--v-theme-on-surface));
     background: rgb(var(--v-theme-surface));
     border: 1px dashed rgb(var(--v-theme-border-color));
-    border-radius: var(--radius-sm);
+    border-radius: .25rem;
     cursor: pointer;
 
     &:hover,
@@ -219,6 +248,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
   }
 
   &__preview {
+    position: relative;
     margin: 0;
   }
 
@@ -247,42 +277,49 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
     -webkit-user-drag: none;
   }
 
-  &__actions {
+  // Vertical action toolbar over the right edge of the image — same look as the
+  // BubbleMenu's TextFormattingTools (black panel, white icons), stacked.
+  &__toolbar {
+    position: absolute;
+    top: 50%;
+    right: var(--space-3, 0.75rem);
+    transform: translateY(-50%);
     display: flex;
-    gap: var(--space-2);
-    margin-top: 0;
-    max-height: 0;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    background: #000;
     opacity: 0;
-    overflow: hidden;
+    visibility: hidden;
     transition:
       opacity 0.15s ease,
-      max-height 0.15s ease,
-      margin-top 0.15s ease;
+      visibility 0s linear 0.15s;
   }
 
-  // Reveal on focus (keyboard/switch/touch) or hover (mouse) — kept as opacity
-  // + collapsed height rather than display:none/visibility:hidden so the
-  // buttons stay reachable to screen readers regardless of visual state.
-  &__preview:focus-within &__actions,
-  &__preview:hover &__actions {
-    margin-top: var(--space-2);
-    max-height: 4rem;
+  &__preview:hover &__toolbar,
+  &__preview:focus-within &__toolbar {
     opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
   }
 
-  &__btn {
-    min-height: var(--control-min-size);
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--text-md);
-    font-family: inherit;
-    color: rgb(var(--v-theme-on-surface));
-    background: rgb(var(--v-theme-surface));
-    border: 1px solid rgb(var(--v-theme-border-color));
-    border-radius: var(--radius-sm);
+  &__tool {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    color: #fff;
+    background: transparent;
+    border: none;
+    border-radius: 0.25rem;
     cursor: pointer;
+    transition: background-color 0.12s ease;
 
-    &:hover {
-      color: rgb(var(--v-theme-ink));
+    &:hover,
+    &:focus-visible {
+      background: rgba(255, 255, 255, 0.16);
     }
   }
 }
