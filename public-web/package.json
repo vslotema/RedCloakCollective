@@ -12,6 +12,7 @@
   "dependencies": {
     "@nuxtjs/sitemap": "^8.5.0",
     "@pinia/nuxt": "^1.0.2",
+    "@tiptap/extension-image": "^3.29.2",
     "@tiptap/pm": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
     "@tiptap/vue-3": "^3.29.2",

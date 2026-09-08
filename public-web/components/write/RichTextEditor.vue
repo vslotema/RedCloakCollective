@@ -121,6 +121,13 @@ onBeforeUnmount(() => {
 
     :deep(.ProseMirror) {
       outline: none;
+
+      blockquote {
+        border-left: 2px solid rgb(var(--v-theme-primary));
+        padding-left: var(--space-4, 1rem);
+        margin-inline: 0;
+        color: rgb(var(--v-theme-on-surface));
+      }
     }
   }
 }
