@@ -8,6 +8,7 @@ import type { JSONContent } from "@tiptap/core";
 import InsertMenu from "./InsertMenu.vue";
 import TextFormattingTools from "./TextFormattingTools.vue";
 import { LinkCard } from "./link-card";
+import { CodeBlock } from "./code-block";
 
 const content = defineModel<JSONContent>({
   default: () => ({
@@ -20,11 +21,9 @@ const content = defineModel<JSONContent>({
   }),
 });
 
-// While the link URL field has focus the editor is blurred, which would
-// normally collapse the bubble menu — keep it up until the field closes.
+
 const linkEditing = ref(false);
-// Set while the InsertMenu's "Link card" field is open. Drives floatingShouldShow
-// (hold the menu open) and the empty-line placeholder below.
+
 const linkCardEditing = ref(false);
 
 const editor = useEditor({
@@ -32,9 +31,11 @@ const editor = useEditor({
   extensions: [
     StarterKit.configure({
       link: { openOnClick: false },
+      codeBlock: false,
     }),
     Image,
     LinkCard,
+    CodeBlock,
     Placeholder.configure({
       placeholder: "Paste a link to embed content from another site",
     }),
@@ -162,6 +163,135 @@ onBeforeUnmount(() => {
         height: auto;
       }
 
+      pre.code-block {
+        margin-block: var(--space-4, 1rem);
+        padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+        background: rgb(var(--v-theme-surface));
+        border: 1px solid rgb(var(--v-theme-border-color));
+        border-radius: var(--radius-sm, 4px);
+        overflow-x: auto;
+
+        &.ProseMirror-selectednode {
+          outline: 2px solid rgb(var(--v-theme-primary));
+          outline-offset: 2px;
+        }
+
+        .code-block__bar {
+          display: flex;
+          align-items: center;
+          padding-bottom: var(--space-2, 0.5rem);
+        }
+
+        .code-block__lang {
+          display: inline-flex;
+          align-items: center;
+          gap: var(--space-1, 0.25rem);
+          padding: 2px var(--space-2, 0.5rem);
+          font-size: var(--text-sm, 0.875rem);
+          color: rgb(var(--v-theme-on-surface));
+          background: none;
+          border: none;
+          border-radius: var(--radius-sm, 4px);
+          cursor: pointer;
+          transition: color 0.12s ease;
+
+          &:hover {
+            color: rgb(var(--v-theme-ink));
+          }
+        }
+
+        code {
+          display: block;
+          font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+          font-size: var(--text-sm, 0.875rem);
+          line-height: 1.5;
+          color: rgb(var(--v-theme-on-surface));
+          background: none;
+          white-space: pre;
+        }
+
+        // Compact highlight.js token palette — hand-picked to match the
+        // theme rather than importing a highlight.js stylesheet.
+        .hljs-keyword,
+        .hljs-literal,
+        .hljs-name,
+        .hljs-tag {
+          color: #b8002f;
+        }
+
+        .hljs-string {
+          color: #268332;
+        }
+
+        .hljs-number {
+          color: #a3651f;
+        }
+
+        .hljs-comment {
+          color: #8a8a8a;
+          font-style: italic;
+        }
+
+        .hljs-title,
+        .hljs-title.function_,
+        .hljs-attr,
+        .hljs-attribute {
+          color: #3642a0;
+        }
+
+        .hljs-built_in,
+        .hljs-type {
+          color: #5b7596;
+        }
+
+        .hljs-meta {
+          color: #8a8a8a;
+        }
+      }
+    }
+
+    // Dark-theme token palette for code blocks — a sibling rule (not nested
+    // inside :deep(.ProseMirror) above) so :global() doesn't have to combine
+    // with SCSS `&`. Vuetify applies `.v-theme--dark` on an ancestor when the
+    // dark theme is active.
+    :deep(.v-theme--dark .code-block) {
+      .hljs-keyword,
+      .hljs-literal,
+      .hljs-name,
+      .hljs-tag {
+        color: #ef5c7d;
+      }
+
+      .hljs-string {
+        color: #78cf83;
+      }
+
+      .hljs-number {
+        color: #d99a5b;
+      }
+
+      .hljs-comment {
+        color: #a89c8a;
+      }
+
+      .hljs-title,
+      .hljs-title.function_,
+      .hljs-attr,
+      .hljs-attribute {
+        color: #9aa3e8;
+      }
+
+      .hljs-built_in,
+      .hljs-type {
+        color: #8fb3d1;
+      }
+
+      .hljs-meta {
+        color: #a89c8a;
+      }
+    }
+
+    :deep(.ProseMirror) {
       a.link-card {
         display: flex;
         align-items: stretch;

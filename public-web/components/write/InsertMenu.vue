@@ -2,13 +2,8 @@
 import type { Editor } from '@tiptap/vue-3'
 import { fetchPreview, hydrateLinkCard } from './link-card'
 
-// Medium-style "+" affordance that sits in the body gutter and fans out the
-// insert actions on hover or keyboard focus. Photo and Link card are wired to
-// the editor; Video / Code still just post a status message this phase.
 const { editor } = defineProps<{ editor: Editor }>()
 
-// Kept in sync with the parent so FloatingMenu's shouldShow holds the menu open
-// while the URL field has focus (the editor blurs when it does).
 const linkCardEditing = defineModel<boolean>('linkCardEditing', { default: false })
 
 const editorStore = useEditorStore()
@@ -59,6 +54,12 @@ function choose(label: string) {
     nextTick(() => linkFieldRef.value?.focus())
     return
   }
+  if (label === 'Code') {
+    editor.chain().focus().setCodeBlock().run()
+    editorStore.statusMessage = 'Code block added'
+    open.value = false
+    return
+  }
   editorStore.statusMessage = `${label} — not available yet`
   open.value = false
 }
@@ -77,8 +78,6 @@ async function submitLinkCard() {
     return
   }
 
-  // Insert the card straight away (host only + skeleton), then fill it in once
-  // the preview comes back.
   const uid = globalThis.crypto?.randomUUID?.() ?? String(Date.now())
   editor.chain().focus().setLinkCard({ href, uid }).run()
   open.value = false
@@ -103,9 +102,6 @@ function onFileChange(event: Event) {
     return
   }
 
-  // Local preview only this phase — the object URL isn't uploaded, persisted, or
-  // revoked (matches HeaderImageField / the store's headerImageUrl). A real
-  // upload pipeline replaces this later.
   const src = URL.createObjectURL(file)
   editor.chain().focus().setImage({ src }).run()
   editorStore.statusMessage = 'Image added'
