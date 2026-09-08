@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import type { Editor } from '@tiptap/vue-3'
-import { fetchPreview, hydrateLinkCard } from './link-card'
 
 const { editor } = defineProps<{ editor: Editor }>()
-
-const linkCardEditing = defineModel<boolean>('linkCardEditing', { default: false })
 
 const editorStore = useEditorStore()
 
@@ -16,29 +13,23 @@ const insertActions = [
 ]
 
 const open = ref(false)
-const linkInput = ref('')
 const rootRef = useTemplateRef<HTMLElement>('rootRef')
 const toggleRef = useTemplateRef<HTMLButtonElement>('toggleRef')
 const fileInputRef = useTemplateRef<HTMLInputElement>('fileInputRef')
-const linkFieldRef = useTemplateRef<HTMLInputElement>('linkFieldRef')
 
 function focusedWithin() {
   return !!rootRef.value?.contains(document.activeElement)
 }
 
 function onLeave() {
-  // A keyboard user mid-navigation still has focus inside — keep it open.
   if (!focusedWithin()) open.value = false
 }
 
 function onFocusOut(event: FocusEvent) {
-  if (rootRef.value?.contains(event.relatedTarget as Node | null)) return
-  open.value = false
-  cancelLinkCard()
+  if (!rootRef.value?.contains(event.relatedTarget as Node | null)) open.value = false
 }
 
 function collapse() {
-  cancelLinkCard()
   open.value = false
   toggleRef.value?.focus()
 }
@@ -49,9 +40,9 @@ function choose(label: string) {
     return
   }
   if (label === 'Link card') {
-    linkCardEditing.value = true
-    open.value = true
-    nextTick(() => linkFieldRef.value?.focus())
+    editor.chain().focus().insertLinkCard().run()
+    editorStore.statusMessage = 'Paste a link'
+    open.value = false
     return
   }
   if (label === 'Code') {
@@ -60,34 +51,14 @@ function choose(label: string) {
     open.value = false
     return
   }
-  editorStore.statusMessage = `${label} — not available yet`
-  open.value = false
-}
-
-function cancelLinkCard() {
-  linkCardEditing.value = false
-  linkInput.value = ''
-}
-
-async function submitLinkCard() {
-  const href = normalizeHref(linkInput.value)
-  linkCardEditing.value = false
-  linkInput.value = ''
-  if (!href) {
+  if (label === 'Video') {
+    editor.chain().focus().insertVideoEmbed().run()
+    editorStore.statusMessage = 'Paste a video link'
     open.value = false
     return
   }
-
-  const uid = globalThis.crypto?.randomUUID?.() ?? String(Date.now())
-  editor.chain().focus().setLinkCard({ href, uid }).run()
+  editorStore.statusMessage = `${label} — not available yet`
   open.value = false
-  editorStore.statusMessage = 'Fetching link preview…'
-
-  const meta = await fetchPreview(href)
-  hydrateLinkCard(editor, uid, meta)
-  editorStore.statusMessage = meta.title
-    ? 'Link card added'
-    : 'Link card added (no preview)'
 }
 
 function onFileChange(event: Event) {
@@ -141,31 +112,7 @@ function onFileChange(event: Event) {
       <v-icon :icon="open ? 'x' : 'plus'" />
     </button>
 
-    <form
-      v-if="linkCardEditing"
-      class="insert-menu__link"
-      @submit.prevent="submitLinkCard"
-    >
-      <input
-        ref="linkFieldRef"
-        v-model="linkInput"
-        type="url"
-        class="insert-menu__link-field"
-        placeholder="Paste or type a link…"
-        aria-label="Link card URL"
-        @keydown.esc.prevent="collapse"
-      />
-      <button
-        type="submit"
-        class="insert-menu__btn"
-        aria-label="Add link card"
-        @mousedown.prevent
-      >
-        <v-icon icon="check" />
-      </button>
-    </form>
-
-    <div v-else class="insert-menu__actions" :aria-hidden="!open">
+    <div class="insert-menu__actions" :aria-hidden="!open">
       <button
         v-for="action in insertActions"
         :key="action.label"
@@ -226,38 +173,6 @@ function onFileChange(event: Event) {
 
   &__toggle {
     color: rgb(var(--v-theme-ink));
-  }
-
-  &__link {
-    position: absolute;
-    left: calc(100% + var(--space-2));
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    z-index: 1;
-  }
-
-  &__link-field {
-    width: 18rem;
-    height: var(--control-min-size);
-    padding: 0 var(--space-3);
-    font: inherit;
-    color: rgb(var(--v-theme-on-surface));
-    background: rgb(var(--v-theme-background));
-    border: 1px solid rgb(var(--v-theme-border-color));
-    border-radius: var(--radius-sm, 4px);
-    outline: none;
-
-    &:focus {
-      border-color: rgb(var(--v-theme-ink));
-    }
-
-    &::placeholder {
-      color: rgb(var(--v-theme-on-surface));
-      opacity: 0.6;
-    }
   }
 
   &__actions {

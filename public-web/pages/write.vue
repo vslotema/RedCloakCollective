@@ -6,11 +6,6 @@ const editorStore = useEditorStore()
 
 const bodyRef = useTemplateRef('bodyRef')
 
-// Grows the textarea to fit its content instead of scrolling internally, so
-// the page itself scrolls once the body outgrows the visible area. Clearing
-// the inline height first lets the CSS flex:1 sizing (fill the remaining
-// view) apply again — we only re-set an explicit height when content needs
-// more room than that, so it never shrinks below the fill-the-view default.
 function resizeBody() {
   const el = bodyRef.value
   if (!el) return
@@ -66,10 +61,11 @@ watch(
   flex: 1 1 auto;
   min-height: 0;
   gap: var(--space-4);
-  padding: var(--space-6);
+  padding: var(--space-6) 0;
   max-width: 45rem;
   width: 100%;
   margin: 0 auto;
+  background: rgb(var(--v-theme-background));
 
   &__title-row {
     position: relative;
@@ -77,9 +73,6 @@ watch(
   }
 
   &__title-caption {
-    // Sits outside editor-main's own box, in the gutter to its left —
-    // right:100% anchors it just past the row's left edge rather than
-    // inside editor-main's padding.
     position: absolute;
     right: calc(100% + var(--space-3));
     top: 50%;
@@ -119,9 +112,6 @@ watch(
     position: relative;
     display: flex;
     flex-direction: column;
-    // flex-basis: auto (not the flex:1 shorthand's 0) so an explicit textarea
-    // height set by resizeBody() is respected instead of being capped to the
-    // container by flex-grow distribution.
     flex: 1 1 auto;
     min-height: 0;
   }
@@ -130,9 +120,6 @@ watch(
     align-self: flex-start;
     margin-bottom: var(--space-3);
 
-    // Room opens up either side of the 45rem column on wide viewports — lift
-    // the control into the left gutter, Medium-style, where it's out of the
-    // writing flow.
     @include respond-to('lg') {
       position: absolute;
       top: 0;
@@ -142,8 +129,6 @@ watch(
   }
 
   &__body {
-    // The border/offset above keeps this aligned with the title's text
-    // column, but the line itself should only be visible on the title.
     border-left-color: transparent;
     flex: 1 1 auto;
     min-height: 0;

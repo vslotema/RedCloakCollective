@@ -3,12 +3,12 @@ import { useEditor, EditorContent } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { FloatingMenu, BubbleMenu } from "@tiptap/vue-3/menus";
-import { Placeholder } from "@tiptap/extensions/placeholder";
 import type { JSONContent } from "@tiptap/core";
 import InsertMenu from "./InsertMenu.vue";
 import TextFormattingTools from "./TextFormattingTools.vue";
 import { LinkCard } from "./link-card";
 import { CodeBlock } from "./code-block";
+import { VideoEmbed } from "./video-embed";
 
 const content = defineModel<JSONContent>({
   default: () => ({
@@ -24,8 +24,6 @@ const content = defineModel<JSONContent>({
 
 const linkEditing = ref(false);
 
-const linkCardEditing = ref(false);
-
 const editor = useEditor({
   content: content.value,
   extensions: [
@@ -34,34 +32,15 @@ const editor = useEditor({
       codeBlock: false,
     }),
     Image,
+    // Before LinkCard so a pasted YouTube/Vimeo URL becomes a video, not a card.
+    VideoEmbed,
     LinkCard,
     CodeBlock,
-    Placeholder.configure({
-      placeholder: "Paste a link to embed content from another site",
-    }),
   ],
   onUpdate: ({ editor }) => {
     content.value = editor.getJSON();
   },
 });
-
-function floatingShouldShow({ editor, view, state }: any) {
-  // Hold the menu open while the link-card field has focus (editor is blurred).
-  if (linkCardEditing.value) return true;
-  const { $anchor, empty } = state.selection;
-  const isEmptyTextBlock =
-    $anchor.parent.isTextblock &&
-    !$anchor.parent.type.spec.code &&
-    !$anchor.parent.textContent &&
-    $anchor.parent.childCount === 0;
-  return (
-    view.hasFocus() &&
-    empty &&
-    $anchor.depth === 1 &&
-    isEmptyTextBlock &&
-    editor.isEditable
-  );
-}
 
 function bubbleShouldShow({ editor, state, view, from, to }: any) {
   if (linkEditing.value) return true;
@@ -96,17 +75,12 @@ onBeforeUnmount(() => {
   
     <FloatingMenu
       :editor="editor"
-      :should-show="floatingShouldShow"
       :tippy-options="{
         duration: 100,
       }"
       style="z-index: 20"
     >
-      <InsertMenu
-        class="insert-menu"
-        :editor="editor"
-        v-model:link-card-editing="linkCardEditing"
-      />
+      <InsertMenu class="insert-menu" :editor="editor" />
     </FloatingMenu>
     <BubbleMenu
       :editor="editor"
@@ -118,11 +92,7 @@ onBeforeUnmount(() => {
     >
       <TextFormattingTools v-model:link-editing="linkEditing" :editor="editor" color="white" background="black" />
     </BubbleMenu>
-    <editor-content
-      :editor="editor"
-      class="rich-text-editor__content"
-      :class="{ 'is-link-card-editing': linkCardEditing }"
-    />
+    <editor-content :editor="editor" class="rich-text-editor__content" />
   </div>
 </template>
 
@@ -144,15 +114,6 @@ onBeforeUnmount(() => {
 
     .insert-menu {
       transform: translateX(-75px);
-    }
-
-    &.is-link-card-editing :deep(.ProseMirror p.is-empty)::before {
-      content: attr(data-placeholder);
-      float: left;
-      height: 0;
-      pointer-events: none;
-      color: rgb(var(--v-theme-on-surface));
-      opacity: 0.55;
     }
 
     :deep(.ProseMirror) {
@@ -292,77 +253,6 @@ onBeforeUnmount(() => {
     }
 
     :deep(.ProseMirror) {
-      a.link-card {
-        display: flex;
-        align-items: stretch;
-        gap: var(--space-4, 1rem);
-        margin-block: var(--space-4, 1rem);
-        border: 1px solid rgb(var(--v-theme-border-color));
-        border-radius: var(--radius-sm, 4px);
-        overflow: hidden;
-        text-decoration: none;
-        color: inherit;
-        transition: border-color 0.12s ease;
-
-        &:hover {
-          border-color: rgb(var(--v-theme-ink));
-        }
-
-        &.ProseMirror-selectednode {
-          outline: 2px solid rgb(var(--v-theme-primary));
-          outline-offset: 2px;
-        }
-
-        .link-card__body {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-2, 0.5rem);
-          padding: var(--space-4, 1rem);
-          flex: 1 1 auto;
-          min-width: 0;
-        }
-
-        .link-card__title {
-          font-weight: 600;
-          color: rgb(var(--v-theme-ink));
-        }
-
-        .link-card__desc {
-          font-size: var(--text-sm, 0.875rem);
-          color: rgb(var(--v-theme-on-surface));
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .link-card__host {
-          margin-top: auto;
-          font-size: var(--text-sm, 0.875rem);
-          color: rgb(var(--v-theme-on-surface));
-        }
-
-        .link-card__media {
-          flex: 0 0 8rem;
-          background: rgb(var(--v-theme-surface));
-
-          img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
-        }
-
-        &.link-card--loading {
-          .link-card__title,
-          .link-card__host {
-            color: transparent;
-            background: rgb(var(--v-theme-surface-variant, var(--v-theme-surface)));
-            border-radius: 2px;
-          }
-        }
-      }
-
       blockquote {
         border-left: 2px solid rgb(var(--v-theme-ink));
         padding-left: var(--space-4, 1rem);

@@ -1,18 +1,13 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 import { Plugin } from '@tiptap/pm/state'
-import type { Editor } from '@tiptap/core'
+import { VueNodeViewRenderer } from '@tiptap/vue-3'
+import LinkCardView from './LinkCardView.vue'
 
 export interface LinkCardMeta {
   title?: string | null
   description?: string | null
   image?: string | null
   siteName?: string | null
-}
-
-export interface LinkCardAttrs extends LinkCardMeta {
-  href: string
-  uid?: string | null
-  loading?: boolean
 }
 
 /** Response shape of `GET /link-preview` (see server/routes/link-preview.get.ts). */
@@ -23,8 +18,8 @@ interface LinkPreview extends Required<LinkCardMeta> {
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     linkCard: {
-      /** Insert a link-card block for the given href (metadata filled in later). */
-      setLinkCard: (attrs: LinkCardAttrs) => ReturnType
+      /** Insert an empty link-card block — the NodeView prompts for the URL. */
+      insertLinkCard: () => ReturnType
     }
   }
 }
@@ -41,33 +36,7 @@ export function fetchPreview(href: string): Promise<LinkCardMeta> {
     .catch(() => ({}))
 }
 
-/**
- * Fill a previously-inserted card (matched by uid) with fetched metadata. A
- * no-op if the node has since been deleted or the editor is gone.
- */
-export function hydrateLinkCard(
-  editor: Editor,
-  uid: string,
-  meta: LinkCardMeta,
-): void {
-  if (!editor || editor.isDestroyed) return
-  editor.commands.command(({ tr, state }) => {
-    let changed = false
-    state.doc.descendants((node, pos) => {
-      if (node.type.name === 'linkCard' && node.attrs.uid === uid) {
-        tr.setNodeMarkup(pos, undefined, {
-          ...node.attrs,
-          ...meta,
-          loading: false,
-        })
-        changed = true
-      }
-    })
-    return changed
-  })
-}
-
-function hostOf(href: string): string {
+export function hostOf(href: string): string {
   try {
     return new URL(href).hostname.replace(/^www\./, '')
   } catch {
@@ -101,7 +70,6 @@ export const LinkCard = Node.create({
       description: dataAttr('description'),
       image: dataAttr('image'),
       siteName: dataAttr('siteName'),
-      uid: dataAttr('uid'),
       loading: { default: false, rendered: false },
     }
   },
@@ -111,7 +79,7 @@ export const LinkCard = Node.create({
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    const { href, title, description, image, siteName, loading } = node.attrs
+    const { href, title, description, image, siteName } = node.attrs
     const host = siteName || hostOf(href)
 
     const body: (string | Record<string, unknown> | unknown[])[] = [
@@ -137,7 +105,7 @@ export const LinkCard = Node.create({
       'a',
       mergeAttributes(HTMLAttributes, {
         'data-link-card': '',
-        class: `link-card${loading ? ' link-card--loading' : ''}`,
+        class: 'link-card',
         target: '_blank',
         rel: 'noopener noreferrer nofollow',
       }),
@@ -145,31 +113,22 @@ export const LinkCard = Node.create({
     ]
   },
 
+  addNodeView() {
+    return VueNodeViewRenderer(LinkCardView)
+  },
+
   addCommands() {
     return {
-      setLinkCard:
-        (attrs) =>
+      insertLinkCard:
+        () =>
         ({ commands }) =>
-          commands.insertContent({
-            type: this.name,
-            attrs: {
-              title: null,
-              description: null,
-              image: null,
-              siteName: null,
-              loading: true,
-              ...attrs,
-              uid:
-                attrs.uid ||
-                globalThis.crypto?.randomUUID?.() ||
-                String(Date.now()),
-            },
-          }),
+          commands.insertContent({ type: this.name }),
     }
   },
 
   addProseMirrorPlugins() {
     const editor = this.editor
+    const type = this.name
 
     return [
       new Plugin({
@@ -178,10 +137,9 @@ export const LinkCard = Node.create({
             const text = event.clipboardData?.getData('text/plain')?.trim()
             if (!text || !/^https?:\/\/\S+$/i.test(text)) return false
 
-            const { selection } = view.state
-            const { $from, empty } = selection
             // Only take over a paste that lands on its own empty line — a URL
             // dropped mid-sentence should still paste as text / an inline link.
+            const { $from, empty } = view.state.selection
             if (
               !empty ||
               $from.parent.type.spec.code ||
@@ -191,12 +149,11 @@ export const LinkCard = Node.create({
               return false
             }
 
-            const uid =
-              globalThis.crypto?.randomUUID?.() ?? String(Date.now())
-            editor.chain().focus().setLinkCard({ href: text, uid }).run()
-            fetchPreview(text).then((meta) =>
-              hydrateLinkCard(editor, uid, meta),
-            )
+            editor
+              .chain()
+              .focus()
+              .insertContent({ type, attrs: { href: text, loading: true } })
+              .run()
             return true
           },
         },
