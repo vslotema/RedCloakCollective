@@ -53,13 +53,6 @@ function onFieldBlur(event: FocusEvent) {
   linkInput.value = "";
 }
 
-function normalizeHref(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  if (/^(https?:\/\/|mailto:|tel:|\/|#)/i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
-}
-
 function applyLink() {
   const href = normalizeHref(linkInput.value);
   const chain = editor.chain().focus().extendMarkRange("link");

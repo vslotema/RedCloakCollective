@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import type { Editor } from '@tiptap/vue-3'
+import { fetchPreview, hydrateLinkCard } from './link-card'
 
 // Medium-style "+" affordance that sits in the body gutter and fans out the
-// insert actions on hover or keyboard focus. Photo is wired to the editor;
-// the rest still just post a status message this phase.
+// insert actions on hover or keyboard focus. Photo and Link card are wired to
+// the editor; Video / Code still just post a status message this phase.
 const { editor } = defineProps<{ editor: Editor }>()
+
+// Kept in sync with the parent so FloatingMenu's shouldShow holds the menu open
+// while the URL field has focus (the editor blurs when it does).
+const linkCardEditing = defineModel<boolean>('linkCardEditing', { default: false })
 
 const editorStore = useEditorStore()
 
@@ -16,9 +21,11 @@ const insertActions = [
 ]
 
 const open = ref(false)
+const linkInput = ref('')
 const rootRef = useTemplateRef<HTMLElement>('rootRef')
 const toggleRef = useTemplateRef<HTMLButtonElement>('toggleRef')
 const fileInputRef = useTemplateRef<HTMLInputElement>('fileInputRef')
+const linkFieldRef = useTemplateRef<HTMLInputElement>('linkFieldRef')
 
 function focusedWithin() {
   return !!rootRef.value?.contains(document.activeElement)
@@ -30,10 +37,13 @@ function onLeave() {
 }
 
 function onFocusOut(event: FocusEvent) {
-  if (!rootRef.value?.contains(event.relatedTarget as Node | null)) open.value = false
+  if (rootRef.value?.contains(event.relatedTarget as Node | null)) return
+  open.value = false
+  cancelLinkCard()
 }
 
 function collapse() {
+  cancelLinkCard()
   open.value = false
   toggleRef.value?.focus()
 }
@@ -43,8 +53,42 @@ function choose(label: string) {
     fileInputRef.value?.click()
     return
   }
+  if (label === 'Link card') {
+    linkCardEditing.value = true
+    open.value = true
+    nextTick(() => linkFieldRef.value?.focus())
+    return
+  }
   editorStore.statusMessage = `${label} — not available yet`
   open.value = false
+}
+
+function cancelLinkCard() {
+  linkCardEditing.value = false
+  linkInput.value = ''
+}
+
+async function submitLinkCard() {
+  const href = normalizeHref(linkInput.value)
+  linkCardEditing.value = false
+  linkInput.value = ''
+  if (!href) {
+    open.value = false
+    return
+  }
+
+  // Insert the card straight away (host only + skeleton), then fill it in once
+  // the preview comes back.
+  const uid = globalThis.crypto?.randomUUID?.() ?? String(Date.now())
+  editor.chain().focus().setLinkCard({ href, uid }).run()
+  open.value = false
+  editorStore.statusMessage = 'Fetching link preview…'
+
+  const meta = await fetchPreview(href)
+  hydrateLinkCard(editor, uid, meta)
+  editorStore.statusMessage = meta.title
+    ? 'Link card added'
+    : 'Link card added (no preview)'
 }
 
 function onFileChange(event: Event) {
@@ -96,12 +140,36 @@ function onFileChange(event: Event) {
       class="insert-menu__btn insert-menu__toggle"
       :aria-expanded="open"
       aria-label="Insert"
-      @click="open = !open"
+      @click="open ? collapse() : (open = true)"
     >
       <v-icon :icon="open ? 'x' : 'plus'" />
     </button>
 
-    <div class="insert-menu__actions" :aria-hidden="!open">
+    <form
+      v-if="linkCardEditing"
+      class="insert-menu__link"
+      @submit.prevent="submitLinkCard"
+    >
+      <input
+        ref="linkFieldRef"
+        v-model="linkInput"
+        type="url"
+        class="insert-menu__link-field"
+        placeholder="Paste or type a link…"
+        aria-label="Link card URL"
+        @keydown.esc.prevent="collapse"
+      />
+      <button
+        type="submit"
+        class="insert-menu__btn"
+        aria-label="Add link card"
+        @mousedown.prevent
+      >
+        <v-icon icon="check" />
+      </button>
+    </form>
+
+    <div v-else class="insert-menu__actions" :aria-hidden="!open">
       <button
         v-for="action in insertActions"
         :key="action.label"
@@ -162,6 +230,38 @@ function onFileChange(event: Event) {
 
   &__toggle {
     color: rgb(var(--v-theme-ink));
+  }
+
+  &__link {
+    position: absolute;
+    left: calc(100% + var(--space-2));
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    z-index: 1;
+  }
+
+  &__link-field {
+    width: 18rem;
+    height: var(--control-min-size);
+    padding: 0 var(--space-3);
+    font: inherit;
+    color: rgb(var(--v-theme-on-surface));
+    background: rgb(var(--v-theme-background));
+    border: 1px solid rgb(var(--v-theme-border-color));
+    border-radius: var(--radius-sm, 4px);
+    outline: none;
+
+    &:focus {
+      border-color: rgb(var(--v-theme-ink));
+    }
+
+    &::placeholder {
+      color: rgb(var(--v-theme-on-surface));
+      opacity: 0.6;
+    }
   }
 
   &__actions {
