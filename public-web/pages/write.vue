@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RichTextEditor from '~/components/write/RichTextEditor.vue';
 definePageMeta({ layout: 'write', middleware: 'auth' })
 
 const editorStore = useEditorStore()
@@ -54,15 +55,7 @@ watch(
       />
     </div>
 
-    <textarea
-      id="doc-body"
-      ref="bodyRef"
-      v-model="editorStore.content"
-      aria-label="Story"
-      class="editor-main__body"
-      placeholder="Tell your story…"
-      @input="resizeBody"
-    />
+    <RichTextEditor></RichTextEditor>
   </section>
 </template>
 
@@ -122,13 +115,36 @@ watch(
     min-height: var(--control-min-size);
   }
 
+  &__body-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    // flex-basis: auto (not the flex:1 shorthand's 0) so an explicit textarea
+    // height set by resizeBody() is respected instead of being capped to the
+    // container by flex-grow distribution.
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  &__insert {
+    align-self: flex-start;
+    margin-bottom: var(--space-3);
+
+    // Room opens up either side of the 45rem column on wide viewports — lift
+    // the control into the left gutter, Medium-style, where it's out of the
+    // writing flow.
+    @include respond-to('lg') {
+      position: absolute;
+      top: 0;
+      right: calc(100% + var(--space-4));
+      margin-bottom: 0;
+    }
+  }
+
   &__body {
     // The border/offset above keeps this aligned with the title's text
     // column, but the line itself should only be visible on the title.
     border-left-color: transparent;
-    // flex-basis: auto (not the flex:1 shorthand's 0) so the explicit height
-    // resizeBody() sets is respected as the item's size instead of being
-    // overridden by flex-grow distribution capped to the container.
     flex: 1 1 auto;
     min-height: 0;
     font-size: var(--text-md);

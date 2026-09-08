@@ -12,5 +12,9 @@
   },
   "devDependencies": {
     "concurrently": "^10.0.4"
+  },
+  "dependencies": {
+    "@tiptap/extension-floating-menu": "^3.31.3",
+    "@tiptap/vue-3": "^3.31.3"
   }
 }

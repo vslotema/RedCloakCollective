@@ -2,7 +2,6 @@
   <div class="page accessible-editor">
     <TopbarNavigation :show-menu-toggle="false" :show-search="false" :show-write-button="false" />
     <v-main class="editor-shell">
-      <WriteToolsSidebar />
       <div class="editor-shell__main">
         <slot />
       </div>
@@ -25,10 +24,6 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-
-  @include respond-to('md') {
-    flex-direction: row;
-  }
 
   &__main {
     flex: 1 1 auto;
