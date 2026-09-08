@@ -106,6 +106,7 @@ onBeforeUnmount(() => {
     z-index: 3;
     border-radius: .25rem;
     background: rgb(var(--v-theme-background));
+    border-bottom: 1px solid rgb(var(--v-theme-surface));
   }
 
   &__content {

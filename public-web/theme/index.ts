@@ -10,7 +10,7 @@ export const light: ThemeDefinition = {
     background: "#FFFFFF",
     surface: "#f5f5f5",
     "surface-variant": "#F8F4F4",
-    "on-background": "#6b6b6b",
+    "on-background": "##e6e6e6",
     "on-surface": "#6b6b6b",
     "on-surface-variant": "#474238",
     "border-color": "#d5d5d5",

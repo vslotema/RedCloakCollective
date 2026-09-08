@@ -85,11 +85,6 @@ function onFileChange(event: Event) {
     ref="rootRef"
     class="insert-menu"
     :class="{ 'insert-menu--open': open }"
-    @mouseenter="open = true"
-    @mouseleave="onLeave"
-    @focusin="open = true"
-    @focusout="onFocusOut"
-    @keydown.esc="collapse"
   >
     <input
       ref="fileInputRef"
@@ -101,31 +96,37 @@ function onFileChange(event: Event) {
       @change="onFileChange"
     />
 
-    <button
+    <v-btn
       ref="toggleRef"
       type="button"
       class="insert-menu__btn insert-menu__toggle"
       :aria-expanded="open"
       aria-label="Insert"
+      icon
+      variant="outlined"
+      size="small"
       @click="open ? collapse() : (open = true)"
     >
       <v-icon :icon="open ? 'x' : 'plus'" />
-    </button>
+</v-btn>
 
     <div class="insert-menu__actions" :aria-hidden="!open">
-      <button
+      <v-btn
         v-for="action in insertActions"
         :key="action.label"
         type="button"
+        theme="dark"
         class="insert-menu__btn"
         :aria-label="action.label"
+        icon
+        size="small"
         @click="choose(action.label)"
       >
-        <v-icon :icon="action.icon" />
+        <v-icon :icon="action.icon"/>
         <v-tooltip activator="parent" location="top" content-class="navbar-tooltip">
           {{ action.label }}
         </v-tooltip>
-      </button>
+      </v-btn>
     </div>
   </div>
 </template>
@@ -150,20 +151,9 @@ function onFileChange(event: Event) {
   }
 
   &__btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--control-min-size);
-    height: var(--control-min-size);
-    flex-shrink: 0;
     color: rgb(var(--v-theme-on-surface));
     background: rgb(var(--v-theme-background));
     border: 1px solid rgb(var(--v-theme-border-color));
-    border-radius: 50%;
-    cursor: pointer;
-    transition:
-      color 0.12s ease,
-      border-color 0.12s ease;
 
     &:hover {
       color: rgb(var(--v-theme-ink));
@@ -177,11 +167,11 @@ function onFileChange(event: Event) {
 
   &__actions {
     position: absolute;
-    left: calc(100% + var(--space-2));
+    left: calc(100% + var(--space-1));
     top: 50%;
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-1);
     opacity: 0;
     visibility: hidden;
     transform: translateY(-50%) translateX(-0.5rem);
