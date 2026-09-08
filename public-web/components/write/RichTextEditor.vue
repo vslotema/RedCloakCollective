@@ -104,6 +104,7 @@ onBeforeUnmount(() => {
     position: sticky;
     top: var(--v-layout-top, 64px);
     z-index: 3;
+    border-radius: .25rem;
     background: rgb(var(--v-theme-background));
   }
 
@@ -111,6 +112,8 @@ onBeforeUnmount(() => {
     padding: 16px;
     flex: 1 1 auto;
     min-height: 0;
+    background: rgb(var(--v-theme-background));
+    border-radius: .25rem;
 
     .insert-menu {
       transform: translateX(-75px);

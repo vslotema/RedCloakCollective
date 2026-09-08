@@ -65,11 +65,13 @@ watch(
   max-width: 45rem;
   width: 100%;
   margin: 0 auto;
-  background: rgb(var(--v-theme-background));
 
   &__title-row {
     position: relative;
     flex-shrink: 0;
+    background: rgb(var(--v-theme-background));
+    border-radius: .25rem;
+    padding: .5rem 0;
   }
 
   &__title-caption {
@@ -92,7 +94,6 @@ watch(
     font-family: inherit;
     background: transparent;
     border: none;
-    border-left: 1.5px solid rgb(var(--v-theme-border-color));
     padding-left: var(--space-3);
 
     &::placeholder {

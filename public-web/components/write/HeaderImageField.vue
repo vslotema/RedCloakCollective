@@ -82,8 +82,6 @@ function onPointerDown(event: PointerEvent) {
 function onPointerMove(event: PointerEvent) {
   if (!dragging.value) return
   const { x: ox, y: oy } = overflow.value
-  // Drag the image right (positive delta) and its left edge scrolls into
-  // view, which is a smaller object-position percentage.
   editorStore.moveHeaderImage(
     ox ? dragStart.x - ((event.clientX - dragStart.pointerX) / ox) * 100 : dragStart.x,
     oy ? dragStart.y - ((event.clientY - dragStart.pointerY) / oy) * 100 : dragStart.y,
