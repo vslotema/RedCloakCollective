@@ -48,6 +48,9 @@ export default defineNuxtConfig({
     // forwards both straight through to the separate Laravel process.
     '/api/**': { proxy: `${backendOrigin}/api/**` },
     '/sanctum/**': { proxy: `${backendOrigin}/sanctum/**` },
+    // Uploaded images — the `public` disk emits relative `/storage/...` URLs;
+    // Nitro forwards them to Laravel's storage symlink.
+    '/storage/**': { proxy: `${backendOrigin}/storage/**` },
 
     // --- Public, SSR'd, cacheable content ---
     '/articles/**': { swr: 3600 },

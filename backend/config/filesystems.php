@@ -41,7 +41,11 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            // Relative by default so image URLs are same-origin as the app in
+            // every environment (dev proxies /storage → backend; prod serves
+            // both from one host). Set PUBLIC_DISK_URL to an absolute base
+            // (e.g. a CDN) when files move off the app server.
+            'url' => env('PUBLIC_DISK_URL', '/storage'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

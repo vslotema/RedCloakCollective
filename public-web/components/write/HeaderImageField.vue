@@ -128,7 +128,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
     <input
       ref="inputRef"
       type="file"
-      accept="image/*"
+      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
       class="header-image__input"
       aria-hidden="true"
       tabindex="-1"

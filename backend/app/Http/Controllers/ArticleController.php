@@ -118,9 +118,7 @@ class ArticleController extends Controller
     {
         Gate::authorize('update', $article);
 
-        $request->validate([
-            'image' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
-        ]);
+        $request->validate(['image' => $this->imageRules()]);
 
         $previous = $article->header_image_path;
         $path = $request->file('image')->store('article-headers', 'public');
@@ -158,13 +156,22 @@ class ArticleController extends Controller
     {
         Gate::authorize('update', $article);
 
-        $request->validate([
-            'image' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
-        ]);
+        $request->validate(['image' => $this->imageRules()]);
 
         $path = $request->file('image')->store('article-body', 'public');
 
         return response()->json(['url' => Storage::disk('public')->url($path)], 201);
+    }
+
+    /**
+     * Validation for an uploaded image (header or inline body). SVG is left out
+     * deliberately — it can carry script. 5 MB ceiling.
+     *
+     * @return array<int, string>
+     */
+    private function imageRules(): array
+    {
+        return ['required', 'image', 'mimes:jpeg,png,webp,gif,avif', 'max:5120'];
     }
 
     /**

@@ -79,8 +79,10 @@ async function onFileChange(event: Event) {
     const src = await editorStore.uploadBodyImage(file)
     editor.chain().focus().setImage({ src }).run()
     editorStore.statusMessage = 'Image added'
-  } catch {
-    editorStore.statusMessage = 'Image upload failed'
+  } catch (error) {
+    const data = (error as { data?: { errors?: Record<string, string[]>; message?: string } }).data
+    editorStore.statusMessage =
+      data?.errors?.image?.[0] ?? data?.message ?? 'Image upload failed'
   }
 }
 </script>
@@ -94,7 +96,7 @@ async function onFileChange(event: Event) {
     <input
       ref="fileInputRef"
       type="file"
-      accept="image/*"
+      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
       class="insert-menu__file"
       aria-hidden="true"
       tabindex="-1"
