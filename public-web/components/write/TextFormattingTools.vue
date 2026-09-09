@@ -122,9 +122,9 @@ function toggleTool(label: string) {
   if (label === "Italic") editor.chain().focus().toggleItalic().run();
   if (label === "Quote") toggleQuote();
   if (label === "Small title")
-    editor.chain().focus().toggleHeading({ level: 3 }).run();
-  if (label === "Big title")
     editor.chain().focus().toggleHeading({ level: 2 }).run();
+  if (label === "Big title")
+    editor.chain().focus().toggleHeading({ level: 1 }).run();
 }
 
 function toolIsActive(label: string): boolean {

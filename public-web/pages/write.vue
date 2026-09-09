@@ -54,7 +54,7 @@ watch(
         :value="editorStore.title"
         type="text"
         aria-label="Title"
-        class="editor-main__title text-h3"
+        class="editor-main__title text-h2"
         placeholder="Title"
         @input="editorStore.setTitle(($event.target as HTMLInputElement).value)"
       />

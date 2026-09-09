@@ -53,3 +53,19 @@ useHead({
     <div class="article-content" v-html="article.content" />
   </v-container>
 </template>
+
+<style scoped lang="scss">
+// Article typography — kept in step with the editor (components/write/
+// RichTextEditor.vue): large default body text, and the "Header" (h2) at the
+// global .text-h2 display size. Heading font/weight/colour come from the
+// bare-`h2` rule in style.scss.
+.article-content {
+  font-size: var(--text-lg);
+  line-height: 1.7;
+
+  :deep(h2) {
+    font-size: 3.75rem; // = global .text-h2
+    line-height: 1.15;
+  }
+}
+</style>

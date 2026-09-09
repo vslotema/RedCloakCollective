@@ -260,13 +260,24 @@ onBeforeUnmount(() => {
     :deep(.ProseMirror) {
       outline: none;
 
+      // Article typography — kept in step with the published article view
+      // (pages/articles/[slug].vue): large default body text, and the "Header"
+      // (h2 / "Big title") at the global .text-h2 display size. The heading
+      // font/weight/colour already come from the bare-`h2` rule in style.scss.
+      font-size: var(--text-lg);
+      line-height: 1.7;
+
+      h2 {
+        font-size: 3.75rem; // = global .text-h2
+        line-height: 1.15;
+      }
+
       img {
         max-width: 100%;
         height: auto;
       }
 
       pre.code-block {
-        margin-block: var(--space-4, 1rem);
         padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
         background: rgb(var(--v-theme-surface));
         border: 1px solid rgb(var(--v-theme-border-color));
@@ -394,6 +405,16 @@ onBeforeUnmount(() => {
     }
 
     :deep(.ProseMirror) {
+
+      > *:not(.line-label) {
+        margin-block: var(--space-4, 1.1rem) 0;
+      }
+
+      > *:not(.line-label):first-child,
+      > .line-label:first-child + *:not(.line-label) {
+        margin-top: 0;
+      }
+
       blockquote {
         border-left: 2px solid rgb(var(--v-theme-ink));
         padding-left: var(--space-4, 1rem);
