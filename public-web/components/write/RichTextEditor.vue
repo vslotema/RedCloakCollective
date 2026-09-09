@@ -195,7 +195,9 @@ onBeforeUnmount(() => {
       overflow: hidden;
       text-overflow: ellipsis;
       font-size: 0.8125rem;
-      line-height: 1.6;
+      // Match the body's first-line box (font-size × line-height) so the label
+      // sits level with where the block's text starts.
+      line-height: calc(var(--text-lg) * 1.7);
       font-variant-numeric: tabular-nums;
       color: rgb(var(--v-theme-on-surface));
       opacity: 0.8;
@@ -406,13 +408,17 @@ onBeforeUnmount(() => {
 
     :deep(.ProseMirror) {
 
+      // Block spacing lives on the *bottom* of each block (not the top) so the
+      // block-number labels stay aligned: a `.line-label` widget is rendered
+      // in flow just before its block, and with no `top` set it sits at its
+      // static position — which must be the block's first text line, not above
+      // a top margin.
       > *:not(.line-label) {
-        margin-block: var(--space-4, 1.1rem) 0;
+        margin-block: 0 var(--space-4, 1.1rem);
       }
 
-      > *:not(.line-label):first-child,
-      > .line-label:first-child + *:not(.line-label) {
-        margin-top: 0;
+      > *:not(.line-label):last-child {
+        margin-bottom: 0;
       }
 
       blockquote {

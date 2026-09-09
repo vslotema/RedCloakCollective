@@ -1,39 +1,73 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    showMenuToggle?: boolean
-    showSearch?: boolean
-    showWriteButton?: boolean
+    showMenuToggle?: boolean;
+    showGoBackButton?: boolean;
+    showSearch?: boolean;
+    showWriteButton?: boolean;
   }>(),
   {
     showMenuToggle: true,
+    showGoBackButton: false,
     showSearch: true,
     showWriteButton: true,
   },
-)
+);
 
 defineEmits<{
-  toggleNavigation: []
-}>()
+  toggleNavigation: [];
+}>();
+
+const router = useRouter();
+
+function goBack() {
+  if (window.history.length > 1) {
+    router.back();
+  } else {
+    router.push("/");
+  }
+}
 </script>
 
 <template>
-  <v-app-bar class="pl-2 pr-4" color="background" flat style="border-bottom: thin solid #d5d5d5">
+  <v-app-bar
+    class="pl-2 pr-4"
+    color="background"
+    flat
+    style="border-bottom: thin solid #d5d5d5"
+  >
     <div class="d-flex align-center">
       <v-btn
+        v-if="showGoBackButton"
+        icon
+        size="small"
+        color="ink"
+        variant="text"
+        aria-label="Go back"
+        @click="goBack"
+      >
+        <v-icon icon="arrow-left" :size="20" />
+        <v-tooltip
+          activator="parent"
+          location="bottom"
+          content-class="navbar-tooltip"
+          text="Go back"
+        />
+      </v-btn>
+      <v-btn
+        v-if="showMenuToggle"
         class="menu-btn"
-        :class="{ 'menu-btn--hidden': !showMenuToggle }"
         icon="menu"
         size="small"
         color="ink"
         @click="$emit('toggleNavigation')"
       >
       </v-btn>
-      <div class="logo">
+      <NuxtLink to="/" class="logo-link">
         <h1 class="text-h6 font-weight-bold mb-0">
           <span class="text-primary">R</span>EDCLOAK COLLECTIVE
         </h1>
-      </div>
+      </NuxtLink>
       <SearchBar v-if="showSearch" class="ml-6" />
     </div>
 
@@ -57,7 +91,13 @@ defineEmits<{
           text="Write"
         />
       </v-btn>
-      <v-btn icon variant="flat" color="white" size="40" class="action-btn border">
+      <v-btn
+        icon
+        variant="flat"
+        color="white"
+        size="40"
+        class="action-btn border"
+      >
         <v-icon icon="bell" :size="20" />
         <v-tooltip
           activator="parent"
@@ -66,7 +106,10 @@ defineEmits<{
           text="Notifications"
         />
       </v-btn>
-      <v-avatar size="40" image="https://randomuser.me/api/portraits/women/44.jpg" />
+      <v-avatar
+        size="40"
+        image="https://randomuser.me/api/portraits/women/44.jpg"
+      />
     </div>
   </v-app-bar>
 </template>
@@ -74,18 +117,17 @@ defineEmits<{
 <style scoped lang="scss">
 .menu-btn {
   margin-right: 0.375rem;
-
-  // Keeps the space reserved (rather than v-if removing it) so the logo
-  // stays in the same spot whether or not the toggle is shown.
-  &--hidden {
-    visibility: hidden;
-    pointer-events: none;
-  }
 }
 
 // Icon uses the same color as a non-active navigation item's text
 // (Vuetify's theme "on-surface" token), while the label stays high-emphasis.
 .action-btn :deep(.v-icon) {
   color: rgb(var(--v-theme-on-surface));
+}
+
+.logo-link {
+  margin-left: 1rem;
+  text-decoration: none;
+  cursor: pointer;
 }
 </style>
