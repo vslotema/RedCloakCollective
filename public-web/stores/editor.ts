@@ -1,5 +1,16 @@
 import type { JSONContent } from '@tiptap/core'
-import type { Article } from '~/types/article'
+import type { Article, ArticleState, ArticleTopic } from '~/types/article'
+
+/**
+ * A topic on the draft. Existing topics have a numeric `id`; a topic the author
+ * typed in the publish dialog that doesn't exist yet has `id: null` and is sent
+ * to the API as a name in `new_topics`.
+ */
+export interface DraftTopic {
+  id: number | null
+  name: string
+  slug?: string
+}
 
 /**
  * Cursor / selection position inside the document, mirrored from the TipTap
@@ -38,7 +49,9 @@ const LEGACY_DRAFT_KEY = 'editor_draft'
 interface RecoverySnapshot {
   articleId: number | null
   title: string
+  excerpt: string
   doc: JSONContent
+  topics: DraftTopic[]
   headerImagePosition: { x: number; y: number }
   savedAt: number
 }
@@ -86,6 +99,20 @@ export const useEditorStore = defineStore('editor', () => {
   const articleId = ref<number | null>(null)
   const slug = ref<string | null>(null)
   const published = ref(false)
+  // ISO string once the article has a publish time (past = live, future =
+  // scheduled); null for a draft.
+  const publishedAt = ref<string | null>(null)
+
+  // Publish metadata, editable in the publish dialog and persisted with the
+  // draft. `excerpt` is the preview subtitle; `topics` mixes existing topics
+  // (numeric id) with author-typed ones (id null).
+  const excerpt = ref('')
+  const topics = ref<DraftTopic[]>([])
+
+  const articleState = computed<ArticleState>(() => {
+    if (!publishedAt.value) return 'draft'
+    return new Date(publishedAt.value).getTime() > Date.now() ? 'scheduled' : 'published'
+  })
 
   // `dirty` flips true on any local edit and back to false once that exact state
   // has reached the server. `savedAt` is an epoch-ms timestamp of the last
@@ -131,21 +158,42 @@ export const useEditorStore = defineStore('editor', () => {
     return {
       articleId: articleId.value,
       title: title.value,
+      excerpt: excerpt.value,
       doc: doc.value,
+      topics: topics.value,
       headerImagePosition: headerImagePosition.value,
       savedAt: Date.now(),
     }
   }
 
-  function applyServerMeta(article: Pick<Article, 'id' | 'slug' | 'published'>) {
+  function applyServerMeta(
+    article: Pick<Article, 'id' | 'slug' | 'published' | 'published_at'> &
+      Partial<Pick<Article, 'topics' | 'excerpt'>>,
+  ) {
     articleId.value = article.id
     slug.value = article.slug
     published.value = article.published
+    publishedAt.value = article.published_at
+    if (article.topics) topics.value = article.topics.map((t) => ({ ...t }))
+    if (article.excerpt !== undefined) excerpt.value = article.excerpt ?? ''
+  }
+
+  /**
+   * Split the draft topics into existing ids and new names for the API. Only
+   * sent on publish/schedule — not in the autosave body — so a cancelled
+   * publish dialog doesn't mutate the draft's topics.
+   */
+  function topicPayload() {
+    return {
+      topic_ids: topics.value.filter((t) => t.id !== null).map((t) => t.id as number),
+      new_topics: topics.value.filter((t) => t.id === null).map((t) => t.name),
+    }
   }
 
   function bodyPayload() {
     return {
       title: title.value,
+      excerpt: excerpt.value || null,
       content: doc.value,
       header_image_position: headerImageUrl.value ? headerImagePosition.value : null,
     }
@@ -171,9 +219,13 @@ export const useEditorStore = defineStore('editor', () => {
    * Replace the whole document — e.g. after loading from the API. Resets
    * dirty/selection since nothing local has changed yet.
    */
-  function load(payload: { title?: string; doc?: JSONContent } = {}) {
+  function load(
+    payload: { title?: string; excerpt?: string; doc?: JSONContent; topics?: DraftTopic[] } = {},
+  ) {
     title.value = payload.title ?? ''
+    excerpt.value = payload.excerpt ?? ''
     doc.value = payload.doc ?? emptyDoc()
+    topics.value = payload.topics ?? []
     selection.value = null
     dirty.value = false
   }
@@ -273,9 +325,16 @@ export const useEditorStore = defineStore('editor', () => {
     headerImageUrl.value = server.header_image_url
     headerImageFile.value = null
 
+    const serverTopics: DraftTopic[] = (server.topics ?? []).map((t) => ({ ...t }))
+
     const recovered = readRecovery(RECOVERY_PREFIX + id)
     if (recovered) {
-      load({ title: recovered.title, doc: recovered.doc })
+      load({
+        title: recovered.title,
+        excerpt: recovered.excerpt ?? '',
+        doc: recovered.doc,
+        topics: recovered.topics ?? serverTopics,
+      })
       headerImagePosition.value = recovered.headerImagePosition
         ?? server.header_image_position
         ?? { x: 50, y: 50 }
@@ -283,7 +342,12 @@ export const useEditorStore = defineStore('editor', () => {
       statusMessage.value = 'Restored unsaved changes'
       scheduleAutosave()
     } else {
-      load({ title: server.title, doc: server.content })
+      load({
+        title: server.title,
+        excerpt: server.excerpt ?? '',
+        doc: server.content,
+        topics: serverTopics,
+      })
       headerImagePosition.value = server.header_image_position ?? { x: 50, y: 50 }
       dirty.value = false
       savedAt.value = Date.parse(server.updated_at) || Date.now()
@@ -306,6 +370,7 @@ export const useEditorStore = defineStore('editor', () => {
     articleId.value = null
     slug.value = null
     published.value = false
+    publishedAt.value = null
     clearHeaderImageLocal()
     headerImageFile.value = null
     saving.value = false
@@ -341,7 +406,12 @@ export const useEditorStore = defineStore('editor', () => {
     }
 
     resetSession()
-    load({ title: recovered.title, doc: recovered.doc })
+    load({
+      title: recovered.title,
+      excerpt: recovered.excerpt ?? '',
+      doc: recovered.doc,
+      topics: recovered.topics ?? [],
+    })
     headerImagePosition.value = recovered.headerImagePosition ?? { x: 50, y: 50 }
     dirty.value = true
     savedAt.value = null
@@ -420,17 +490,42 @@ export const useEditorStore = defineStore('editor', () => {
 
   // --- publish -----------------------------------------------------------
 
-  async function publish() {
+  function setExcerpt(next: string) {
+    excerpt.value = next
+    markDirty()
+    scheduleAutosave()
+  }
+
+  function setTopics(next: DraftTopic[]) {
+    topics.value = next
+  }
+
+  /**
+   * Publish now, or schedule for `publishAt` (ISO string) when given. Sends the
+   * current excerpt + topics along with the transition. Surfaces validation
+   * errors (missing title / topic) via `saveError` and rethrows.
+   */
+  async function publish(opts: { publishAt?: string | null } = {}) {
     await flush()
     const id = await ensureArticle()
+    const body = {
+      excerpt: excerpt.value || null,
+      ...topicPayload(),
+      ...(opts.publishAt ? { publish_at: opts.publishAt } : { published: true }),
+    }
     try {
-      const updated = await api<Article>(`/articles/${id}`, { method: 'PATCH', body: { published: true } })
+      const updated = await api<Article>(`/articles/${id}`, { method: 'PATCH', body })
       applyServerMeta(updated)
       saveError.value = null
-      statusMessage.value = 'Published'
+      statusMessage.value = opts.publishAt ? 'Scheduled' : 'Published'
     } catch (error) {
       const data = (error as { data?: { errors?: Record<string, string[]>; message?: string } }).data
-      const message = data?.errors?.title?.[0] ?? data?.message ?? 'Couldn’t publish'
+      const message =
+        data?.errors?.title?.[0] ??
+        data?.errors?.topic_ids?.[0] ??
+        data?.errors?.publish_at?.[0] ??
+        data?.message ??
+        'Couldn’t publish'
       saveError.value = message
       statusMessage.value = message
       throw error
@@ -439,7 +534,10 @@ export const useEditorStore = defineStore('editor', () => {
 
   async function unpublish() {
     const id = await ensureArticle()
-    const updated = await api<Article>(`/articles/${id}`, { method: 'PATCH', body: { published: false } })
+    const updated = await api<Article>(`/articles/${id}`, {
+      method: 'PATCH',
+      body: { published: false },
+    })
     applyServerMeta(updated)
     statusMessage.value = 'Moved to drafts'
   }
@@ -447,10 +545,14 @@ export const useEditorStore = defineStore('editor', () => {
   return {
     doc,
     title,
+    excerpt,
+    topics,
     selection,
     articleId,
     slug,
     published,
+    publishedAt,
+    articleState,
     dirty,
     saving,
     savedAt,
@@ -461,6 +563,8 @@ export const useEditorStore = defineStore('editor', () => {
     wordCount,
     setDoc,
     setTitle,
+    setExcerpt,
+    setTopics,
     setSelection,
     load,
     loadArticle,

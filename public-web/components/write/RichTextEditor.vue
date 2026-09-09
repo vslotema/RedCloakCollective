@@ -38,6 +38,8 @@ const linkEditing = ref(false);
 
 const editor = useEditor({
   content: content.value,
+  // Share the published-article body styling (assets/styles/article-content.scss).
+  editorProps: { attributes: { class: "article-content" } },
   extensions: [
     StarterKit.configure({
       link: { openOnClick: false },
@@ -270,173 +272,45 @@ onBeforeUnmount(() => {
       transform: translateX(-75px);
     }
 
+    // Body typography, code-block palette, link-card / video / blockquote
+    // styling, block spacing — all shared with the published page, in
+    // assets/styles/article-content.scss (the .ProseMirror element carries the
+    // `article-content` class via `editorProps`).
+
     :deep(.ProseMirror) {
       outline: none;
-
-      // Article typography — kept in step with the published article view
-      // (pages/articles/[slug].vue): large default body text, and the "Header"
-      // (h2 / "Big title") at the global .text-h2 display size. The heading
-      // font/weight/colour already come from the bare-`h2` rule in style.scss.
-      font-size: var(--text-lg);
-      line-height: 1.7;
-
-      h2 {
-        font-size: 3.75rem; // = global .text-h2
-        line-height: 1.15;
-      }
-
-      img {
-        max-width: 100%;
-        height: auto;
-      }
-
-      pre.code-block {
-        padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-        background: rgb(var(--v-theme-surface));
-        border: 1px solid rgb(var(--v-theme-border-color));
-        border-radius: var(--radius-sm, 4px);
-        overflow-x: auto;
-
-        &.ProseMirror-selectednode {
-          outline: 2px solid rgb(var(--v-theme-primary));
-          outline-offset: 2px;
-        }
-
-        .code-block__bar {
-          display: flex;
-          align-items: center;
-          padding-bottom: var(--space-2, 0.5rem);
-        }
-
-        .code-block__lang {
-          display: inline-flex;
-          align-items: center;
-          gap: var(--space-1, 0.25rem);
-          padding: 2px var(--space-2, 0.5rem);
-          font-size: var(--text-sm, 0.875rem);
-          color: rgb(var(--v-theme-on-surface));
-          background: none;
-          border: none;
-          border-radius: var(--radius-sm, 4px);
-          cursor: pointer;
-          transition: color 0.12s ease;
-
-          &:hover {
-            color: rgb(var(--v-theme-ink));
-          }
-        }
-
-        code {
-          display: block;
-          font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
-          font-size: var(--text-sm, 0.875rem);
-          line-height: 1.5;
-          color: rgb(var(--v-theme-on-surface));
-          background: none;
-          white-space: pre;
-        }
-
-        // Compact highlight.js token palette — hand-picked to match the
-        // theme rather than importing a highlight.js stylesheet.
-        .hljs-keyword,
-        .hljs-literal,
-        .hljs-name,
-        .hljs-tag {
-          color: #b8002f;
-        }
-
-        .hljs-string {
-          color: #268332;
-        }
-
-        .hljs-number {
-          color: #a3651f;
-        }
-
-        .hljs-comment {
-          color: #8a8a8a;
-          font-style: italic;
-        }
-
-        .hljs-title,
-        .hljs-title.function_,
-        .hljs-attr,
-        .hljs-attribute {
-          color: #3642a0;
-        }
-
-        .hljs-built_in,
-        .hljs-type {
-          color: #5b7596;
-        }
-
-        .hljs-meta {
-          color: #8a8a8a;
-        }
-      }
     }
 
-    // Dark-theme token palette for code blocks — a sibling rule (not nested
-    // inside :deep(.ProseMirror) above) so :global() doesn't have to combine
-    // with SCSS `&`. Vuetify applies `.v-theme--dark` on an ancestor when the
-    // dark theme is active.
-    :deep(.v-theme--dark .code-block) {
-      .hljs-keyword,
-      .hljs-literal,
-      .hljs-name,
-      .hljs-tag {
-        color: #ef5c7d;
+    // Editor-only code-block chrome (the language picker bar + selection
+    // outline). Base styling comes from the shared sheet.
+    :deep(pre.code-block) {
+      &.ProseMirror-selectednode {
+        outline: 2px solid rgb(var(--v-theme-primary));
+        outline-offset: 2px;
       }
 
-      .hljs-string {
-        color: #78cf83;
+      .code-block__bar {
+        display: flex;
+        align-items: center;
+        padding-bottom: var(--space-2, 0.5rem);
       }
 
-      .hljs-number {
-        color: #d99a5b;
-      }
-
-      .hljs-comment {
-        color: #a89c8a;
-      }
-
-      .hljs-title,
-      .hljs-title.function_,
-      .hljs-attr,
-      .hljs-attribute {
-        color: #9aa3e8;
-      }
-
-      .hljs-built_in,
-      .hljs-type {
-        color: #8fb3d1;
-      }
-
-      .hljs-meta {
-        color: #a89c8a;
-      }
-    }
-
-    :deep(.ProseMirror) {
-
-      // Block spacing lives on the *bottom* of each block (not the top) so the
-      // block-number labels stay aligned: a `.line-label` widget is rendered
-      // in flow just before its block, and with no `top` set it sits at its
-      // static position — which must be the block's first text line, not above
-      // a top margin.
-      > *:not(.line-label) {
-        margin-block: 0 var(--space-4, 1.1rem);
-      }
-
-      > *:not(.line-label):last-child {
-        margin-bottom: 0;
-      }
-
-      blockquote {
-        border-left: 2px solid rgb(var(--v-theme-ink));
-        padding-left: var(--space-4, 1rem);
-        margin-inline: 0;
+      .code-block__lang {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1, 0.25rem);
+        padding: 2px var(--space-2, 0.5rem);
+        font-size: var(--text-sm, 0.875rem);
         color: rgb(var(--v-theme-on-surface));
+        background: none;
+        border: none;
+        border-radius: var(--radius-sm, 4px);
+        cursor: pointer;
+        transition: color 0.12s ease;
+
+        &:hover {
+          color: rgb(var(--v-theme-ink));
+        }
       }
     }
   }

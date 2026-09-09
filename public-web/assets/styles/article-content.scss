@@ -1,0 +1,239 @@
+// Shared styling for rendered article bodies:
+//  - the editor's live document — components/write/RichTextEditor.vue adds the
+//    `article-content` class to the `.ProseMirror` element via `editorProps`;
+//  - the published page — components/ArticleBody.vue renders into
+//    `<div class="article-content">`.
+// Global sheet (listed in nuxt.config.ts `css[]`), so selectors are unscoped
+// and no `:deep()` is needed. Editor-only affordances (block-number gutter,
+// node-view input prompts, selection outlines, the code-block language picker)
+// stay in their own components.
+
+.article-content {
+  font-size: var(--text-lg);
+  line-height: 1.7;
+
+  // Vertical rhythm: every top-level block carries its gap on the bottom. The
+  // `:not(.line-label)` skips the editor's block-number widgets (never present
+  // on the published page).
+  > *:not(.line-label) {
+    margin-block: 0 var(--space-4, 1.1rem);
+  }
+
+  > *:not(.line-label):last-child {
+    margin-bottom: 0;
+  }
+
+  h2 {
+    font-size: 3.75rem; // = Vuetify's .text-h2 display size
+    line-height: 1.15;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  li > p {
+    margin: 0;
+  }
+
+  blockquote {
+    border-left: 2px solid rgb(var(--v-theme-ink));
+    padding-left: var(--space-4, 1rem);
+    margin-inline: 0;
+    color: rgb(var(--v-theme-on-surface));
+  }
+
+  // --- code blocks -------------------------------------------------------
+
+  pre.code-block {
+    padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+    background: rgb(var(--v-theme-surface));
+    border: 1px solid rgb(var(--v-theme-border-color));
+    border-radius: var(--radius-sm, 4px);
+    overflow-x: auto;
+
+    code {
+      display: block;
+      font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+      font-size: var(--text-sm, 0.875rem);
+      line-height: 1.5;
+      color: rgb(var(--v-theme-on-surface));
+      background: none;
+      white-space: pre;
+    }
+
+    // Compact highlight.js token palette — hand-picked to match the theme
+    // rather than importing a highlight.js stylesheet.
+    .hljs-keyword,
+    .hljs-literal,
+    .hljs-name,
+    .hljs-tag {
+      color: #b8002f;
+    }
+
+    .hljs-string {
+      color: #268332;
+    }
+
+    .hljs-number {
+      color: #a3651f;
+    }
+
+    .hljs-comment {
+      color: #8a8a8a;
+      font-style: italic;
+    }
+
+    .hljs-title,
+    .hljs-title.function_,
+    .hljs-attr,
+    .hljs-attribute {
+      color: #3642a0;
+    }
+
+    .hljs-built_in,
+    .hljs-type {
+      color: #5b7596;
+    }
+
+    .hljs-meta {
+      color: #8a8a8a;
+    }
+  }
+
+  // --- link card --------------------------------------------------------
+
+  a.link-card {
+    display: flex;
+    align-items: stretch;
+    min-height: 160px;
+    background: rgb(var(--v-theme-background));
+    border: 1px solid rgb(var(--v-theme-border-color));
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.12s ease;
+
+    &:hover {
+      border-color: rgb(var(--v-theme-ink));
+    }
+
+    .link-card__body {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 1.25rem 1.5rem;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .link-card__title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      line-height: 1.4;
+      color: rgb(var(--v-theme-ink));
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .link-card__desc {
+      margin-top: 0.5rem;
+      // Reserve two lines whether or not there's text, so the host line stays put.
+      min-height: 2.85rem;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: rgb(var(--v-theme-on-surface));
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .link-card__host {
+      margin-top: auto;
+      padding-top: 0.75rem;
+      font-size: 0.85rem;
+      color: rgb(var(--v-theme-on-surface));
+    }
+
+    .link-card__media {
+      flex: 0 0 160px;
+      width: 160px;
+      height: 160px;
+      align-self: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem;
+      border-left: 1px solid rgb(var(--v-theme-border-color));
+      background: rgb(var(--v-theme-background));
+
+      img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+    }
+  }
+
+  // --- video embed -----------------------------------------------------
+
+  .video-embed__frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: var(--radius-sm, 4px);
+    overflow: hidden;
+
+    iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+  }
+}
+
+// Dark-theme code palette. Kept out of the nested block above so a plain global
+// selector matches under Vuetify's `.v-theme--dark` ancestor in both contexts.
+.v-theme--dark .article-content pre.code-block {
+  .hljs-keyword,
+  .hljs-literal,
+  .hljs-name,
+  .hljs-tag {
+    color: #ef5c7d;
+  }
+
+  .hljs-string {
+    color: #78cf83;
+  }
+
+  .hljs-number {
+    color: #d99a5b;
+  }
+
+  .hljs-comment {
+    color: #a89c8a;
+  }
+
+  .hljs-title,
+  .hljs-title.function_,
+  .hljs-attr,
+  .hljs-attribute {
+    color: #9aa3e8;
+  }
+
+  .hljs-built_in,
+  .hljs-type {
+    color: #8fb3d1;
+  }
+
+  .hljs-meta {
+    color: #a89c8a;
+  }
+}

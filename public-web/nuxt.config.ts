@@ -16,7 +16,7 @@ export default defineNuxtConfig({
   // would just be redundant (`<ContentFiltersContentFilterBar>`).
   components: [{ path: '~/components', pathPrefix: false }],
 
-  css: ['~/assets/styles/style.scss'],
+  css: ['~/assets/styles/style.scss', '~/assets/styles/article-content.scss'],
 
   vite: {
     css: {
