@@ -11,6 +11,7 @@ import { LinkCard } from "./link-card";
 import { CodeBlock } from "./code-block";
 import { VideoEmbed } from "./video-embed";
 import { LineNumbers } from "./line-numbers";
+import { toggleBlockNumbers } from "./editor-actions";
 
 const editorStore = useEditorStore();
 
@@ -62,7 +63,8 @@ const lineNumbersOn = computed(
 );
 
 function toggleLineNumbers() {
-  editor.value?.chain().focus().toggleLineNumbers().run();
+  if (!editor.value) return;
+  toggleBlockNumbers(editor.value);
   editorStore.statusMessage = `Block numbers ${lineNumbersOn.value ? "on" : "off"}`;
 }
 

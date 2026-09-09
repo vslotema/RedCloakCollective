@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import type { Editor } from "@tiptap/vue-3";
-import { liftTarget } from "@tiptap/pm/transform";
+import {
+  selectionHasBlockquote,
+  toggleBold,
+  toggleHeading,
+  toggleItalic,
+  toggleQuote,
+} from "./editor-actions";
 
 const { editor, color = 'black', background = 'white' } = defineProps<{
   editor: Editor;
@@ -71,67 +77,23 @@ function removeLink() {
   linkInput.value = "";
 }
 
-function selectionHasBlockquote(): boolean {
-  const type = editor.schema.nodes.blockquote;
-  if (!type) return false;
-  const { from, to } = editor.state.selection;
-  let found = false;
-  editor.state.doc.nodesBetween(from, to, (node) => {
-    if (node.type === type) found = true;
-  });
-  return found;
-}
-
-function toggleQuote() {
-  if (!selectionHasBlockquote()) {
-    editor.chain().focus().wrapIn("blockquote").run();
-    return;
-  }
-  editor
-    .chain()
-    .focus()
-    .command(({ tr, dispatch }) => {
-      const type = editor.schema.nodes.blockquote;
-      const ranges: { from: number; to: number }[] = [];
-      const { from, to } = tr.selection;
-      tr.doc.nodesBetween(from, to, (node, pos) => {
-        if (node.type === type) ranges.push({ from: pos, to: pos + node.nodeSize });
-      });
-      if (!ranges.length) return false;
-      if (!dispatch) return true;
-
-      ranges.sort((a, b) => b.from - a.from);
-      for (const range of ranges) {
-        const blockRange = tr.doc
-          .resolve(range.from + 1)
-          .blockRange(tr.doc.resolve(range.to - 1));
-        const depth = blockRange && liftTarget(blockRange);
-        if (depth != null) tr.lift(blockRange!, depth);
-      }
-      return true;
-    })
-    .run();
-}
-
 function toggleTool(label: string) {
   if (label === "Link") {
     openLinkField();
     return;
   }
-  if (label === "Bold") editor.chain().focus().toggleBold().run();
-  if (label === "Italic") editor.chain().focus().toggleItalic().run();
-  if (label === "Quote") toggleQuote();
-  if (label === "Small title")
-    editor.chain().focus().toggleHeading({ level: 2 }).run();
-  if (label === "Big title")
-    editor.chain().focus().toggleHeading({ level: 1 }).run();
+  if (label === "Bold") toggleBold(editor);
+  if (label === "Italic") toggleItalic(editor);
+  if (label === "Quote") toggleQuote(editor);
+  if (label === "Small title") toggleHeading(editor, 2);
+  if (label === "Big title") toggleHeading(editor, 1);
 }
 
 function toolIsActive(label: string): boolean {
   if (label === "Bold") return editor.isActive("bold");
   if (label === "Italic") return editor.isActive("italic");
   if (label === "Link") return editor.isActive("link");
-  if (label === "Quote") return selectionHasBlockquote();
+  if (label === "Quote") return selectionHasBlockquote(editor);
   if (label === "Small title") return editor.isActive("heading", { level: 3 });
   if (label === "Big title") return editor.isActive("heading", { level: 2 });
   return false;

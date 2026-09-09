@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Editor } from '@tiptap/vue-3'
+import { insertCodeBlock } from './editor-actions'
 
 const { editor } = defineProps<{ editor: Editor }>()
 
@@ -46,7 +47,7 @@ function choose(label: string) {
     return
   }
   if (label === 'Code') {
-    editor.chain().focus().setCodeBlock().run()
+    insertCodeBlock(editor)
     editorStore.statusMessage = 'Code block added'
     open.value = false
     return
