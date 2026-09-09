@@ -1,4 +1,5 @@
 import type { JSONContent } from '@tiptap/core'
+import type { Article } from '~/types/article'
 
 /**
  * Cursor / selection position inside the document, mirrored from the TipTap
@@ -24,28 +25,55 @@ function docText(node: JSONContent): string {
   return (node.content ?? []).map(docText).join(' ')
 }
 
-// There's a single local draft slot — writing a new one replaces whatever was
-// there. Read/written only client-side; SSR never touches localStorage.
-const DRAFT_STORAGE_KEY = 'editor_draft'
-const AUTOSAVE_DELAY_MS = 800
+const AUTOSAVE_DELAY_MS = 2000
 
-interface StoredDraft {
+// The backend is the source of truth for drafts; localStorage is only a
+// write-through recovery buffer for edits that haven't reached the server yet
+// (a failed / half-finished save, an offline blip). One key per article id, plus
+// `editor_draft:new` for a draft that hasn't been POSTed yet.
+const RECOVERY_PREFIX = 'editor_draft:'
+// Key used by the pre-backend implementation — cleared on the way past.
+const LEGACY_DRAFT_KEY = 'editor_draft'
+
+interface RecoverySnapshot {
+  articleId: number | null
   title: string
   doc: JSONContent
+  headerImagePosition: { x: number; y: number }
   savedAt: number
 }
 
-function readStoredDraft(): StoredDraft | null {
+function readRecovery(key: string): RecoverySnapshot | null {
   if (!import.meta.client) return null
   try {
-    const raw = localStorage.getItem(DRAFT_STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as StoredDraft) : null
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as RecoverySnapshot) : null
   } catch {
     return null
   }
 }
 
+function writeRecovery(key: string, snapshot: RecoverySnapshot) {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(key, JSON.stringify(snapshot))
+  } catch {
+    // Quota / private mode — recovery is best-effort.
+  }
+}
+
+function dropRecovery(key: string) {
+  if (!import.meta.client) return
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // ignore
+  }
+}
+
 export const useEditorStore = defineStore('editor', () => {
+  const api = useApi()
+
   // The document body as ProseMirror / TipTap JSON — the single source of
   // truth the editor reads on mount and writes back to on every update.
   const doc = ref<JSONContent>(emptyDoc())
@@ -53,22 +81,29 @@ export const useEditorStore = defineStore('editor', () => {
 
   const selection = ref<EditorSelection | null>(null)
 
-  // `dirty` flips true on any local edit and back to false once the current
-  // state has been persisted (`markSaved`). `lastSavedAt` is an epoch-ms
-  // timestamp of the last successful save, or null if never saved this session.
+  // Server identity. `articleId` is null until the first successful save creates
+  // the row; the write page then swaps the URL to /write/{id}.
+  const articleId = ref<number | null>(null)
+  const slug = ref<string | null>(null)
+  const published = ref(false)
+
+  // `dirty` flips true on any local edit and back to false once that exact state
+  // has reached the server. `savedAt` is an epoch-ms timestamp of the last
+  // successful server save. `saving` / `saveError` drive the topbar status.
   const dirty = ref(false)
-  const lastSavedAt = ref<number | null>(null)
+  const savedAt = ref<number | null>(null)
+  const saving = ref(false)
+  const saveError = ref<string | null>(null)
 
   // Transient status line for the write page ("Image added", "Paste a link"…).
   const statusMessage = ref('Ready')
 
-  // Object URL for the chosen header image — local preview only this phase,
-  // not uploaded or persisted. Lives on the store (not the field component) so
-  // it survives the component unmounting and there's one place that revokes it.
+  // Header image. Before upload, `headerImageUrl` is a local `blob:` preview and
+  // `headerImageFile` holds the File to upload; after upload it's the server URL
+  // and the File is cleared.
   const headerImageUrl = ref<string | null>(null)
-  // object-position for the preview, as x/y percentages (0–100). Only shifts
-  // anything on an axis where the image overflows its frame under
-  // object-fit: cover — the field component drives it from drag / arrow keys.
+  const headerImageFile = ref<File | null>(null)
+  // object-position for the preview, as x/y percentages (0–100).
   const headerImagePosition = ref({ x: 50, y: 50 })
 
   const wordCount = computed(() => {
@@ -76,15 +111,55 @@ export const useEditorStore = defineStore('editor', () => {
     return text ? text.split(/\s+/).length : 0
   })
 
+  // Bumped on every local edit so an in-flight save knows whether the document
+  // moved under it (→ leave `dirty` set, another autosave is already queued).
+  let editGen = 0
+  let autosaveTimer: ReturnType<typeof setTimeout> | undefined
+  let inFlight: Promise<void> | null = null
+  let createPromise: Promise<number> | null = null
+
+  function markDirty() {
+    editGen++
+    dirty.value = true
+  }
+
+  function recoveryKey() {
+    return RECOVERY_PREFIX + (articleId.value ?? 'new')
+  }
+
+  function snapshot(): RecoverySnapshot {
+    return {
+      articleId: articleId.value,
+      title: title.value,
+      doc: doc.value,
+      headerImagePosition: headerImagePosition.value,
+      savedAt: Date.now(),
+    }
+  }
+
+  function applyServerMeta(article: Pick<Article, 'id' | 'slug' | 'published'>) {
+    articleId.value = article.id
+    slug.value = article.slug
+    published.value = article.published
+  }
+
+  function bodyPayload() {
+    return {
+      title: title.value,
+      content: doc.value,
+      header_image_position: headerImageUrl.value ? headerImagePosition.value : null,
+    }
+  }
+
   function setDoc(next: JSONContent) {
     doc.value = next
-    dirty.value = true
+    markDirty()
     scheduleAutosave()
   }
 
   function setTitle(next: string) {
     title.value = next
-    dirty.value = true
+    markDirty()
     scheduleAutosave()
   }
 
@@ -93,114 +168,257 @@ export const useEditorStore = defineStore('editor', () => {
   }
 
   /**
-   * Replace the whole document — e.g. after loading a draft from the API.
-   * Resets dirty/selection since nothing local has changed yet.
+   * Replace the whole document — e.g. after loading from the API. Resets
+   * dirty/selection since nothing local has changed yet.
    */
   function load(payload: { title?: string; doc?: JSONContent } = {}) {
     title.value = payload.title ?? ''
     doc.value = payload.doc ?? emptyDoc()
     selection.value = null
     dirty.value = false
-    lastSavedAt.value = null
   }
-
-  /** Mark the current state as persisted. */
-  function markSaved() {
-    dirty.value = false
-    lastSavedAt.value = Date.now()
-  }
-
-  // Guards loadDraft so it restores from storage only once per real page
-  // load. This store instance (and this flag) survives in-app navigation —
-  // including the browser back/forward buttons, which Vue Router handles
-  // client-side without reloading the document — so re-entering /write that
-  // way won't repopulate a draft the user just left blank. Only an actual
-  // reload tears down the JS context and resets this to false.
-  let draftRestoredThisLoad = false
-
-  let autosaveTimer: ReturnType<typeof setTimeout> | null = null
 
   function scheduleAutosave() {
     if (!import.meta.client) return
-    if (autosaveTimer) clearTimeout(autosaveTimer)
-    autosaveTimer = setTimeout(saveDraft, AUTOSAVE_DELAY_MS)
+    clearTimeout(autosaveTimer)
+    autosaveTimer = setTimeout(() => {
+      void persist()
+    }, AUTOSAVE_DELAY_MS)
   }
 
-  /** Write the current title/doc to the local draft slot, replacing whatever was there. */
-  function saveDraft() {
-    if (autosaveTimer) {
-      clearTimeout(autosaveTimer)
-      autosaveTimer = null
+  /** Create the server row if it doesn't exist yet. Memoised while in flight. */
+  function ensureArticle(): Promise<number> {
+    if (articleId.value !== null) return Promise.resolve(articleId.value)
+    if (!createPromise) {
+      createPromise = api<Article>('/articles', { method: 'POST', body: bodyPayload() })
+        .then((created) => {
+          const gen = editGen
+          applyServerMeta(created)
+          dropRecovery(RECOVERY_PREFIX + 'new')
+          if (editGen === gen) {
+            dirty.value = false
+            savedAt.value = Date.now()
+          }
+          saveError.value = null
+          return created.id
+        })
+        .finally(() => {
+          createPromise = null
+        })
     }
+    return createPromise
+  }
+
+  async function doPersist(opts: { keepalive?: boolean }) {
+    const gen = editGen
+    const key = recoveryKey()
+    saving.value = true
+    writeRecovery(key, snapshot())
+
+    try {
+      if (articleId.value === null) {
+        await ensureArticle()
+      } else {
+        await api<Article>(`/articles/${articleId.value}`, {
+          method: 'PATCH',
+          body: bodyPayload(),
+          ...opts,
+        })
+      }
+      saveError.value = null
+      if (editGen === gen) {
+        dirty.value = false
+        savedAt.value = Date.now()
+        dropRecovery(key)
+      }
+    } catch {
+      // Autosave must never throw into the UI. Keep the recovery copy and the
+      // dirty flag so the next edit / flush retries.
+      saveError.value = 'Couldn’t save — retrying…'
+    } finally {
+      saving.value = false
+    }
+  }
+
+  function persist(opts: { keepalive?: boolean } = {}): Promise<void> {
+    if (!import.meta.client) return Promise.resolve()
+    // Nothing typed yet — don't create an empty article just because the user
+    // opened /write and navigated away.
+    if (!dirty.value) return inFlight ?? Promise.resolve()
+    if (inFlight) return inFlight
+    inFlight = doPersist(opts).finally(() => {
+      inFlight = null
+    })
+    return inFlight
+  }
+
+  /** Save any unsynced work right now. `keepalive` for the tab-close path. */
+  async function flush(opts: { keepalive?: boolean } = {}) {
     if (!import.meta.client) return
-    const stored: StoredDraft = { title: title.value, doc: doc.value, savedAt: Date.now() }
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(stored))
-    markSaved()
+    clearTimeout(autosaveTimer)
+    await persist(opts)
+    // An edit landed while the first save was in flight — one more pass.
+    if (dirty.value) await persist(opts)
   }
 
   /**
-   * Restore the last saved draft, if any, into the working document — but
-   * only the first time this is called per page load, see
-   * `draftRestoredThisLoad` above.
+   * Load an existing article for editing. Throws on 403/404 so the page can
+   * render an error. If a recovery copy exists for this id it means the last
+   * session had unsynced edits — those win and re-save immediately.
    */
-  function loadDraft() {
-    if (draftRestoredThisLoad) return
-    draftRestoredThisLoad = true
-    const stored = readStoredDraft()
-    if (!stored) return
-    load({ title: stored.title, doc: stored.doc })
-    lastSavedAt.value = stored.savedAt
-  }
+  async function loadArticle(id: number) {
+    dropRecovery(LEGACY_DRAFT_KEY)
+    const server = await api<Article>(`/me/articles/${id}`)
+    applyServerMeta(server)
+    headerImageUrl.value = server.header_image_url
+    headerImageFile.value = null
 
-  /** Save any unpersisted edits right now instead of waiting for the debounce. */
-  function flushDraft() {
-    if (autosaveTimer) {
-      clearTimeout(autosaveTimer)
-      autosaveTimer = null
+    const recovered = readRecovery(RECOVERY_PREFIX + id)
+    if (recovered) {
+      load({ title: recovered.title, doc: recovered.doc })
+      headerImagePosition.value = recovered.headerImagePosition
+        ?? server.header_image_position
+        ?? { x: 50, y: 50 }
+      dirty.value = true
+      statusMessage.value = 'Restored unsaved changes'
+      scheduleAutosave()
+    } else {
+      load({ title: server.title, doc: server.content })
+      headerImagePosition.value = server.header_image_position ?? { x: 50, y: 50 }
+      dirty.value = false
+      savedAt.value = Date.parse(server.updated_at) || Date.now()
+      statusMessage.value = 'Ready'
     }
-    if (dirty.value) saveDraft()
+    saving.value = false
+    saveError.value = null
   }
 
-  /**
-   * Leaving the write page: persist anything unsaved, then blank the working
-   * document. The saved draft in storage is untouched, so `loadDraft` brings
-   * it back on the next visit.
-   */
-  function leaveDraft() {
-    flushDraft()
-    reset()
+  /** Blank slate for a fresh /write (no network). */
+  function startNew() {
+    clearTimeout(autosaveTimer)
+    inFlight = null
+    createPromise = null
+    editGen = 0
+    articleId.value = null
+    slug.value = null
+    published.value = false
+    load()
+    clearHeaderImageLocal()
+    headerImageFile.value = null
+    dirty.value = false
+    saving.value = false
+    savedAt.value = null
+    saveError.value = null
+    statusMessage.value = 'Ready'
+    dropRecovery(LEGACY_DRAFT_KEY)
+    dropRecovery(RECOVERY_PREFIX + 'new')
+  }
+
+  // --- header image --------------------------------------------------------
+
+  function clearHeaderImageLocal() {
+    if (headerImageUrl.value?.startsWith('blob:')) URL.revokeObjectURL(headerImageUrl.value)
+    headerImageUrl.value = null
+    headerImagePosition.value = { x: 50, y: 50 }
   }
 
   function setHeaderImage(file: File) {
-    if (headerImageUrl.value) URL.revokeObjectURL(headerImageUrl.value)
+    if (headerImageUrl.value?.startsWith('blob:')) URL.revokeObjectURL(headerImageUrl.value)
     headerImageUrl.value = URL.createObjectURL(file)
+    headerImageFile.value = file
     headerImagePosition.value = { x: 50, y: 50 }
+    markDirty()
+    void uploadHeaderImage()
   }
 
-  function clearHeaderImage() {
-    if (headerImageUrl.value) URL.revokeObjectURL(headerImageUrl.value)
-    headerImageUrl.value = null
-    headerImagePosition.value = { x: 50, y: 50 }
+  async function uploadHeaderImage() {
+    const file = headerImageFile.value
+    if (!file) return
+    try {
+      statusMessage.value = 'Uploading header image…'
+      const id = await ensureArticle()
+      const form = new FormData()
+      form.append('image', file)
+      const updated = await api<Article>(`/articles/${id}/header-image`, { method: 'POST', body: form })
+      if (headerImageUrl.value?.startsWith('blob:')) URL.revokeObjectURL(headerImageUrl.value)
+      headerImageUrl.value = updated.header_image_url
+      headerImageFile.value = null
+      statusMessage.value = 'Header image added'
+      // Persist the reset focal point.
+      scheduleAutosave()
+    } catch {
+      saveError.value = 'Header image upload failed'
+      statusMessage.value = 'Header image upload failed'
+    }
+  }
+
+  async function clearHeaderImage() {
+    clearHeaderImageLocal()
+    headerImageFile.value = null
+    statusMessage.value = 'Header image removed'
+    if (articleId.value !== null) {
+      try {
+        await api(`/articles/${articleId.value}/header-image`, { method: 'DELETE' })
+      } catch {
+        saveError.value = 'Couldn’t remove the header image'
+      }
+    }
   }
 
   function moveHeaderImage(x: number, y: number) {
     const clamp = (n: number) => Math.min(100, Math.max(0, n))
     headerImagePosition.value = { x: clamp(x), y: clamp(y) }
+    markDirty()
+    scheduleAutosave()
   }
 
-  /** Back to a blank document with no header image. */
-  function reset() {
-    load()
-    clearHeaderImage()
-    statusMessage.value = 'Ready'
+  // --- inline body image --------------------------------------------------
+
+  async function uploadBodyImage(file: File): Promise<string> {
+    const id = await ensureArticle()
+    const form = new FormData()
+    form.append('image', file)
+    const { url } = await api<{ url: string }>(`/articles/${id}/images`, { method: 'POST', body: form })
+    return url
+  }
+
+  // --- publish -----------------------------------------------------------
+
+  async function publish() {
+    await flush()
+    const id = await ensureArticle()
+    try {
+      const updated = await api<Article>(`/articles/${id}`, { method: 'PATCH', body: { published: true } })
+      applyServerMeta(updated)
+      saveError.value = null
+      statusMessage.value = 'Published'
+    } catch (error) {
+      const data = (error as { data?: { errors?: Record<string, string[]>; message?: string } }).data
+      const message = data?.errors?.title?.[0] ?? data?.message ?? 'Couldn’t publish'
+      saveError.value = message
+      statusMessage.value = message
+      throw error
+    }
+  }
+
+  async function unpublish() {
+    const id = await ensureArticle()
+    const updated = await api<Article>(`/articles/${id}`, { method: 'PATCH', body: { published: false } })
+    applyServerMeta(updated)
+    statusMessage.value = 'Moved to drafts'
   }
 
   return {
     doc,
     title,
     selection,
+    articleId,
+    slug,
+    published,
     dirty,
-    lastSavedAt,
+    saving,
+    savedAt,
+    saveError,
     statusMessage,
     headerImageUrl,
     headerImagePosition,
@@ -209,14 +427,14 @@ export const useEditorStore = defineStore('editor', () => {
     setTitle,
     setSelection,
     load,
-    markSaved,
-    saveDraft,
-    loadDraft,
-    flushDraft,
-    leaveDraft,
+    loadArticle,
+    startNew,
+    flush,
     setHeaderImage,
     clearHeaderImage,
     moveHeaderImage,
-    reset,
+    uploadBodyImage,
+    publish,
+    unpublish,
   }
 })

@@ -1,6 +1,11 @@
 <template>
   <div class="page accessible-editor">
-    <TopbarNavigation :show-menu-toggle="false" :show-search="false" :show-write-button="false" />
+    <TopbarNavigation
+      :show-menu-toggle="false"
+      :show-search="false"
+      :show-write-button="false"
+      :write-actions="true"
+    />
     <v-main class="editor-shell">
       <div class="editor-shell__main">
         <slot />
