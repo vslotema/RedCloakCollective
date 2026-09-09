@@ -45,7 +45,7 @@ class TopicSeeder extends Seeder
     public function run(): void
     {
         foreach (self::TOPICS as $slug => $name) {
-            Topic::updateOrCreate(['slug' => $slug], ['name' => $name]);
+            Topic::updateOrCreate(['slug' => $slug], ['name' => $name, 'curated' => true]);
         }
     }
 }

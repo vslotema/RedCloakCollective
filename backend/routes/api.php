@@ -8,6 +8,7 @@ use App\Http\Controllers\Public\ArticleController;
 use App\Http\Controllers\Public\EquipmentListController;
 use App\Http\Controllers\Public\ProfileController;
 use App\Http\Controllers\Public\SitemapController;
+use App\Http\Controllers\TopicController;
 use App\Http\Controllers\TopicFollowController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -50,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users/{user:username}/follow', [FollowController::class, 'store']);
     Route::delete('/users/{user:username}/follow', [FollowController::class, 'destroy']);
 
+    Route::get('/topics', [TopicController::class, 'index']);
     Route::get('/topics/following', [TopicFollowController::class, 'index']);
     Route::post('/topics/{topic:slug}/follow', [TopicFollowController::class, 'store']);
     Route::delete('/topics/{topic:slug}/follow', [TopicFollowController::class, 'destroy']);

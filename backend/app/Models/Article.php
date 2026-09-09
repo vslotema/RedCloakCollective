@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['title', 'slug', 'content', 'published_at', 'header_image_path', 'header_image_position'])]
+#[Fillable(['title', 'slug', 'excerpt', 'content', 'published_at', 'header_image_path', 'header_image_position'])]
 #[Hidden(['header_image_path'])]
 class Article extends Model
 {
@@ -26,7 +26,7 @@ class Article extends Model
      *
      * @var list<string>
      */
-    protected $appends = ['header_image_url', 'published'];
+    protected $appends = ['header_image_url', 'published', 'state'];
 
     protected function casts(): array
     {
@@ -48,6 +48,21 @@ class Article extends Model
     {
         return Attribute::get(fn (): bool => $this->published_at !== null
             && $this->published_at->lessThanOrEqualTo(now()));
+    }
+
+    /**
+     * Author-facing lifecycle: no timestamp → draft; a future timestamp →
+     * scheduled (auto-goes-live when it passes); a past timestamp → published.
+     */
+    protected function state(): Attribute
+    {
+        return Attribute::get(function (): string {
+            if ($this->published_at === null) {
+                return 'draft';
+            }
+
+            return $this->published_at->isFuture() ? 'scheduled' : 'published';
+        });
     }
 
     public function author(): BelongsTo

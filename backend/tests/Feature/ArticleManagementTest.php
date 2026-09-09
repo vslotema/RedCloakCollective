@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Article;
+use App\Models\Topic;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -53,14 +54,18 @@ class ArticleManagementTest extends TestCase
     {
         $user = User::factory()->create();
 
+        $topic = Topic::factory()->create();
+
         Sanctum::actingAs($user);
         $this->postJson('/api/articles', [
             'title' => 'Published now',
             'content' => $this->doc(),
             'published' => true,
+            'topic_ids' => [$topic->id],
         ])
             ->assertCreated()
-            ->assertJsonPath('published', true);
+            ->assertJsonPath('published', true)
+            ->assertJsonPath('topics.0.id', $topic->id);
 
         $this->assertNotNull(Article::firstWhere('title', 'Published now')->published_at);
     }
@@ -89,6 +94,7 @@ class ArticleManagementTest extends TestCase
     {
         $user = User::factory()->create();
         $article = Article::factory()->unpublished()->for($user, 'author')->create(['title' => '']);
+        $article->topics()->attach(Topic::factory()->create());
 
         Sanctum::actingAs($user);
         $this->patchJson("/api/articles/{$article->id}", ['published' => true])
@@ -101,6 +107,25 @@ class ArticleManagementTest extends TestCase
         $this->patchJson("/api/articles/{$article->id}", ['title' => 'Now titled', 'published' => true])
             ->assertOk()
             ->assertJsonPath('published', true);
+    }
+
+    public function test_publishing_requires_at_least_one_topic(): void
+    {
+        $user = User::factory()->create();
+        $article = Article::factory()->unpublished()->for($user, 'author')->create(['title' => 'Ready']);
+
+        Sanctum::actingAs($user);
+        $this->patchJson("/api/articles/{$article->id}", ['published' => true])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('topic_ids');
+
+        $this->assertNull($article->fresh()->published_at);
+
+        $topic = Topic::factory()->create();
+        $this->patchJson("/api/articles/{$article->id}", [
+            'published' => true,
+            'topic_ids' => [$topic->id],
+        ])->assertOk()->assertJsonPath('published', true);
     }
 
     public function test_creating_a_published_article_without_a_title_is_rejected(): void
@@ -173,6 +198,7 @@ class ArticleManagementTest extends TestCase
     {
         $user = User::factory()->create();
         $article = Article::factory()->unpublished()->for($user, 'author')->create();
+        $article->topics()->attach(Topic::factory()->create());
 
         Sanctum::actingAs($user);
 
@@ -348,5 +374,110 @@ class ArticleManagementTest extends TestCase
 
         $this->deleteJson("/api/articles/{$article->id}/header-image")->assertUnauthorized();
         $this->postJson("/api/articles/{$article->id}/images")->assertUnauthorized();
+    }
+
+    // --- topics, excerpt & scheduling ------------------------------------------
+
+    public function test_update_syncs_topics_and_creates_author_topics(): void
+    {
+        $user = User::factory()->create();
+        $article = Article::factory()->unpublished()->for($user, 'author')->create();
+        $existing = Topic::factory()->create(['name' => 'Assistive technology']);
+
+        Sanctum::actingAs($user);
+        $this->patchJson("/api/articles/{$article->id}", [
+            'topic_ids' => [$existing->id],
+            'new_topics' => ['Feeding tips', 'feeding tips'],
+        ])->assertOk()->assertJsonCount(2, 'topics');
+
+        $this->assertDatabaseHas('topics', ['slug' => 'feeding-tips', 'curated' => false]);
+        // "Feeding tips" / "feeding tips" collapse to one row by slug.
+        $this->assertSame(1, Topic::where('slug', 'feeding-tips')->count());
+        $this->assertEqualsCanonicalizing(
+            [$existing->id, Topic::where('slug', 'feeding-tips')->value('id')],
+            $article->fresh()->topics->pluck('id')->all(),
+        );
+    }
+
+    public function test_an_article_may_carry_at_most_five_topics(): void
+    {
+        $user = User::factory()->create();
+        $article = Article::factory()->for($user, 'author')->create();
+        $topics = Topic::factory()->count(6)->create();
+
+        Sanctum::actingAs($user);
+        $this->patchJson("/api/articles/{$article->id}", [
+            'topic_ids' => $topics->pluck('id')->all(),
+        ])->assertStatus(422)->assertJsonValidationErrors('topic_ids');
+    }
+
+    public function test_a_user_can_set_a_preview_excerpt(): void
+    {
+        $user = User::factory()->create();
+        $article = Article::factory()->for($user, 'author')->create();
+
+        Sanctum::actingAs($user);
+        $this->patchJson("/api/articles/{$article->id}", [
+            'excerpt' => 'A short preview subtitle.',
+        ])->assertOk()->assertJsonPath('excerpt', 'A short preview subtitle.');
+    }
+
+    public function test_a_user_can_schedule_an_article_for_the_future(): void
+    {
+        $user = User::factory()->create();
+        $article = Article::factory()->unpublished()->for($user, 'author')->create(['title' => 'Later']);
+        $article->topics()->attach(Topic::factory()->create());
+        $when = now()->addDays(2)->startOfSecond();
+
+        Sanctum::actingAs($user);
+        $this->patchJson("/api/articles/{$article->id}", [
+            'publish_at' => $when->toIso8601String(),
+        ])->assertOk()
+            ->assertJsonPath('published', false)
+            ->assertJsonPath('state', 'scheduled');
+
+        $this->assertEquals(
+            $when->toIso8601String(),
+            $article->fresh()->published_at->toIso8601String(),
+        );
+
+        // Not visible on the public surface yet.
+        $this->getJson("/api/articles/{$article->slug}")->assertNotFound();
+    }
+
+    public function test_a_scheduled_article_goes_live_when_its_time_passes(): void
+    {
+        $article = Article::factory()->for(User::factory(), 'author')
+            ->create(['published_at' => now()->addHour()]);
+
+        $this->getJson("/api/articles/{$article->slug}")->assertNotFound();
+
+        $this->travel(2)->hours();
+
+        $this->getJson("/api/articles/{$article->slug}")->assertOk();
+    }
+
+    public function test_scheduling_a_past_time_publishes_immediately(): void
+    {
+        $user = User::factory()->create();
+        $article = Article::factory()->unpublished()->for($user, 'author')->create(['title' => 'Now']);
+        $article->topics()->attach(Topic::factory()->create());
+
+        Sanctum::actingAs($user);
+        $this->patchJson("/api/articles/{$article->id}", [
+            'publish_at' => now()->subDay()->toIso8601String(),
+        ])->assertOk()->assertJsonPath('published', true);
+    }
+
+    public function test_topics_index_lists_curated_first(): void
+    {
+        Topic::factory()->create(['name' => 'Zebra care', 'curated' => true]);
+        Topic::factory()->userCreated()->create(['name' => 'Aardvark tips']);
+
+        Sanctum::actingAs(User::factory()->create());
+        $this->getJson('/api/topics')
+            ->assertOk()
+            ->assertJsonPath('0.name', 'Zebra care')
+            ->assertJsonPath('1.name', 'Aardvark tips');
     }
 }

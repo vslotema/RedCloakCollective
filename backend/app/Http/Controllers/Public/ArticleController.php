@@ -24,6 +24,6 @@ class ArticleController extends Controller
             404
         );
 
-        return $article->load('author:id,name,username');
+        return $article->load('author:id,name,username', 'topics:id,name,slug');
     }
 }

@@ -21,6 +21,13 @@ class TopicFactory extends Factory
         return [
             'name' => Str::title($name),
             'slug' => Str::slug($name),
+            'curated' => true,
         ];
+    }
+
+    /** An author-created topic from the publish dialog. */
+    public function userCreated(): static
+    {
+        return $this->state(fn () => ['curated' => false]);
     }
 }
