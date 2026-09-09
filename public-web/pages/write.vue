@@ -15,15 +15,24 @@ function resizeBody() {
   }
 }
 
+function flushDraft() {
+  editorStore.flushDraft()
+}
+
 onMounted(() => {
+  editorStore.loadDraft()
   resizeBody()
   window.addEventListener('resize', resizeBody)
+  // Covers a hard reload / tab close, where onBeforeUnmount below may not run.
+  window.addEventListener('beforeunload', flushDraft)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', resizeBody)
+  window.removeEventListener('beforeunload', flushDraft)
+  editorStore.leaveDraft()
 })
 watch(
-  () => editorStore.content,
+  () => editorStore.doc,
   () => nextTick(resizeBody),
 )
 </script>
@@ -42,15 +51,21 @@ watch(
       </span>
       <input
         id="doc-title"
-        v-model="editorStore.title"
+        :value="editorStore.title"
         type="text"
         aria-label="Title"
         class="editor-main__title text-h3"
         placeholder="Title"
+        @input="editorStore.setTitle(($event.target as HTMLInputElement).value)"
       />
     </div>
 
-    <RichTextEditor></RichTextEditor>
+    <RichTextEditor
+      :model-value="editorStore.doc"
+      :selection="editorStore.selection"
+      @update:model-value="editorStore.setDoc"
+      @update:selection="editorStore.setSelection"
+    />
   </section>
 </template>
 

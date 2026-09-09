@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { FloatingMenu, BubbleMenu } from "@tiptap/vue-3/menus";
 import type { JSONContent } from "@tiptap/core";
+import type { EditorSelection } from "~/stores/editor";
 import InsertMenu from "./InsertMenu.vue";
 import TextFormattingTools from "./TextFormattingTools.vue";
 import { LinkCard } from "./link-card";
@@ -22,6 +23,12 @@ const content = defineModel<JSONContent>({
 });
 
 
+// Cursor / selection position, mirrored up to the editor store. Write-only
+// from here — the store never pushes a selection back down.
+const selection = defineModel<EditorSelection | null>("selection", {
+  default: null,
+});
+
 const linkEditing = ref(false);
 
 const editor = useEditor({
@@ -39,6 +46,10 @@ const editor = useEditor({
   ],
   onUpdate: ({ editor }) => {
     content.value = editor.getJSON();
+  },
+  onSelectionUpdate: ({ editor }) => {
+    const { from, to, empty } = editor.state.selection;
+    selection.value = { from, to, empty };
   },
 });
 
