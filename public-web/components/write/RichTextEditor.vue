@@ -9,6 +9,9 @@ import TextFormattingTools from "./TextFormattingTools.vue";
 import { LinkCard } from "./link-card";
 import { CodeBlock } from "./code-block";
 import { VideoEmbed } from "./video-embed";
+import { LineNumbers } from "./line-numbers";
+
+const editorStore = useEditorStore();
 
 const content = defineModel<JSONContent>({
   default: () => ({
@@ -36,11 +39,27 @@ const editor = useEditor({
     VideoEmbed,
     LinkCard,
     CodeBlock,
+    LineNumbers,
   ],
   onUpdate: ({ editor }) => {
     content.value = editor.getJSON();
   },
 });
+
+const lineNumbersOn = computed(
+  () => editor.value?.storage.lineNumbers?.enabled ?? false,
+);
+
+function toggleLineNumbers() {
+  editor.value?.chain().focus().toggleLineNumbers().run();
+  editorStore.statusMessage = `Block numbers ${lineNumbersOn.value ? "on" : "off"}`;
+}
+
+if (import.meta.dev) {
+  watchEffect(() => {
+    if (editor.value) (window as unknown as Record<string, unknown>).__editor = editor.value;
+  });
+}
 
 function bubbleShouldShow({ editor, state, view, from, to }: any) {
   if (linkEditing.value) return true;
@@ -71,6 +90,21 @@ onBeforeUnmount(() => {
       class="rich-text-editor__toolbar"
     >
       <TextFormattingTools :editor="editor" />
+      <v-spacer />
+      <v-btn
+        icon
+        size="small"
+        :active="lineNumbersOn"
+        active-color="#4f9cf6"
+        :aria-pressed="lineNumbersOn"
+        aria-label="Toggle block numbers"
+        @click="toggleLineNumbers"
+      >
+        <v-icon icon="hash" :size="18" />
+        <v-tooltip activator="parent" location="bottom" content-class="navbar-tooltip">
+          Block numbers
+        </v-tooltip>
+      </v-btn>
     </v-toolbar>
   
     <FloatingMenu
@@ -92,13 +126,32 @@ onBeforeUnmount(() => {
     >
       <TextFormattingTools v-model:link-editing="linkEditing" :editor="editor" color="white" background="black" />
     </BubbleMenu>
-    <editor-content :editor="editor" class="rich-text-editor__content" />
+    <editor-content
+      :editor="editor"
+      class="rich-text-editor__content"
+      :class="{ 'rich-text-editor__content--numbered': lineNumbersOn }"
+    />
+    <p class="rich-text-editor__sr-status" aria-live="polite">
+      {{ editorStore.statusMessage }}
+    </p>
   </div>
 </template>
 
 <style scoped lang="scss">
 .rich-text-editor {
   border-radius: 4px;
+
+  &__sr-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
 
   &__toolbar {
     position: sticky;
@@ -107,6 +160,79 @@ onBeforeUnmount(() => {
     border-radius: .25rem;
     background: rgb(var(--v-theme-background));
     border-bottom: 1px solid rgb(var(--v-theme-surface));
+  }
+
+  // Block-number gutter — see ./line-numbers.ts. Off by default; toggled by the
+  // toolbar "#" button which adds this modifier.
+  //
+  // Default (wide): labels live in the page's left margin, right-aligned to the
+  // text column's left edge, so the text stays put and aligned with the toolbar.
+  &__content--numbered {
+    --ln-label-width: 6rem;
+    --ln-gap: 1.25rem;
+
+    :deep(.ProseMirror) {
+      position: relative;
+    }
+
+    :deep(.line-label) {
+      position: absolute;
+      right: calc(100% + var(--ln-gap));
+      width: var(--ln-label-width);
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      font-variant-numeric: tabular-nums;
+      color: rgb(var(--v-theme-on-surface));
+      opacity: 0.8;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    // Keep the "+" menu clear of the label column.
+    .insert-menu {
+      transform: translateX(
+        calc(-1 * (var(--ln-label-width) + var(--ln-gap) + 3.25rem))
+      );
+    }
+
+    // Not enough left margin for a margin gutter → reserve an inset gutter
+    // instead (labels move inside, text shifts right).
+    @media (max-width: 1099px) {
+      --ln-inset: 7.5rem;
+
+      :deep(.ProseMirror) {
+        padding-left: var(--ln-inset);
+      }
+
+      :deep(.line-label) {
+        right: auto;
+        left: 0;
+        width: calc(var(--ln-inset) - var(--ln-gap));
+      }
+
+      .insert-menu {
+        transform: translateX(calc(-1 * var(--ln-inset)));
+      }
+    }
+
+    // No room at all — hide the labels (the mode can still read "on").
+    @media (max-width: 599px) {
+      :deep(.ProseMirror) {
+        padding-left: 0;
+      }
+
+      :deep(.line-label) {
+        display: none;
+      }
+
+      .insert-menu {
+        transform: translateX(-75px);
+      }
+    }
   }
 
   &__content {
