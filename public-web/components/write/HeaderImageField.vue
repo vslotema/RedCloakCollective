@@ -235,7 +235,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
     font-size: var(--text-md);
     font-family: inherit;
     color: rgb(var(--v-theme-on-surface));
-    background: rgb(var(--v-theme-on-background));
+    background: #e6e6e6;
     border: 1px dashed rgb(var(--v-theme-border-color));
     border-radius: .25rem;
     cursor: pointer;

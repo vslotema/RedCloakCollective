@@ -6,7 +6,6 @@ interface MenuItem {
   title: string
   route: string
   icon: string
-  // Route names that should also keep this item highlighted (e.g. Home's tabs).
   match?: string[]
 }
 
@@ -20,8 +19,6 @@ const menuItems = ref<MenuItem[]>([
   { title: 'Home', route: '/', icon: 'home', match: ['index', 'home-explore'] },
   { title: 'Library', route: '/library', icon: 'bookmark' },
   { title: 'Profile', route: '/profile', icon: 'user' },
-  // These are the author's own dashboard (drafts/scheduled/published) — a
-  // different concept from the public /articles and /equipment browse pages.
   { title: 'Your Articles', route: '/dashboard/articles', icon: 'book-open' },
   { title: 'Equipment Lists', route: '/dashboard/equipment', icon: 'package' },
 ])

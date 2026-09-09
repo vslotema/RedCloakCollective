@@ -180,7 +180,7 @@ onBeforeUnmount(() => {
   // text column's left edge, so the text stays put and aligned with the toolbar.
   &__content--numbered {
     --ln-label-width: 6rem;
-    --ln-gap: 1.25rem;
+    --ln-gap: 1.5rem;
 
     :deep(.ProseMirror) {
       position: relative;
