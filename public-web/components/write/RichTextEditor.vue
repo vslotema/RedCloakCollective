@@ -14,6 +14,7 @@ import { LineNumbers } from "./line-numbers";
 import { toggleBlockNumbers } from "./editor-actions";
 
 const editorStore = useEditorStore();
+const { setEditor } = useEditorInstance();
 
 const content = defineModel<JSONContent>({
   default: () => ({
@@ -68,6 +69,13 @@ function toggleLineNumbers() {
   editorStore.statusMessage = `Block numbers ${lineNumbersOn.value ? "on" : "off"}`;
 }
 
+// Publish the live editor for page-level UI (voice command controller / button).
+watch(
+  editor,
+  (value) => setEditor(value ?? null),
+  { immediate: true },
+);
+
 if (import.meta.dev) {
   watchEffect(() => {
     if (editor.value) (window as unknown as Record<string, unknown>).__editor = editor.value;
@@ -91,6 +99,7 @@ watch(content, (value) => {
 });
 
 onBeforeUnmount(() => {
+  setEditor(null);
   editor.value?.destroy();
 });
 </script>
