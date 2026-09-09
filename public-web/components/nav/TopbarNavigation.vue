@@ -1,11 +1,11 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    showMenuToggle?: boolean
-    showGoBackButton?: boolean
-    showSearch?: boolean
-    showWriteButton?: boolean
-    writeActions?: boolean
+    showMenuToggle?: boolean;
+    showGoBackButton?: boolean;
+    showSearch?: boolean;
+    showWriteButton?: boolean;
+    writeActions?: boolean;
   }>(),
   {
     showMenuToggle: true,
@@ -17,37 +17,37 @@ withDefaults(
 );
 
 defineEmits<{
-  toggleNavigation: []
-}>()
+  toggleNavigation: [];
+}>();
 const router = useRouter();
-const editorStore = useEditorStore()
-const publishing = ref(false)
+const editorStore = useEditorStore();
+const publishing = ref(false);
 
 const saveStatus = computed(() => {
-  if (editorStore.saving) return 'Saving…'
-  if (editorStore.saveError) return editorStore.saveError
-  if (editorStore.dirty) return 'Unsaved changes'
-  if (editorStore.savedAt) return 'Saved'
-  return ''
-})
+  if (editorStore.saving) return "Saving…";
+  if (editorStore.saveError) return editorStore.saveError;
+  if (editorStore.dirty) return "Unsaved changes";
+  if (editorStore.savedAt) return "Saved";
+  return "";
+});
 
 async function onPublish() {
-  publishing.value = true
+  publishing.value = true;
   try {
-    await editorStore.publish()
+    await editorStore.publish();
   } catch {
     // The store surfaces the reason via saveStatus.
   } finally {
-    publishing.value = false
+    publishing.value = false;
   }
 }
 
 async function onUnpublish() {
-  publishing.value = true
+  publishing.value = true;
   try {
-    await editorStore.unpublish()
+    await editorStore.unpublish();
   } finally {
-    publishing.value = false
+    publishing.value = false;
   }
 }
 
@@ -61,12 +61,7 @@ function goBack() {
 </script>
 
 <template>
-  <v-app-bar
-    class="pl-2 pr-4"
-    color="background"
-    flat
-    style="border-bottom: thin solid #d5d5d5"
-  >
+  <v-app-bar class="topbar-nav pl-2 pr-4" flat>
     <div class="d-flex align-center">
       <v-btn
         v-if="showGoBackButton"
@@ -104,9 +99,12 @@ function goBack() {
 
     <v-spacer />
 
-       <div class="d-flex align-center" :class="writeActions ? 'ga-4' : 'ga-2'">
+    <div class="d-flex align-center" :class="writeActions ? 'ga-4' : 'ga-2'">
       <template v-if="writeActions">
-        <span class="text-body-2 text-medium-emphasis d-none d-sm-inline mr-1" aria-live="polite">
+        <span
+          class="text-body-2 text-medium-emphasis d-none d-sm-inline mr-1"
+          aria-live="polite"
+        >
           {{ saveStatus }}
         </span>
         <v-btn
@@ -153,7 +151,7 @@ function goBack() {
       </template>
 
       <template v-else>
-         <v-btn
+        <v-btn
           v-if="showWriteButton"
           icon
           variant="flat"
@@ -170,7 +168,13 @@ function goBack() {
             text="Write"
           />
         </v-btn>
-        <v-btn icon variant="flat" color="white" size="40" class="action-btn border">
+        <v-btn
+          icon
+          variant="flat"
+          color="white"
+          size="40"
+          class="action-btn border"
+        >
           <v-icon icon="bell" :size="20" />
           <v-tooltip
             activator="parent"
@@ -180,18 +184,21 @@ function goBack() {
           />
         </v-btn>
       </template>
-      <v-avatar size="40" image="https://randomuser.me/api/portraits/women/44.jpg" />
+      <v-avatar
+        size="40"
+        image="https://randomuser.me/api/portraits/women/44.jpg"
+      />
     </div>
   </v-app-bar>
 </template>
 
 <style scoped lang="scss">
+.topbar-nav.v-app-bar.v-toolbar {
+  background-color: rgba($color: var(--v-theme-background), $alpha: .95);
+}
 .menu-btn {
   margin-right: 0.375rem;
 }
-
-// Icon uses the same color as a non-active navigation item's text
-// (Vuetify's theme "on-surface" token), while the label stays high-emphasis.
 .action-btn :deep(.v-icon) {
   color: rgb(var(--v-theme-on-surface));
 }
