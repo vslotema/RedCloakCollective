@@ -7,14 +7,16 @@
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@nuxtjs/sitemap": "^8.5.0",
     "@pinia/nuxt": "^1.0.2",
     "@tiptap/core": "^3.29.2",
-    "@tiptap/extension-image": "^3.29.2",
     "@tiptap/extension-code-block-lowlight": "^3.29.2",
+    "@tiptap/extension-image": "^3.29.2",
     "@tiptap/pm": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
     "@tiptap/vue-3": "^3.29.2",
@@ -30,6 +32,10 @@
     "vuetify-nuxt-module": "^1.0.0-rc.5"
   },
   "devDependencies": {
-    "sass-embedded": "^1.103.1"
+    "@nuxt/test-utils": "^4.3.2",
+    "@vue/test-utils": "^2.5.0",
+    "happy-dom": "^20.14.0",
+    "sass-embedded": "^1.103.1",
+    "vitest": "^5.0.0"
   }
 }

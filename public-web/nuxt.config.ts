@@ -6,7 +6,7 @@ const apiBase = process.env.NUXT_API_BASE ?? `${backendOrigin}/api`
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-01',
 
-  modules: ['vuetify-nuxt-module', '@nuxtjs/sitemap', '@pinia/nuxt'],
+  modules: ['vuetify-nuxt-module', '@nuxtjs/sitemap', '@pinia/nuxt', '@nuxt/test-utils/module'],
 
   ssr: true,
 
