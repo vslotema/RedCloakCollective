@@ -31,6 +31,13 @@ class ApiGuestResponseTest extends TestCase
             'GET /api/onboarding/recommendations' => ['get', '/api/onboarding/recommendations'],
             'POST /api/onboarding/personalize' => ['post', '/api/onboarding/personalize'],
             'POST /api/topics/{slug}/follow' => ['post', '/api/topics/anything/follow'],
+            'GET /api/me/articles' => ['get', '/api/me/articles'],
+            'POST /api/articles' => ['post', '/api/articles'],
+            'PUT /api/articles/{article}' => ['put', '/api/articles/1'],
+            'DELETE /api/articles/{article}' => ['delete', '/api/articles/1'],
+            'POST /api/articles/{article}/header-image' => ['post', '/api/articles/1/header-image'],
+            'DELETE /api/articles/{article}/header-image' => ['delete', '/api/articles/1/header-image'],
+            'POST /api/articles/{article}/images' => ['post', '/api/articles/1/images'],
         ];
     }
 }

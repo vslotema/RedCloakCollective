@@ -61,7 +61,7 @@ function choose(label: string) {
   open.value = false
 }
 
-function onFileChange(event: Event) {
+async function onFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   // Let the same file be picked again after it's inserted / removed.
@@ -73,10 +73,15 @@ function onFileChange(event: Event) {
     return
   }
 
-  const src = URL.createObjectURL(file)
-  editor.chain().focus().setImage({ src }).run()
-  editorStore.statusMessage = 'Image added'
   open.value = false
+  editorStore.statusMessage = 'Uploading image…'
+  try {
+    const src = await editorStore.uploadBodyImage(file)
+    editor.chain().focus().setImage({ src }).run()
+    editorStore.statusMessage = 'Image added'
+  } catch {
+    editorStore.statusMessage = 'Image upload failed'
+  }
 }
 </script>
 

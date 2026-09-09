@@ -23,7 +23,17 @@ class ArticleFactory extends Factory
             'user_id' => User::factory(),
             'title' => $title,
             'slug' => Str::slug($title).'-'.Str::lower(Str::random(6)),
-            'content' => fake()->paragraphs(3, true),
+            'content' => [
+                'type' => 'doc',
+                'content' => [
+                    [
+                        'type' => 'paragraph',
+                        'content' => [['type' => 'text', 'text' => fake()->paragraph()]],
+                    ],
+                ],
+            ],
+            'header_image_path' => null,
+            'header_image_position' => null,
             'published_at' => now(),
         ];
     }
@@ -35,6 +45,18 @@ class ArticleFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'published_at' => null,
+        ]);
+    }
+
+    /**
+     * Has a header image already "uploaded" (path only — no real file on disk
+     * unless the test faked the storage and put one there).
+     */
+    public function withHeaderImage(string $path = 'article-headers/example.jpg'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'header_image_path' => $path,
+            'header_image_position' => ['x' => 50, 'y' => 50],
         ]);
     }
 }

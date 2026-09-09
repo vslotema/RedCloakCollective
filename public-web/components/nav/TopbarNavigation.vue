@@ -1,24 +1,55 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    showMenuToggle?: boolean;
-    showGoBackButton?: boolean;
-    showSearch?: boolean;
-    showWriteButton?: boolean;
+    showMenuToggle?: boolean
+    showGoBackButton?: boolean
+    showSearch?: boolean
+    showWriteButton?: boolean
+    writeActions?: boolean
   }>(),
   {
     showMenuToggle: true,
     showGoBackButton: false,
     showSearch: true,
     showWriteButton: true,
+    writeActions: false,
   },
 );
 
 defineEmits<{
-  toggleNavigation: [];
-}>();
-
+  toggleNavigation: []
+}>()
 const router = useRouter();
+const editorStore = useEditorStore()
+const publishing = ref(false)
+
+const saveStatus = computed(() => {
+  if (editorStore.saving) return 'Saving…'
+  if (editorStore.saveError) return editorStore.saveError
+  if (editorStore.dirty) return 'Unsaved changes'
+  if (editorStore.savedAt) return 'Saved'
+  return ''
+})
+
+async function onPublish() {
+  publishing.value = true
+  try {
+    await editorStore.publish()
+  } catch {
+    // The store surfaces the reason via saveStatus.
+  } finally {
+    publishing.value = false
+  }
+}
+
+async function onUnpublish() {
+  publishing.value = true
+  try {
+    await editorStore.unpublish()
+  } finally {
+    publishing.value = false
+  }
+}
 
 function goBack() {
   if (window.history.length > 1) {
@@ -73,43 +104,83 @@ function goBack() {
 
     <v-spacer />
 
-    <div class="d-flex align-center ga-2">
-      <v-btn
-        v-if="showWriteButton"
-        icon
-        variant="flat"
-        color="white"
-        size="40"
-        class="action-btn border"
-        to="/write"
-      >
-        <v-icon icon="edit" :size="20" />
-        <v-tooltip
-          activator="parent"
-          location="bottom"
-          content-class="navbar-tooltip"
-          text="Write"
-        />
-      </v-btn>
-      <v-btn
-        icon
-        variant="flat"
-        color="white"
-        size="40"
-        class="action-btn border"
-      >
-        <v-icon icon="bell" :size="20" />
-        <v-tooltip
-          activator="parent"
-          location="bottom"
-          content-class="navbar-tooltip"
-          text="Notifications"
-        />
-      </v-btn>
-      <v-avatar
-        size="40"
-        image="https://randomuser.me/api/portraits/women/44.jpg"
-      />
+       <div class="d-flex align-center" :class="writeActions ? 'ga-4' : 'ga-2'">
+      <template v-if="writeActions">
+        <span class="text-body-2 text-medium-emphasis d-none d-sm-inline mr-1" aria-live="polite">
+          {{ saveStatus }}
+        </span>
+        <v-btn
+          v-if="editorStore.saveError"
+          size="small"
+          variant="text"
+          @click="editorStore.flush()"
+        >
+          Retry
+        </v-btn>
+        <span class="text-body-2 text-medium-emphasis d-none d-md-inline">
+          {{ editorStore.wordCount }} words
+        </span>
+        <v-btn
+          v-if="editorStore.published && editorStore.slug"
+          :to="`/articles/${editorStore.slug}`"
+          variant="text"
+          size="small"
+        >
+          View
+        </v-btn>
+        <v-btn
+          v-if="editorStore.published"
+          variant="outlined"
+          size="small"
+          rounded="pill"
+          :loading="publishing"
+          @click="onUnpublish"
+        >
+          Unpublish
+        </v-btn>
+        <v-btn
+          v-else
+          color="tertiary"
+          variant="flat"
+          size="small"
+          rounded="pill"
+          class="font-weight-bold"
+          :loading="publishing"
+          @click="onPublish"
+        >
+          Publish
+        </v-btn>
+      </template>
+
+      <template v-else>
+         <v-btn
+          v-if="showWriteButton"
+          icon
+          variant="flat"
+          color="white"
+          size="40"
+          class="action-btn border"
+          to="/write"
+        >
+          <v-icon icon="edit" :size="20" />
+          <v-tooltip
+            activator="parent"
+            location="bottom"
+            content-class="navbar-tooltip"
+            text="Write"
+          />
+        </v-btn>
+        <v-btn icon variant="flat" color="white" size="40" class="action-btn border">
+          <v-icon icon="bell" :size="20" />
+          <v-tooltip
+            activator="parent"
+            location="bottom"
+            content-class="navbar-tooltip"
+            text="Notifications"
+          />
+        </v-btn>
+      </template>
+      <v-avatar size="40" image="https://randomuser.me/api/portraits/women/44.jpg" />
     </div>
   </v-app-bar>
 </template>

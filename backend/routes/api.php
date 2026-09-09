@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ArticleController as AuthoredArticleController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\OnboardingController;
@@ -34,6 +35,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::patch('/user/location', [AuthController::class, 'updateLocation']);
+
+    // Author-facing article CRUD. The public read side is the unauthenticated
+    // GET /articles routes above.
+    Route::get('/me/articles', [AuthoredArticleController::class, 'index']);
+    Route::get('/me/articles/{article}', [AuthoredArticleController::class, 'show']);
+    Route::post('/articles', [AuthoredArticleController::class, 'store']);
+    Route::match(['put', 'patch'], '/articles/{article}', [AuthoredArticleController::class, 'update']);
+    Route::delete('/articles/{article}', [AuthoredArticleController::class, 'destroy']);
+    Route::post('/articles/{article}/header-image', [AuthoredArticleController::class, 'uploadHeaderImage']);
+    Route::delete('/articles/{article}/header-image', [AuthoredArticleController::class, 'destroyHeaderImage']);
+    Route::post('/articles/{article}/images', [AuthoredArticleController::class, 'uploadBodyImage']);
 
     Route::post('/users/{user:username}/follow', [FollowController::class, 'store']);
     Route::delete('/users/{user:username}/follow', [FollowController::class, 'destroy']);
