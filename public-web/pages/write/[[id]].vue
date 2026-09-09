@@ -43,7 +43,7 @@ function onVisibilityChange() {
 onMounted(async () => {
   if (idParam.value !== null) {
     await loadForRoute(idParam.value)
-  } else {
+  } else if (!editorStore.resumeNewDraft()) {
     editorStore.startNew()
   }
 
@@ -54,7 +54,9 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener('pagehide', flushOnHide)
   document.removeEventListener('visibilitychange', onVisibilityChange)
-  editorStore.startNew()
+  // Stop timers / in-flight saves but keep any recovery buffer — an offline
+  // edit navigated away from should still be resumable on the next visit.
+  editorStore.resetSession()
 })
 
 onBeforeRouteLeave(async () => {

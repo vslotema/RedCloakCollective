@@ -293,8 +293,12 @@ export const useEditorStore = defineStore('editor', () => {
     saveError.value = null
   }
 
-  /** Blank slate for a fresh /write (no network). */
-  function startNew() {
+  /**
+   * Reset per-session state (timers, in-flight saves, server identity, local
+   * header image) without touching the document or the recovery buffer —
+   * shared by `startNew` and `resumeNewDraft`.
+   */
+  function resetSession() {
     clearTimeout(autosaveTimer)
     inFlight = null
     createPromise = null
@@ -302,16 +306,48 @@ export const useEditorStore = defineStore('editor', () => {
     articleId.value = null
     slug.value = null
     published.value = false
-    load()
     clearHeaderImageLocal()
     headerImageFile.value = null
-    dirty.value = false
     saving.value = false
-    savedAt.value = null
     saveError.value = null
-    statusMessage.value = 'Ready'
     dropRecovery(LEGACY_DRAFT_KEY)
+  }
+
+  /** Blank slate for a fresh /write (no network). */
+  function startNew() {
+    resetSession()
+    load()
+    dirty.value = false
+    savedAt.value = null
+    statusMessage.value = 'Ready'
     dropRecovery(RECOVERY_PREFIX + 'new')
+  }
+
+  /**
+   * Resume a brand-new draft that was typed at /write but never confirmed
+   * saved to the server (a hard reload, a lost keepalive POST). Returns false
+   * when there's nothing worth restoring — the caller should `startNew()`.
+   */
+  function resumeNewDraft(): boolean {
+    const recovered = readRecovery(RECOVERY_PREFIX + 'new')
+    if (
+      !recovered ||
+      recovered.articleId !== null ||
+      ((recovered.title ?? '').trim() === '' &&
+        !(recovered.doc && docText(recovered.doc).trim() !== ''))
+    ) {
+      dropRecovery(RECOVERY_PREFIX + 'new')
+      return false
+    }
+
+    resetSession()
+    load({ title: recovered.title, doc: recovered.doc })
+    headerImagePosition.value = recovered.headerImagePosition ?? { x: 50, y: 50 }
+    dirty.value = true
+    savedAt.value = null
+    statusMessage.value = 'Restored unsaved changes'
+    scheduleAutosave()
+    return true
   }
 
   // --- header image --------------------------------------------------------
@@ -429,6 +465,8 @@ export const useEditorStore = defineStore('editor', () => {
     load,
     loadArticle,
     startNew,
+    resumeNewDraft,
+    resetSession,
     flush,
     setHeaderImage,
     clearHeaderImage,
