@@ -139,6 +139,190 @@ class ArticleManagementTest extends TestCase
         $this->assertDatabaseCount('articles', 0);
     }
 
+    // --- create path: topics, excerpt, position, scheduling & validation ------
+
+    public function test_create_syncs_topics_and_creates_author_topics(): void
+    {
+        $user = User::factory()->create();
+        $existing = Topic::factory()->create(['name' => 'Assistive technology']);
+
+        Sanctum::actingAs($user);
+        $response = $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'topic_ids' => [$existing->id],
+            'new_topics' => ['Feeding tips', 'feeding tips'],
+        ])->assertCreated()->assertJsonCount(2, 'topics');
+
+        // "Feeding tips" / "feeding tips" collapse to one row by slug.
+        $this->assertDatabaseHas('topics', ['slug' => 'feeding-tips', 'curated' => false]);
+        $this->assertSame(1, Topic::where('slug', 'feeding-tips')->count());
+
+        $article = Article::findOrFail($response->json('id'));
+        $this->assertEqualsCanonicalizing(
+            [$existing->id, Topic::where('slug', 'feeding-tips')->value('id')],
+            $article->topics->pluck('id')->all(),
+        );
+    }
+
+    public function test_create_rejects_more_than_five_topics(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+        $topics = Topic::factory()->count(6)->create();
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'topic_ids' => $topics->pluck('id')->all(),
+        ])->assertStatus(422)->assertJsonValidationErrors('topic_ids');
+    }
+
+    public function test_create_rejects_an_unknown_topic_id(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'topic_ids' => [99999],
+        ])->assertStatus(422)->assertJsonValidationErrors('topic_ids.0');
+    }
+
+    public function test_create_persists_an_excerpt(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'excerpt' => 'A short preview subtitle.',
+        ])->assertCreated()->assertJsonPath('excerpt', 'A short preview subtitle.');
+    }
+
+    public function test_create_rejects_an_over_long_excerpt(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'excerpt' => str_repeat('a', 281),
+        ])->assertStatus(422)->assertJsonValidationErrors('excerpt');
+    }
+
+    public function test_create_persists_a_header_image_position(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'header_image_position' => ['x' => 20, 'y' => 70],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('header_image_position.x', 20)
+            ->assertJsonPath('header_image_position.y', 70);
+    }
+
+    public function test_header_image_position_is_bounded_on_create_and_update(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'header_image_position' => ['x' => 150, 'y' => 50],
+        ])->assertStatus(422)->assertJsonValidationErrors('header_image_position.x');
+
+        $article = Article::factory()->for($user, 'author')->create();
+        $this->patchJson("/api/articles/{$article->id}", [
+            'header_image_position' => ['x' => 50, 'y' => -1],
+        ])->assertStatus(422)->assertJsonValidationErrors('header_image_position.y');
+    }
+
+    public function test_a_user_can_schedule_an_article_at_creation_time(): void
+    {
+        $user = User::factory()->create();
+        $topic = Topic::factory()->create();
+        $when = now()->addDays(2)->startOfSecond();
+
+        Sanctum::actingAs($user);
+        $response = $this->postJson('/api/articles', [
+            'title' => 'Later',
+            'content' => $this->doc(),
+            'topic_ids' => [$topic->id],
+            'publish_at' => $when->toIso8601String(),
+        ])
+            ->assertCreated()
+            ->assertJsonPath('published', false)
+            ->assertJsonPath('state', 'scheduled');
+
+        $this->assertEquals(
+            $when->toIso8601String(),
+            Article::findOrFail($response->json('id'))->published_at->toIso8601String(),
+        );
+    }
+
+    public function test_create_rejects_a_non_array_content(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', ['content' => 'just a string'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('content');
+    }
+
+    public function test_create_rejects_an_over_long_title_and_a_too_short_new_topic(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'title' => str_repeat('a', 256),
+        ])->assertStatus(422)->assertJsonValidationErrors('title');
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'new_topics' => ['a'],
+        ])->assertStatus(422)->assertJsonValidationErrors('new_topics.0');
+    }
+
+    public function test_each_draft_gets_a_distinct_slug_even_with_the_same_title(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $first = $this->postJson('/api/articles', [
+            'title' => 'Same Title',
+            'content' => $this->doc(),
+        ])->assertCreated()->json('slug');
+
+        $second = $this->postJson('/api/articles', [
+            'title' => 'Same Title',
+            'content' => $this->doc(),
+        ])->assertCreated()->json('slug');
+
+        $this->assertNotSame($first, $second);
+        $this->assertStringStartsWith('same-title-', $first);
+        $this->assertStringStartsWith('same-title-', $second);
+    }
+
+    public function test_a_title_less_draft_still_gets_a_slug(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $slug = $this->postJson('/api/articles', ['content' => $this->doc()])
+            ->assertCreated()
+            ->json('slug');
+
+        $this->assertNotEmpty($slug);
+        $this->assertStringStartsWith('article-', $slug);
+    }
+
+    public function test_an_article_can_be_updated_with_the_put_verb(): void
+    {
+        $user = User::factory()->create();
+        $article = Article::factory()->for($user, 'author')->create();
+
+        Sanctum::actingAs($user);
+        $this->putJson("/api/articles/{$article->id}", ['title' => 'Via PUT'])
+            ->assertOk()
+            ->assertJsonPath('title', 'Via PUT');
+    }
+
     public function test_a_user_can_load_their_own_draft_for_editing(): void
     {
         $user = User::factory()->create();
