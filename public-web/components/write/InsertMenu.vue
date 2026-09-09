@@ -5,6 +5,9 @@ import { insertCodeBlock } from './editor-actions'
 const { editor } = defineProps<{ editor: Editor }>()
 
 const editorStore = useEditorStore()
+// A voice "insert image" can't open the file picker, so it flags the photo
+// button here to pulse until the user taps it (or the flag times out).
+const { imagePrompt, clearImagePrompt } = useArticleVoice()
 
 const insertActions = [
   { label: 'Photo', icon: 'image' },
@@ -35,8 +38,13 @@ function collapse() {
   toggleRef.value?.focus()
 }
 
+watch(imagePrompt, (on) => {
+  if (on) open.value = true
+})
+
 function choose(label: string) {
   if (label === 'Photo') {
+    clearImagePrompt()
     fileInputRef.value?.click()
     return
   }
@@ -67,6 +75,7 @@ async function onFileChange(event: Event) {
   const file = input.files?.[0]
   // Let the same file be picked again after it's inserted / removed.
   input.value = ''
+  clearImagePrompt()
   if (!file) return
 
   if (!file.type.startsWith('image/')) {
@@ -125,6 +134,9 @@ async function onFileChange(event: Event) {
         type="button"
         theme="dark"
         class="insert-menu__btn"
+        :class="{
+          'insert-menu__btn--pulse': action.label === 'Photo' && imagePrompt,
+        }"
         :aria-label="action.label"
         icon
         size="small"
@@ -136,6 +148,10 @@ async function onFileChange(event: Event) {
         </v-tooltip>
       </v-btn>
     </div>
+
+    <p v-if="imagePrompt" class="insert-menu__sr-hint" aria-live="assertive">
+      Choose a photo — activate the Photo button.
+    </p>
   </div>
 </template>
 
@@ -167,6 +183,26 @@ async function onFileChange(event: Event) {
       color: rgb(var(--v-theme-ink));
       border-color: rgb(var(--v-theme-ink));
     }
+
+    // Voice "insert image" flags the Photo button here — a voice event can't
+    // open the OS file picker, so the user taps this.
+    &--pulse {
+      color: rgb(var(--v-theme-ink));
+      border-color: rgb(var(--v-theme-primary));
+      animation: insert-menu-pulse 1.2s ease-in-out infinite;
+    }
+  }
+
+  &__sr-hint {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   &__toggle {
@@ -195,6 +231,22 @@ async function onFileChange(event: Event) {
     visibility: visible;
     transform: translateY(-50%);
     transition-delay: 0s;
+  }
+}
+
+@keyframes insert-menu-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--v-theme-primary), 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(var(--v-theme-primary), 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .insert-menu__btn--pulse {
+    animation: none;
   }
 }
 </style>

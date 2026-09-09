@@ -114,6 +114,8 @@ watch(
       @update:selection="editorStore.setSelection"
     />
   </section>
+
+  <VoiceCommandButton />
 </template>
 
 <style scoped lang="scss">

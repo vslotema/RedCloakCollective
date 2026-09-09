@@ -32,6 +32,7 @@ const imagePrompt = ref(false)
 const panelOpen = ref(false)
 
 let wired = false
+let restoreAttempted = false
 let imagePromptTimer: ReturnType<typeof setTimeout> | undefined
 let heardClearTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -175,8 +176,16 @@ function dispatch(command: ParsedCommand, raw: string) {
         announce('Code block added')
         return
       }
-      // image — can't open the picker from a voice event
-      editor!.chain().focus().run()
+      // image — a voice event can't open the OS file picker, so make sure the
+      // caret sits on an empty paragraph (that's where the "+" insert menu
+      // appears) and flag its photo button to pulse for a tap.
+      {
+        const { $from } = editor!.state.selection
+        const onEmptyParagraph =
+          $from.parent.type.name === 'paragraph' && $from.parent.content.size === 0
+        if (onEmptyParagraph) editor!.chain().focus().run()
+        else editor!.chain().focus().createParagraphNear().run()
+      }
       imagePrompt.value = true
       clearTimeout(imagePromptTimer)
       imagePromptTimer = setTimeout(clearImagePrompt, IMAGE_PROMPT_MS)
@@ -265,7 +274,8 @@ function toggle() {
 export function useArticleVoice() {
   const speech = useSpeechRecognition()
 
-  if (import.meta.client && !wired) {
+  if (import.meta.client && !restoreAttempted && !wired) {
+    restoreAttempted = true
     // Restore the preference, but wait for a user gesture before starting the
     // mic (browsers require one, and a mic that turns itself on at page load
     // is hostile). Users who never enabled it are unaffected.
