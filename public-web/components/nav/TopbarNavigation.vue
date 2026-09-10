@@ -22,6 +22,7 @@ defineEmits<{
 const router = useRouter();
 const editorStore = useEditorStore();
 const publishing = ref(false);
+const publishDialog = ref(false);
 
 const saveStatus = computed(() => {
   if (editorStore.saving) return "Saving…";
@@ -31,16 +32,13 @@ const saveStatus = computed(() => {
   return "";
 });
 
-async function onPublish() {
-  publishing.value = true;
-  try {
-    await editorStore.publish();
-  } catch {
-    // The store surfaces the reason via saveStatus.
-  } finally {
-    publishing.value = false;
-  }
-}
+const scheduledLabel = computed(() => {
+  if (editorStore.articleState !== "scheduled" || !editorStore.publishedAt) return "";
+  return new Date(editorStore.publishedAt).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+});
 
 async function onUnpublish() {
   publishing.value = true;
@@ -61,7 +59,7 @@ function goBack() {
 </script>
 
 <template>
-  <v-app-bar class="topbar-nav pl-2 pr-4" flat>
+  <v-app-bar class="topbar-nav pl-2 pr-4" :class="{'border': showWriteButton}" flat>
     <div class="d-flex align-center">
       <v-btn
         v-if="showGoBackButton"
@@ -91,7 +89,7 @@ function goBack() {
       </v-btn>
       <NuxtLink to="/" class="logo-link">
         <h1 class="text-h6 font-weight-bold mb-0">
-          <span class="text-primary">R</span>EDCLOAK COLLECTIVE
+          <span class="text-primary">R</span>edCloak Collective
         </h1>
       </NuxtLink>
       <SearchBar v-if="showSearch" class="ml-6" />
@@ -126,27 +124,37 @@ function goBack() {
         >
           View
         </v-btn>
+
+        <v-chip
+          v-if="editorStore.articleState === 'scheduled'"
+          size="small"
+          color="tertiary"
+          variant="tonal"
+          prepend-icon="calendar"
+        >
+          Scheduled · {{ scheduledLabel }}
+        </v-chip>
+
         <v-btn
-          v-if="editorStore.published"
+          v-if="editorStore.articleState !== 'draft'"
           variant="outlined"
           size="small"
           rounded="pill"
           :loading="publishing"
           @click="onUnpublish"
         >
-          Unpublish
+          {{ editorStore.articleState === "scheduled" ? "Cancel" : "Unpublish" }}
         </v-btn>
         <v-btn
-          v-else
+          v-if="editorStore.articleState !== 'published'"
           color="tertiary"
           variant="flat"
           size="small"
           rounded="pill"
           class="font-weight-bold"
-          :loading="publishing"
-          @click="onPublish"
+          @click="publishDialog = true"
         >
-          Publish
+          {{ editorStore.articleState === "scheduled" ? "Reschedule" : "Publish" }}
         </v-btn>
       </template>
 
@@ -189,12 +197,17 @@ function goBack() {
         image="https://randomuser.me/api/portraits/women/44.jpg"
       />
     </div>
+
+    <PublishDialog v-if="writeActions" v-model="publishDialog" />
   </v-app-bar>
 </template>
 
 <style scoped lang="scss">
 .topbar-nav.v-app-bar.v-toolbar {
-  background-color: rgba($color: var(--v-theme-background), $alpha: .95);
+  background-color: rgba($color: var(--v-theme-background), $alpha: 1.0);
+}
+.topbar.border {
+  border-bottom: 1px solid;
 }
 .menu-btn {
   margin-right: 0.375rem;

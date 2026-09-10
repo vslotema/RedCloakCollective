@@ -1,13 +1,9 @@
-import { createLowlight, common } from 'lowlight'
-import dart from 'highlight.js/lib/languages/dart'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { VueNodeViewRenderer } from '@tiptap/vue-3'
+import { lowlight } from '~/lib/lowlight'
 import CodeBlockView from './CodeBlockView.vue'
 
-// `common` covers most of what the picker offers (csharp, css, diff, go,
-// graphql, ini/toml, typescript, …) — register anything extra here.
-export const lowlight = createLowlight(common)
-lowlight.register({ dart })
+export { lowlight }
 
 /** Ids whose default (id-derived) label would read oddly. */
 const DISPLAY_NAMES: Record<string, string> = {

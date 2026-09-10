@@ -6,7 +6,16 @@ const apiBase = process.env.NUXT_API_BASE ?? `${backendOrigin}/api`
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-01',
 
-  modules: ['vuetify-nuxt-module', '@nuxtjs/sitemap', '@pinia/nuxt'],
+  modules: ['@nuxt/fonts', 'vuetify-nuxt-module', '@nuxtjs/sitemap', '@pinia/nuxt', '@nuxt/test-utils/module'],
+
+  // Self-hosts the heading font (Fraunces) — downloaded + @font-face generated
+  // at build time, so `font-family: 'Fraunces'` in the stylesheet actually
+  // resolves. Nothing loaded it before, so headings fell back to system-ui.
+  fonts: {
+    families: [
+      { name: 'Fraunces', provider: 'google', weights: [400, 600, 700], styles: ['normal', 'italic'] },
+    ],
+  },
 
   ssr: true,
 
@@ -16,7 +25,7 @@ export default defineNuxtConfig({
   // would just be redundant (`<ContentFiltersContentFilterBar>`).
   components: [{ path: '~/components', pathPrefix: false }],
 
-  css: ['~/assets/styles/style.scss'],
+  css: ['~/assets/styles/style.scss', '~/assets/styles/article-content.scss'],
 
   vite: {
     css: {

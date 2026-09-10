@@ -78,29 +78,13 @@ const iframeTitle = computed(() =>
 </template>
 
 <style scoped lang="scss">
+// The `.video-embed__frame` / `iframe` styling is shared with the published
+// page — see assets/styles/article-content.scss. Only the editor's prompt
+// field, error text and selection outline live here.
 .video-embed {
-  margin-block: var(--space-4, 1rem);
-
   &.ProseMirror-selectednode .video-embed__frame {
     outline: 2px solid rgb(var(--v-theme-primary));
     outline-offset: 2px;
-  }
-
-  &__frame {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    background: #000;
-    border-radius: var(--radius-sm, 4px);
-    overflow: hidden;
-
-    iframe {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
   }
 
   &__input {
