@@ -85,6 +85,7 @@ function makeEditor(
       },
     },
   )
+  const storage = { lineNumbers: { enabled: false } }
   return {
     chains,
     calls: () => chains.flat(),
@@ -93,6 +94,13 @@ function makeEditor(
     chain: () => {
       cur = []
       return proxy
+    },
+    storage,
+    commands: {
+      setLineNumbers: vi.fn((enabled: boolean) => {
+        storage.lineNumbers.enabled = enabled
+        return true
+      }),
     },
     state: {
       selection: {
@@ -313,6 +321,39 @@ describe('useArticleVoice — editor not ready', () => {
     say('bold')
     expect(store.statusMessage).toBe('Editor not ready')
     expect(editorActions.toggleBold).not.toHaveBeenCalled()
+  })
+})
+
+describe('useArticleVoice — block numbers follow voice mode', () => {
+  it('enable() shows the numbered gutter, disable() hides it again', async () => {
+    await setup()
+    await nextTick()
+    expect(editor.storage.lineNumbers.enabled).toBe(true)
+    expect(editor.commands.setLineNumbers).toHaveBeenLastCalledWith(true)
+
+    voice.disable()
+    await nextTick()
+    expect(editor.storage.lineNumbers.enabled).toBe(false)
+    expect(editor.commands.setLineNumbers).toHaveBeenLastCalledWith(false)
+  })
+
+  it('leaves an already-on gutter alone across a voice session', async () => {
+    const { useArticleVoice, useEditorInstance, useEditorStore } = await loadVoice()
+    store = useEditorStore() as unknown as typeof store
+    vi.spyOn(store, 'flush').mockResolvedValue(undefined)
+
+    editor = makeEditor()
+    editor.storage.lineNumbers.enabled = true // user had it on before voice
+    useEditorInstance().setEditor(editor as never)
+
+    voice = useArticleVoice()
+    voice.enable()
+    await nextTick()
+    expect(editor.commands.setLineNumbers).not.toHaveBeenCalled()
+
+    voice.disable()
+    await nextTick()
+    expect(editor.storage.lineNumbers.enabled).toBe(true)
   })
 })
 

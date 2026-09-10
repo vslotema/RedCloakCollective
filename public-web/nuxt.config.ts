@@ -8,12 +8,12 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/fonts', 'vuetify-nuxt-module', '@nuxtjs/sitemap', '@pinia/nuxt', '@nuxt/test-utils/module'],
 
-  // Self-hosts the heading font (Fraunces) — downloaded + @font-face generated
-  // at build time, so `font-family: 'Fraunces'` in the stylesheet actually
+  // Self-hosts the heading font (Raleway) — downloaded + @font-face generated
+  // at build time, so `font-family: 'Raleway'` in the stylesheet actually
   // resolves. Nothing loaded it before, so headings fell back to system-ui.
   fonts: {
     families: [
-      { name: 'Fraunces', provider: 'google', weights: [400, 600, 700], styles: ['normal', 'italic'] },
+      { name: 'Raleway', provider: 'google', weights: [400, 600, 700], styles: ['normal', 'italic'] },
     ],
   },
 

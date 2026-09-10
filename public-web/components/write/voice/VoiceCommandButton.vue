@@ -40,6 +40,14 @@ function onToggle() {
 function togglePanel() {
   panelOpen.value = !panelOpen.value;
 }
+
+// Voice is a /write-only feature and this button is mounted only on that page,
+// so leaving it must stop the mic. Full disable (not a pause): the saved
+// preference is cleared too, so returning to /write starts with voice off.
+// A hard reload doesn't run this hook, so resume-on-reload still works.
+onBeforeUnmount(() => {
+  if (enabled.value) voice.disable();
+});
 </script>
 
 <template>

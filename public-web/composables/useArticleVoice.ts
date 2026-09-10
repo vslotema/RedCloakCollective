@@ -33,6 +33,10 @@ const panelOpen = ref(false)
 
 let wired = false
 let restoreAttempted = false
+let blockNumbersWatched = false
+// True while the block-number gutter is on *because* voice turned it on, so
+// disabling voice only reverts our own change, not a deliberate user toggle.
+let voiceShowedBlockNumbers = false
 let imagePromptTimer: ReturnType<typeof setTimeout> | undefined
 let heardClearTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -58,6 +62,22 @@ function currentEditor(): Editor | null {
 function clearImagePrompt() {
   imagePrompt.value = false
   clearTimeout(imagePromptTimer)
+}
+
+// Voice commands target blocks by number ("go to paragraph 3"), so the
+// numbered gutter is shown automatically whenever voice is on and hidden again
+// when it goes off. Runs on both `enabled` changes and the editor mounting.
+function syncBlockNumbers() {
+  const editor = currentEditor()
+  if (!editor?.commands?.setLineNumbers) return
+  const showing = editor.storage?.lineNumbers?.enabled ?? false
+  if (enabled.value && !showing) {
+    editor.commands.setLineNumbers(true)
+    voiceShowedBlockNumbers = true
+  } else if (!enabled.value && showing && voiceShowedBlockNumbers) {
+    editor.commands.setLineNumbers(false)
+    voiceShowedBlockNumbers = false
+  }
 }
 
 // --- dictation -----------------------------------------------------------
@@ -295,6 +315,11 @@ export function useArticleVoice() {
       window.addEventListener('pointerdown', kick, { once: true })
       window.addEventListener('keydown', kick, { once: true })
     }
+  }
+
+  if (import.meta.client && !blockNumbersWatched) {
+    blockNumbersWatched = true
+    watch([enabled, useEditorInstance().editor], syncBlockNumbers, { immediate: true })
   }
 
   if (import.meta.dev && import.meta.client) {
