@@ -89,7 +89,7 @@ function goBack() {
       </v-btn>
       <NuxtLink to="/" class="logo-link">
         <h1 class="text-h6 font-weight-bold mb-0">
-          <span class="text-primary">R</span>EDCLOAK COLLECTIVE
+          <span class="text-primary">R</span>edCloak Collective
         </h1>
       </NuxtLink>
       <SearchBar v-if="showSearch" class="ml-6" />
