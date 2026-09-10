@@ -8,10 +8,16 @@ import {
   toggleQuote,
 } from "./editor-actions";
 
-const { editor, color = 'black', background = 'white' } = defineProps<{
+const {
+  editor,
+  color = 'black',
+  background = 'white',
+  orientation = 'horizontal',
+} = defineProps<{
   editor: Editor;
   color?: string;
-  background?: string
+  background?: string;
+  orientation?: 'horizontal' | 'vertical';
 }>();
 
 // Kept in sync with the parent so the BubbleMenu's shouldShow can keep the
@@ -101,7 +107,11 @@ function toolIsActive(label: string): boolean {
 </script>
 
 <template>
-  <div class="format-tools-menu" :style="{color, background}"  >
+  <div
+    class="format-tools-menu"
+    :class="`format-tools-menu--${orientation}`"
+    :style="{ color, background }"
+  >
     <form
       v-if="linkEditing"
       class="format-tools-menu__link"
@@ -183,6 +193,23 @@ function toolIsActive(label: string): boolean {
   border-radius: 0.25rem;
   display: flex;
   gap: 0.25rem;
+
+  &--vertical {
+    flex-direction: column;
+    position: relative;
+
+    // The link field can't fit a 44px rail — pop it out to the side.
+    .format-tools-menu__link {
+      position: absolute;
+      left: calc(100% + 0.5rem);
+      top: 0;
+      z-index: 5;
+      padding: 0.25rem;
+      background: rgb(var(--v-theme-background));
+      border: 1px solid rgb(var(--v-theme-surface));
+      border-radius: 0.25rem;
+    }
+  }
 
   .write-tools__tool {
     border-radius: 0.25rem;

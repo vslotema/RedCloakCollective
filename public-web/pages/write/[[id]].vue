@@ -115,7 +115,7 @@ watch(
     />
   </section>
 
-  <VoiceCommandButton />
+  <VoiceStatusPill />
 </template>
 
 <style scoped lang="scss">

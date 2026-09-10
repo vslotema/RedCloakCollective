@@ -12,7 +12,6 @@ import { CodeBlock } from "./code-block";
 import { VideoEmbed } from "./video-embed";
 import { LineNumbers } from "./line-numbers";
 import { DictationPreview } from "./dictation-preview";
-import { toggleBlockNumbers } from "./editor-actions";
 
 const editorStore = useEditorStore();
 const { setEditor } = useEditorInstance();
@@ -67,12 +66,6 @@ const lineNumbersOn = computed(
   () => editor.value?.storage.lineNumbers?.enabled ?? false,
 );
 
-function toggleLineNumbers() {
-  if (!editor.value) return;
-  toggleBlockNumbers(editor.value);
-  editorStore.statusMessage = `Block numbers ${lineNumbersOn.value ? "on" : "off"}`;
-}
-
 // Publish the live editor for page-level UI (voice command controller / button).
 watch(
   editor,
@@ -110,29 +103,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div v-if="editor" class="rich-text-editor">
-    <v-toolbar
-      density="compact"
-      color="background"
-      class="rich-text-editor__toolbar"
-    >
-      <TextFormattingTools :editor="editor" />
-      <v-spacer />
-      <v-btn
-        icon
-        size="small"
-        :active="lineNumbersOn"
-        active-color="#4f9cf6"
-        :aria-pressed="lineNumbersOn"
-        aria-label="Toggle block numbers"
-        @click="toggleLineNumbers"
-      >
-        <v-icon icon="hash" :size="18" />
-        <v-tooltip activator="parent" location="bottom" content-class="navbar-tooltip">
-          Block numbers
-        </v-tooltip>
-      </v-btn>
-    </v-toolbar>
-  
     <FloatingMenu
       :editor="editor"
       :tippy-options="{
@@ -179,17 +149,8 @@ onBeforeUnmount(() => {
     border: 0;
   }
 
-  &__toolbar {
-    position: sticky;
-    top: var(--v-layout-top, 64px);
-    z-index: 3;
-    border-radius: .25rem;
-    background: rgb(var(--v-theme-background));
-    border-bottom: 1px solid rgb(var(--v-theme-surface));
-  }
-
   // Block-number gutter — see ./line-numbers.ts. Off by default; toggled by the
-  // toolbar "#" button which adds this modifier.
+  // left rail's "#" button (EditorToolbar.vue), which adds this modifier.
   //
   // Default (wide): labels live in the page's left margin, right-aligned to the
   // text column's left edge, so the text stays put and aligned with the toolbar.

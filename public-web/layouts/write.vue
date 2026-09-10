@@ -6,6 +6,7 @@
         <slot />
       </div>
     </v-main>
+    <EditorToolbar />
   </div>
 </template>
 
@@ -29,6 +30,17 @@
     display: flex;
     flex-direction: column;
     background: rgb(var(--v-theme-surface));
+
+    // Clear the fixed left rail (44px + margins) so the centred editor column
+    // never sits under it on narrower screens.
+    @include respond-to('sm') {
+      padding-left: calc(44px + var(--space-2) * 2 + 0.5rem);
+    }
+
+    // Clear the fixed bottom footer that the rail becomes on phones.
+    @media (max-width: 599px) {
+      padding-bottom: calc(44px + var(--space-2) * 2 + 0.5rem);
+    }
   }
 }
 </style>
