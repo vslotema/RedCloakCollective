@@ -157,6 +157,33 @@ function toDictation(raw: string): DictationSegment[] {
 }
 
 /**
+ * Dictation is entered as soon as a start word is *heard* (Chrome is too slow
+ * and unreliable at finalising a lone "type"), so the matching final still
+ * arrives carrying that word. Given that final's text, returns what should
+ * actually be dictated: `''` when it is nothing but the start phrase, the
+ * remainder when the user ran straight on ("type hello there"), or `null` when
+ * no start phrase leads it (dictate the whole thing untouched).
+ */
+export function consumeDictationStart(raw: string): string | null {
+  const text = normalize(raw)
+  for (const phrase of START_WORDS) {
+    if (text === phrase) return ''
+    if (text.startsWith(`${phrase} `)) return text.slice(phrase.length + 1)
+  }
+  return null
+}
+
+/**
+ * Best-effort rendering of an interim (not-yet-final) dictation transcript for
+ * the live caret preview: punctuation words resolved, block-break markers shown
+ * as a visible glyph rather than acted on (the real split happens on the final
+ * result via `toDictation`).
+ */
+export function previewDictation(raw: string): string {
+  return applyPunctuation(raw.replace(/\b(new paragraph|new line)\b/gi, ' ⏎ '))
+}
+
+/**
  * Decide the spacing and sentence-start capitalisation for `chunk` given the
  * document text immediately before the caret. Pure so the controller can unit
  * it without an editor.

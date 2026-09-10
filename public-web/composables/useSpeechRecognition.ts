@@ -99,12 +99,30 @@ function ensureRecognition(): SpeechRecognitionLike | null {
   }
 
   rec.onresult = (event) => {
+    // Chrome (continuous mode) can hold several entries in `results` at once —
+    // e.g. `results[0]` = "the quick" and `results[1]` = " brown fox", both
+    // still interim. Emitting them one-by-one made the consumer see a stream of
+    // disjoint fragments; concatenate every new segment into a single transcript
+    // instead. Newly-final segments go out as one `isFinal` chunk to commit, the
+    // rest as one interim string to preview.
+    // Only results at/after `resultIndex` are newly finalised — committing the
+    // earlier ones again would duplicate text.
+    let final = ''
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const result = event.results[i]
-      const alternative = result?.[0]
-      if (!alternative) continue
-      handler?.({ transcript: alternative.transcript, isFinal: result.isFinal })
+      if (result?.isFinal && result[0]) final += result[0].transcript
     }
+    // The interim hypothesis is rebuilt in full each event from every
+    // not-yet-final segment, so the consumer always gets the whole phrase.
+    let interim = ''
+    for (let i = 0; i < event.results.length; i++) {
+      const result = event.results[i]
+      if (result && !result.isFinal && result[0]) interim += result[0].transcript
+    }
+    final = final.trim()
+    interim = interim.trim()
+    if (final) handler?.({ transcript: final, isFinal: true })
+    if (interim) handler?.({ transcript: interim, isFinal: false })
   }
 
   rec.onerror = (event) => {

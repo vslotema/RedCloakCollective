@@ -1,7 +1,9 @@
 // @vitest-environment nuxt
 import { describe, expect, it } from 'vitest'
 import {
+  consumeDictationStart,
   parseCommand,
+  previewDictation,
   spaceAndCapitalize,
 } from '~/components/write/voice/voice-commands'
 import type { ParsedCommand } from '~/components/write/voice/voice-commands'
@@ -250,5 +252,39 @@ describe('spaceAndCapitalize', () => {
 
   it('empty chunk → empty string', () => {
     expect(spaceAndCapitalize('anything', '')).toBe('')
+  })
+})
+
+describe('consumeDictationStart', () => {
+  it('returns "" when the text is nothing but a start phrase', () => {
+    expect(consumeDictationStart('type')).toBe('')
+    expect(consumeDictationStart('Start typing.')).toBe('')
+    expect(consumeDictationStart('dictation')).toBe('')
+  })
+
+  it('returns the remainder when speech ran straight on', () => {
+    expect(consumeDictationStart('type hello world')).toBe('hello world')
+    expect(consumeDictationStart('start typing the quick brown fox')).toBe('the quick brown fox')
+  })
+
+  it('returns null when no start phrase leads the text', () => {
+    expect(consumeDictationStart('the quick brown fox')).toBeNull()
+    expect(consumeDictationStart('typescript is great')).toBeNull()
+  })
+})
+
+describe('previewDictation', () => {
+  it('resolves punctuation words the same way dictation does', () => {
+    expect(previewDictation('hello world period')).toBe('hello world.')
+    expect(previewDictation('wait comma what question mark')).toBe('wait, what?')
+  })
+
+  it('shows block-break markers as a glyph instead of acting on them', () => {
+    expect(previewDictation('one new paragraph two')).toBe('one ⏎ two')
+    expect(previewDictation('a new line b')).toBe('a ⏎ b')
+  })
+
+  it('empty transcript → empty string', () => {
+    expect(previewDictation('')).toBe('')
   })
 })

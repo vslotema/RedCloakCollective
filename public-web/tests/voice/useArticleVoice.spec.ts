@@ -101,6 +101,7 @@ function makeEditor(
         storage.lineNumbers.enabled = enabled
         return true
       }),
+      setDictationPreview: vi.fn(() => true),
     },
     state: {
       selection: {
@@ -193,11 +194,12 @@ describe('useArticleVoice — enable / disable', () => {
 })
 
 describe('useArticleVoice — dictation', () => {
-  it('"type" enters dictation mode', async () => {
+  it('"type" enters dictation mode and focuses the editor body', async () => {
     await setup()
     say('type')
     expect(voice.mode.value).toBe('dictation')
     expect(store.statusMessage).toMatch(/Dictating/)
+    expect(editor.called('focus')).toBe(true)
   })
 
   it('inserts spoken text with sentence casing + punctuation', async () => {
@@ -223,11 +225,65 @@ describe('useArticleVoice — dictation', () => {
     expect(voice.mode.value).toBe('idle')
   })
 
+  it('enters dictation as soon as "type" is heard, before it finalises', async () => {
+    await setup()
+    say('type', false) // interim only — Chrome may never finalise a lone word
+    expect(voice.mode.value).toBe('dictation')
+  })
+
+  it('does not type the start word when the final for it arrives', async () => {
+    await setup()
+    say('type', false)
+    say('type') // the finalised start word
+    expect(editor.called('insertContent')).toBe(false)
+  })
+
+  it('strips the start word when Chrome bundles it with the first phrase', async () => {
+    await setup()
+    say('type', false)
+    say('type hello world')
+    expect(editor.argsOf('insertContent')?.[0]).toBe('Hello world')
+  })
+
+  it('a normal phrase after an interim start is dictated untouched', async () => {
+    await setup()
+    say('start typing', false)
+    say('the quick brown fox')
+    expect(editor.argsOf('insertContent')?.[0]).toBe('The quick brown fox')
+  })
+
   it('an interim result is shown but not dispatched', async () => {
     await setup()
     say('bold', false)
     expect(voice.heardText.value).toBe('bold')
     expect(editorActions.toggleBold).not.toHaveBeenCalled()
+    expect(editor.commands.setDictationPreview).not.toHaveBeenCalled()
+  })
+
+  it('an interim result while dictating previews as ghost text at the caret', async () => {
+    await setup()
+    say('type')
+    say('hello world period', false)
+    expect(editor.commands.setDictationPreview).toHaveBeenLastCalledWith('hello world.')
+    expect(editor.called('insertContent')).toBe(false)
+  })
+
+  it('the final result clears the preview, then inserts the real text', async () => {
+    await setup()
+    say('type')
+    say('hello world', false)
+    say('hello world')
+    expect(editor.commands.setDictationPreview).toHaveBeenLastCalledWith('')
+    expect(editor.argsOf('insertContent')?.[0]).toBe('Hello world')
+  })
+
+  it('"stop" clears any lingering preview', async () => {
+    await setup()
+    say('type')
+    say('half a sen', false)
+    editor.commands.setDictationPreview.mockClear()
+    say('stop')
+    expect(editor.commands.setDictationPreview).toHaveBeenCalledWith('')
   })
 })
 

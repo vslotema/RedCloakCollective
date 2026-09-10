@@ -4,7 +4,9 @@ import * as editorActions from '~/components/write/editor-actions'
 import { listBlocks } from '~/components/write/line-numbers'
 import {
   COMMAND_REFERENCE,
+  consumeDictationStart,
   parseCommand,
+  previewDictation,
   spaceAndCapitalize,
 } from '~/components/write/voice/voice-commands'
 import type {
@@ -39,6 +41,10 @@ let blockNumbersWatched = false
 let voiceShowedBlockNumbers = false
 let imagePromptTimer: ReturnType<typeof setTimeout> | undefined
 let heardClearTimer: ReturnType<typeof setTimeout> | undefined
+// Set when dictation was entered from an interim "type"/"start typing" — the
+// final for that same utterance still carries the word and must not be typed.
+let swallowStartWordFinal = false
+let swallowStartTimer: ReturnType<typeof setTimeout> | undefined
 
 function persist(value: boolean) {
   if (!import.meta.client) return
@@ -62,6 +68,15 @@ function currentEditor(): Editor | null {
 function clearImagePrompt() {
   imagePrompt.value = false
   clearTimeout(imagePromptTimer)
+}
+
+function clearDictationPreview() {
+  currentEditor()?.commands.setDictationPreview?.('')
+}
+
+function clearStartWordSwallow() {
+  swallowStartWordFinal = false
+  clearTimeout(swallowStartTimer)
 }
 
 // Voice commands target blocks by number ("go to paragraph 3"), so the
@@ -150,10 +165,15 @@ function dispatch(command: ParsedCommand, raw: string) {
   switch (command.kind) {
     case 'enterDictation':
       mode.value = 'dictation'
+      // Put the caret in the body so dictated text — and its live preview —
+      // has a home even if the user never clicked into the editor.
+      editor!.chain().focus().run()
       announce('Dictating — say “stop” to finish')
       return
     case 'exitDictation':
       mode.value = 'idle'
+      clearStartWordSwallow()
+      clearDictationPreview()
       announce('Stopped dictating')
       return
     case 'dictate':
@@ -239,9 +259,48 @@ function dispatch(command: ParsedCommand, raw: string) {
 function handleResult({ transcript, isFinal }: SpeechResult) {
   heardText.value = transcript.trim()
   clearTimeout(heardClearTimer)
+
+  let text = transcript
+
+  // Enter dictation the moment "type" / "start typing" is *heard*, not when it
+  // finalises — Chrome is slow and flaky at ending a lone short word, so waiting
+  // for isFinal leaves you stuck in command mode. The matching final still
+  // carries the word, so swallow it (or strip it if speech ran straight on).
+  if (mode.value === 'idle' && !isFinal) {
+    if (parseCommand(transcript, 'idle')?.kind === 'enterDictation') {
+      dispatch({ kind: 'enterDictation' }, transcript)
+      if (mode.value === 'dictation') {
+        swallowStartWordFinal = true
+        clearTimeout(swallowStartTimer)
+        swallowStartTimer = setTimeout(clearStartWordSwallow, 5_000)
+      }
+      return
+    }
+  }
+
+  // While the swallow flag is up, every result for this utterance still leads
+  // with the start word ("type …") — strip it from the previews and the final
+  // alike; drop the flag once that final has been seen.
+  if (swallowStartWordFinal && mode.value === 'dictation') {
+    const rest = consumeDictationStart(text)
+    if (rest !== null) text = rest
+    if (isFinal) {
+      clearStartWordSwallow()
+      if (!text) return // the final was nothing but the start word
+    }
+  }
+
+  // Live dictation preview: show the interim words as ghost text at the caret,
+  // cleared the moment the phrase finalises (the real text is inserted below).
+  if (mode.value === 'dictation') {
+    currentEditor()?.commands.setDictationPreview?.(
+      isFinal ? '' : previewDictation(text),
+    )
+  }
+
   if (!isFinal) return
 
-  dispatch(parseCommand(transcript, mode.value), transcript)
+  dispatch(parseCommand(text, mode.value), text)
 
   heardClearTimer = setTimeout(() => {
     heardText.value = ''
@@ -279,6 +338,8 @@ function enable() {
 
 function disable() {
   clearImagePrompt()
+  clearDictationPreview()
+  clearStartWordSwallow()
   enabled.value = false
   mode.value = 'idle'
   persist(false)

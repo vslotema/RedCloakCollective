@@ -84,7 +84,24 @@ describe('useSpeechRecognition — lifecycle', () => {
     expect(listening.value).toBe(true)
   })
 
-  it('forwards every interim and final result to the handler', async () => {
+  it('concatenates the segments Chrome holds in `results` into one transcript', async () => {
+    const { start, onResult } = await load()
+    const heard: { transcript: string; isFinal: boolean }[] = []
+    onResult((r) => heard.push(r))
+    start()
+
+    // Chrome mid-utterance: two still-interim entries at once.
+    rec().onresult?.(
+      resultsEvent([
+        { transcript: 'the quick', isFinal: false },
+        { transcript: ' brown fox', isFinal: false },
+      ]),
+    )
+
+    expect(heard).toEqual([{ transcript: 'the quick brown fox', isFinal: false }])
+  })
+
+  it('emits the finalised chunk, then the trailing interim', async () => {
     const { start, onResult } = await load()
     const heard: { transcript: string; isFinal: boolean }[] = []
     onResult((r) => heard.push(r))
@@ -92,15 +109,26 @@ describe('useSpeechRecognition — lifecycle', () => {
 
     rec().onresult?.(
       resultsEvent([
-        { transcript: 'hel', isFinal: false },
-        { transcript: 'hello', isFinal: true },
+        { transcript: 'the quick', isFinal: true },
+        { transcript: ' brown', isFinal: false },
       ]),
     )
 
     expect(heard).toEqual([
-      { transcript: 'hel', isFinal: false },
-      { transcript: 'hello', isFinal: true },
+      { transcript: 'the quick', isFinal: true },
+      { transcript: 'brown', isFinal: false },
     ])
+  })
+
+  it('ignores an empty result (Chrome fires a blank final on session end)', async () => {
+    const { start, onResult } = await load()
+    const heard: { transcript: string; isFinal: boolean }[] = []
+    onResult((r) => heard.push(r))
+    start()
+
+    rec().onresult?.(resultsEvent([{ transcript: '', isFinal: true }]))
+
+    expect(heard).toEqual([])
   })
 
   it('auto-restarts ~300ms after the browser ends the session', async () => {

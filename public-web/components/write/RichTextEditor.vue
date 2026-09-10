@@ -11,6 +11,7 @@ import { LinkCard } from "./link-card";
 import { CodeBlock } from "./code-block";
 import { VideoEmbed } from "./video-embed";
 import { LineNumbers } from "./line-numbers";
+import { DictationPreview } from "./dictation-preview";
 import { toggleBlockNumbers } from "./editor-actions";
 
 const editorStore = useEditorStore();
@@ -51,6 +52,7 @@ const editor = useEditor({
     LinkCard,
     CodeBlock,
     LineNumbers,
+    DictationPreview,
   ],
   onUpdate: ({ editor }) => {
     content.value = editor.getJSON();
@@ -279,6 +281,19 @@ onBeforeUnmount(() => {
 
     :deep(.ProseMirror) {
       outline: none;
+    }
+
+    // Live dictation ghost text — the words still being heard, shown at the
+    // caret until the phrase finalises and the real text is inserted.
+    :deep(.dictation-preview) {
+      color: rgb(var(--v-theme-on-surface));
+      opacity: 0.55;
+      font-style: italic;
+      background: rgb(var(--v-theme-primary) / 0.08);
+      border-radius: 0.15em;
+      padding: 0 0.1em;
+      white-space: pre-wrap;
+      pointer-events: none;
     }
 
     // Editor-only code-block chrome (the language picker bar + selection
