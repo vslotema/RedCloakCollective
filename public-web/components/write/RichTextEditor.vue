@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { FloatingMenu, BubbleMenu } from "@tiptap/vue-3/menus";
 import type { JSONContent } from "@tiptap/core";
+import type { EditorView } from "@tiptap/pm/view";
 import type { EditorSelection } from "~/stores/editor";
 import InsertMenu from "./InsertMenu.vue";
 import TextFormattingTools from "./TextFormattingTools.vue";
@@ -28,18 +29,46 @@ const content = defineModel<JSONContent>({
 });
 
 
-// Cursor / selection position, mirrored up to the editor store. Write-only
-// from here — the store never pushes a selection back down.
 const selection = defineModel<EditorSelection | null>("selection", {
   default: null,
 });
 
 const linkEditing = ref(false);
 
+const CARET_BOTTOM_MARGIN_REM = 3;
+
+function remToPx(rem: number) {
+  const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  return rem * rootFontSize;
+}
+
+function keepCaretClearOfBottom() {
+  if (!editor.value) return;
+  const { view } = editor.value;
+  const coords = view.coordsAtPos(view.state.selection.from);
+  const margin = remToPx(CARET_BOTTOM_MARGIN_REM);
+  const overflow = coords.bottom - (window.innerHeight - margin);
+  if (overflow > 0) {
+    window.scrollBy({ top: overflow, behavior: "auto" });
+  }
+}
+
+function handleKeyDown(_view: EditorView, event: KeyboardEvent) {
+  if (event.key === "Enter") {
+    // Double rAF: wait for ProseMirror's default Enter handling (incl. its
+    // own scrollIntoView) to finish, then for that scroll to actually paint.
+    requestAnimationFrame(() => requestAnimationFrame(keepCaretClearOfBottom));
+  }
+  return false;
+}
+
 const editor = useEditor({
   content: content.value,
   // Share the published-article body styling (assets/styles/article-content.scss).
-  editorProps: { attributes: { class: "article-content" } },
+  editorProps: {
+    attributes: { class: "article-content" },
+    handleKeyDown,
+  },
   extensions: [
     StarterKit.configure({
       link: { openOnClick: false },
