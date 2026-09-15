@@ -5,7 +5,7 @@
     flat
     style="border-bottom: thin solid rgb(var(--v-theme-border-strong))"
   >
-    <div class="d-flex align-center ga-8 ml-4">
+    <div class="d-flex align-center ga-8 ml-2">
       <NuxtLink to="/" class="d-flex align-center text-decoration-none">
         <AppLogo height="35" />
       </NuxtLink>

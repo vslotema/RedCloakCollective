@@ -103,9 +103,9 @@ async function togglePerson(username: string) {
       </section>
 
       <section v-if="recs.people.length">
-        <h2 class="text-medium font-heading mb-4">Who to follow</h2>
-        <div class="d-flex flex-column ga-6">
-          <SuggestedFollowItem
+        <h2 class="text-small mb-6">RECOMMENDED FOLLOWERS</h2>
+        <div class="d-flex flex-column">
+          <RecommendedFollowerCard
             v-for="person in recs.people"
             :key="person.id"
             :person="person"

@@ -12,7 +12,6 @@ interface MenuItem {
 interface FollowedUser {
   id: number
   name: string
-  role: string
   avatar: string
 }
 
@@ -34,9 +33,9 @@ const menuItems = ref<MenuItem[]>([
 const isActive = (item: MenuItem) =>
   item.match ? item.match.includes(route.name as string) : route.path.startsWith(item.route)
 const following = ref<FollowedUser[]>([
-  { id: 5, name: 'Ethan Wright', role: 'Occupational Therapist', avatar: 'https://i.pravatar.cc/150?img=5' },
-  { id: 6, name: 'Mia Chen', role: 'Cerebral Palsy Advocate', avatar: 'https://i.pravatar.cc/150?img=6' },
-  { id: 7, name: 'Oliver James', role: 'Caregiver & Father', avatar: 'https://i.pravatar.cc/150?img=7' },
+  { id: 5, name: 'Ethan Wright', avatar: 'https://i.pravatar.cc/150?img=5' },
+  { id: 6, name: 'Mia Chen', avatar: 'https://i.pravatar.cc/150?img=6' },
+  { id: 7, name: 'Oliver James', avatar: 'https://i.pravatar.cc/150?img=7' },
 ])
 
 const toggleNavigation = () => {
@@ -61,11 +60,11 @@ async function handleLogout() {
     color="surface"
     :width="fullWidthNav"
     :rail="rail"
-    :rail-width="wider ? fullWidthNav : 52"
+    :rail-width="wider ? fullWidthNav : 64"
     permanent
     style="border-right: thin solid rgb(var(--v-theme-border-strong))"
   >
-    <v-list :class="wider ? 'px-4 pt-4' : 'px-1 pt-4 nav-rail'">
+    <v-list :class="wider ? 'px-1 pt-4' : 'px-1 pt-4 nav-rail'">
       <v-list-item
         v-for="item in menuItems"
         :key="item.title"
@@ -92,7 +91,7 @@ async function handleLogout() {
         <v-divider></v-divider>
       </div>
 
-      <div v-if="wider" class="following-label px-1 mb-3">
+      <div v-if="wider" class="following-label px-4 mb-3">
         <span class="text-caption font-weight-bold following-label-text">Following</span>
       </div>
 
@@ -107,9 +106,6 @@ async function handleLogout() {
         <v-list-item-title class="text-body-2 font-weight-medium following-name">
           {{ user.name }}
         </v-list-item-title>
-        <v-list-item-subtitle v-if="wider" class="text-caption following-role">
-          {{ user.role }}
-        </v-list-item-subtitle>
         <v-tooltip
           activator="parent"
           location="end"
@@ -121,7 +117,7 @@ async function handleLogout() {
     </v-list>
 
     <template #append>
-      <div :class="wider ? 'px-4 pb-4' : 'px-1 pb-4 nav-rail'">
+      <div :class="wider ? 'px-1 pb-4' : 'px-1 pb-4 nav-rail'">
         <v-list-item
           prepend-icon="menu"
           prepend-gap="1rem"
@@ -160,6 +156,28 @@ async function handleLogout() {
 </template>
 
 <style scoped lang="scss">
+
+.nav-list-item,
+.following-item {
+  padding-inline: 8px !important;
+
+  :deep(.v-list-item__prepend) {
+    width: 40px;
+    flex: 0 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-inline-end: 0;
+
+    // The prepend-gap spacer between icon and title is a real DOM node
+    // (not part of the hidden content area), so it still pushes the icon
+    // off-center unless removed explicitly.
+    .v-list-item__spacer {
+      display: none;
+    }
+  }
+}
+
 .nav-list-item {
   border-radius: 12px;
   margin-bottom: 8px;
@@ -183,26 +201,6 @@ async function handleLogout() {
 .nav-rail {
   .nav-list-item,
   .following-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    min-height: 40px;
-    padding: 0;
-    margin-inline: auto;
-
-    :deep(.v-list-item__prepend) {
-      margin-inline-end: 0;
-
-      // The prepend-gap spacer between icon and title is a real DOM node
-      // (not part of the hidden content area), so it still pushes the icon
-      // off-center unless removed explicitly.
-      .v-list-item__spacer {
-        display: none;
-      }
-    }
-
     :deep(.v-list-item__content) {
       display: none;
     }
