@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { RecommendedPerson } from '~/types/recommendation'
+import type { RecommendedCreator } from '~/types/recommendation'
 
 const props = defineProps<{
-  person: RecommendedPerson
+  person: RecommendedCreator
   selected: boolean
 }>()
 

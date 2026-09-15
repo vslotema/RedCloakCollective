@@ -22,7 +22,9 @@ const pending = ref<Set<string | number>>(new Set());
 
 onMounted(async () => {
   try {
-    recs.value = await api<FeedRecommendations>("/onboarding/recommendations");
+    recs.value = await api<FeedRecommendations>("/onboarding/recommendations", {
+      query: { topics_limit: 7, creators_limit: 3 },
+    });
     shownTopicIds.value = new Set(
       recs.value.topics.filter((t) => !t.following).map((t) => t.id),
     );
@@ -55,7 +57,7 @@ async function toggleTopic(slug: string, following: boolean) {
   }
 }
 
-async function togglePerson(username: string) {
+async function toggleCreator(username: string) {
   if (pending.value.has(username)) return;
   pending.value.add(username);
   const following = followedUsernames.value.has(username);
@@ -102,15 +104,15 @@ async function togglePerson(username: string) {
         </v-btn>
       </section>
 
-      <section v-if="recs.people.length">
+      <section v-if="recs.creators.length">
         <h2 class="text-small mb-6">RECOMMENDED FOLLOWERS</h2>
         <div class="d-flex flex-column">
           <RecommendedFollowerCard
-            v-for="person in recs.people"
-            :key="person.id"
-            :person="person"
-            :selected="followedUsernames.has(person.username)"
-            @toggle="togglePerson(person.username)"
+            v-for="creator in recs.creators"
+            :key="creator.id"
+            :person="creator"
+            :selected="followedUsernames.has(creator.username)"
+            @toggle="toggleCreator(creator.username)"
           />
         </div>
         <v-btn
@@ -119,7 +121,7 @@ async function togglePerson(username: string) {
           to="/home/explore"
           class="see-more px-0 mt-4 text-primary"
         >
-          See more suggestions
+          See more suggestions <v-icon class="ml-1" icon="chevron-right" size="small"></v-icon>
         </v-btn>
       </section>
     </template>

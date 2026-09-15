@@ -16,7 +16,7 @@ const { showQuestionnaire, showPersonalize } = useHomeFeedState()
     <PersonalizeFeed />
   </div>
   <div v-else class="mt-8">
-    <ContentFilterBar followed class="mb-12"/>
+    <ContentFilterBar followed class="mb-6"/>
     <ContentList :items="mockContentItems" />
   </div>
 </template>

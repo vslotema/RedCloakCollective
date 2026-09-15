@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { RecommendedPerson } from '~/types/recommendation'
+import type { RecommendedCreator } from '~/types/recommendation'
 
 const props = defineProps<{
-  person: RecommendedPerson
+  person: RecommendedCreator
   selected: boolean
 }>()
 
@@ -26,16 +26,17 @@ const bio = computed(() => mockBios[props.person.id % mockBios.length])
 
 <template>
   <div class="follower-card d-flex align-center ga-3">
-    <v-avatar size="56" :image="avatar" />
+    <v-avatar size="40" :image="avatar" />
     <div class="follower-card__body">
-      <div class="follower-card__name">{{ person.name }}</div>
-      <p class="follower-card__meta">{{ bio }}</p>
+      <div class="follower-card__name text-small bold">{{ person.name }}</div>
+      <p class="follower-card__meta text-x-small">{{ bio }}</p>
     </div>
     <v-btn
       :ripple="false"
       variant="outlined"
       rounded="pill"
       color="ink"
+      size="small"
       class="follower-card__btn"
       @click="$emit('toggle')"
     >
@@ -65,8 +66,6 @@ const bio = computed(() => mockBios[props.person.id % mockBios.length])
 
   &__name {
     color: rgb(var(--v-theme-ink));
-    font-weight: 700;
-    font-size: 1.125rem;
   }
 
   &__meta {

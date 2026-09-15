@@ -8,7 +8,7 @@ export interface RecommendedTopic extends Topic {
   following: boolean
 }
 
-export interface RecommendedPerson {
+export interface RecommendedCreator {
   id: number
   name: string
   username: string
@@ -18,5 +18,5 @@ export interface RecommendedPerson {
 
 export interface FeedRecommendations {
   topics: RecommendedTopic[]
-  people: RecommendedPerson[]
+  creators: RecommendedCreator[]
 }

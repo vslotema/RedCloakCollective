@@ -62,6 +62,24 @@ class OnboardingRecommendationsTest extends TestCase
         $this->assertSame($slugs, array_values(array_unique($slugs)));
     }
 
+    public function test_topics_and_creators_can_be_capped_via_query_params(): void
+    {
+        $topic = Topic::where('slug', 'feeding-nutrition')->first();
+        $user = $this->userWithAnswers(['content_interests' => ['feeding_swallowing_nutrition']]);
+
+        foreach (range(1, 5) as $i) {
+            $author = User::factory()->create();
+            Article::factory()->for($author, 'author')->create()->topics()->attach($topic);
+        }
+
+        Sanctum::actingAs($user);
+        $response = $this->getJson('/api/onboarding/recommendations?topics_limit=2&creators_limit=3');
+
+        $response->assertOk();
+        $this->assertCount(2, $response->json('topics'));
+        $this->assertCount(3, $response->json('creators'));
+    }
+
     public function test_topics_are_derived_from_condition_answers(): void
     {
         $user = $this->userWithAnswers(['conditions' => ['cerebral_palsy']]);
@@ -88,7 +106,7 @@ class OnboardingRecommendationsTest extends TestCase
         );
     }
 
-    public function test_recommended_people_are_authors_publishing_in_recommended_topics(): void
+    public function test_recommended_creators_are_authors_publishing_in_recommended_topics(): void
     {
         $topic = Topic::where('slug', 'feeding-nutrition')->first();
         $user = $this->userWithAnswers(['content_interests' => ['feeding_swallowing_nutrition']]);
@@ -109,7 +127,7 @@ class OnboardingRecommendationsTest extends TestCase
         Article::factory()->for($user, 'author')->create()->topics()->attach($topic);
 
         Sanctum::actingAs($user);
-        $usernames = $this->getJson('/api/onboarding/recommendations')->json('people.*.username');
+        $usernames = $this->getJson('/api/onboarding/recommendations')->json('creators.*.username');
 
         $this->assertContains($match->username, $usernames);
         $this->assertNotContains($draftOnly->username, $usernames);
@@ -118,7 +136,7 @@ class OnboardingRecommendationsTest extends TestCase
         $this->assertNotContains($user->username, $usernames);
     }
 
-    public function test_recommended_people_fall_back_to_popular_authors_when_nothing_matches(): void
+    public function test_recommended_creators_fall_back_to_popular_authors_when_nothing_matches(): void
     {
         $user = $this->userWithAnswers(['content_interests' => ['feeding_swallowing_nutrition']]);
 
@@ -130,7 +148,7 @@ class OnboardingRecommendationsTest extends TestCase
         Article::factory()->for($quiet, 'author')->create();
 
         Sanctum::actingAs($user);
-        $usernames = $this->getJson('/api/onboarding/recommendations')->json('people.*.username');
+        $usernames = $this->getJson('/api/onboarding/recommendations')->json('creators.*.username');
 
         $this->assertSame([$popular->username, $quiet->username], $usernames);
     }

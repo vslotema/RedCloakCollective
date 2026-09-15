@@ -23,7 +23,7 @@ async function load() {
     selectedTopicIds.value = new Set(
       data.topics.filter((t) => t.following).map((t) => t.id),
     );
-    selectedUsernames.value = new Set(data.people.map((p) => p.username));
+    selectedUsernames.value = new Set(data.creators.map((c) => c.username));
   } catch {
     error.value = true;
   } finally {
@@ -40,7 +40,7 @@ function toggleTopic(id: number) {
   selectedTopicIds.value = next;
 }
 
-function togglePerson(username: string) {
+function toggleCreator(username: string) {
   const next = new Set(selectedUsernames.value);
   if (next.has(username)) next.delete(username);
   else next.add(username);
@@ -96,15 +96,15 @@ const skip = () => submit([], []);
         </div>
       </section>
 
-      <section v-if="recs.people.length" class="mt-8">
-        <h2 class="text-medium font-heading mb-4">People to follow</h2>
+      <section v-if="recs.creators.length" class="mt-8">
+        <h2 class="text-medium font-heading mb-4">Creators to follow</h2>
         <div class="d-flex flex-column ga-6">
           <SuggestedFollowItem
-            v-for="person in recs.people"
-            :key="person.id"
-            :person="person"
-            :selected="selectedUsernames.has(person.username)"
-            @toggle="togglePerson(person.username)"
+            v-for="creator in recs.creators"
+            :key="creator.id"
+            :person="creator"
+            :selected="selectedUsernames.has(creator.username)"
+            @toggle="toggleCreator(creator.username)"
           />
         </div>
       </section>
