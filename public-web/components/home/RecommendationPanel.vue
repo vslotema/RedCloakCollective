@@ -1,64 +1,74 @@
 <script setup lang="ts">
-import type { FeedRecommendations } from '~/types/recommendation'
+import type { FeedRecommendations } from "~/types/recommendation";
 
 interface Props {
-  width?: string
+  width?: string;
 }
 
-const { width = '350px' } = defineProps<Props>()
+const { width = "350px" } = defineProps<Props>();
 
-const api = useApi()
+const api = useApi();
 
-const loading = ref(true)
-const recs = ref<FeedRecommendations | null>(null)
+const loading = ref(true);
+const recs = ref<FeedRecommendations | null>(null);
 // Topic ids that weren't followed at load time — this list is frozen for the
 // session so a topic stays visible (as "added") after the user follows it, and
 // only drops off on the next page load.
-const shownTopicIds = ref<Set<number>>(new Set())
+const shownTopicIds = ref<Set<number>>(new Set());
 // usernames the viewer currently follows (seeded from nothing — the panel only
 // surfaces people they don't follow yet, and flips locally on toggle).
-const followedUsernames = ref<Set<string>>(new Set())
-const pending = ref<Set<string | number>>(new Set())
+const followedUsernames = ref<Set<string>>(new Set());
+const pending = ref<Set<string | number>>(new Set());
 
 onMounted(async () => {
   try {
-    recs.value = await api<FeedRecommendations>('/onboarding/recommendations')
+    recs.value = await api<FeedRecommendations>("/onboarding/recommendations");
     shownTopicIds.value = new Set(
       recs.value.topics.filter((t) => !t.following).map((t) => t.id),
-    )
+    );
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-})
+});
 
 // Topics that were unfollowed at load. Membership is fixed for the session;
 // following one flips its chip to "added" but doesn't remove it until refresh.
-const shownTopics = computed(() => recs.value?.topics.filter((t) => shownTopicIds.value.has(t.id)) ?? [])
+const shownTopics = computed(
+  () => recs.value?.topics.filter((t) => shownTopicIds.value.has(t.id)) ?? [],
+);
+
+const topicIconColors = ["#8B5CF6", "#F59E0B", "#F97316", "#10B981", "#3B82F6"];
+const topicColor = (index: number) =>
+  topicIconColors[index % topicIconColors.length] ?? '#8B5CF6';
 
 async function toggleTopic(slug: string, following: boolean) {
-  if (pending.value.has(slug)) return
-  pending.value.add(slug)
+  if (pending.value.has(slug)) return;
+  pending.value.add(slug);
   try {
-    await api(`/topics/${slug}/follow`, { method: following ? 'DELETE' : 'POST' })
-    const topic = recs.value?.topics.find((t) => t.slug === slug)
-    if (topic) topic.following = !following
+    await api(`/topics/${slug}/follow`, {
+      method: following ? "DELETE" : "POST",
+    });
+    const topic = recs.value?.topics.find((t) => t.slug === slug);
+    if (topic) topic.following = !following;
   } finally {
-    pending.value.delete(slug)
+    pending.value.delete(slug);
   }
 }
 
 async function togglePerson(username: string) {
-  if (pending.value.has(username)) return
-  pending.value.add(username)
-  const following = followedUsernames.value.has(username)
+  if (pending.value.has(username)) return;
+  pending.value.add(username);
+  const following = followedUsernames.value.has(username);
   try {
-    await api(`/users/${username}/follow`, { method: following ? 'DELETE' : 'POST' })
-    const next = new Set(followedUsernames.value)
-    if (following) next.delete(username)
-    else next.add(username)
-    followedUsernames.value = next
+    await api(`/users/${username}/follow`, {
+      method: following ? "DELETE" : "POST",
+    });
+    const next = new Set(followedUsernames.value);
+    if (following) next.delete(username);
+    else next.add(username);
+    followedUsernames.value = next;
   } finally {
-    pending.value.delete(username)
+    pending.value.delete(username);
   }
 }
 </script>
@@ -71,18 +81,24 @@ async function togglePerson(username: string) {
 
     <template v-else-if="recs">
       <section v-if="shownTopics.length" class="mb-8">
-        <h2 class="text-medium font-heading mb-4">Recommended topics</h2>
-        <div class="d-flex flex-wrap ga-2">
-          <RecommendedTopicChip
-            v-for="topic in shownTopics"
+        <h2 class="text-small mb-6">RECOMMENDED TOPICS</h2>
+        <div class="d-flex flex-column ga-4">
+          <RecommendedTopicRow
+            v-for="(topic, index) in shownTopics"
             :key="topic.id"
             :label="topic.name"
             :added="topic.following"
+            :color="topicColor(index)"
             @toggle="toggleTopic(topic.slug, topic.following)"
           />
         </div>
-        <v-btn :ripple="false" variant="text" to="/home/explore" class="see-more px-0 mt-4">
-          See more topics
+        <v-btn
+          :ripple="false"
+          variant="text"
+          to="/home/explore"
+          class="see-more px-0 mt-4 text-primary d-flex justify-start align-center"
+        >
+          See more topics <v-icon class="ml-1" icon="chevron-right" size="small"></v-icon>
         </v-btn>
       </section>
 
@@ -97,7 +113,12 @@ async function togglePerson(username: string) {
             @toggle="togglePerson(person.username)"
           />
         </div>
-        <v-btn :ripple="false" variant="text" to="/home/explore" class="see-more px-0 mt-4">
+        <v-btn
+          :ripple="false"
+          variant="text"
+          to="/home/explore"
+          class="see-more px-0 mt-4 text-primary"
+        >
           See more suggestions
         </v-btn>
       </section>
@@ -107,7 +128,7 @@ async function togglePerson(username: string) {
 
 <style lang="scss" scoped>
 .panel-container {
-  border-left: 1px solid rgb(var(--v-theme-border-color));
+  background: rgb(var(--v-theme-background));
   padding: var(--space-8) var(--space-6);
 }
 
@@ -118,8 +139,6 @@ async function togglePerson(username: string) {
 }
 
 .see-more {
-  color: rgb(var(--v-theme-on-surface));
-
   :deep(.v-btn__overlay) {
     opacity: 0;
   }
