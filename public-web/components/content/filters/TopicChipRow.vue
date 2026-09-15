@@ -71,6 +71,7 @@ watch(
       icon="chevron-right"
       variant="text"
       density="comfortable"
+      size="small"
       @click="scrollNext"
     />
   </div>

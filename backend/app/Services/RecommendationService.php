@@ -32,7 +32,7 @@ class RecommendationService
      *
      * @return Collection<int, Topic>
      */
-    public function recommendedTopics(User $user): Collection
+    public function recommendedTopics(User $user, ?int $limit = null): Collection
     {
         $slugs = OnboardingTopicMap::slugsFor($user->onboarding_answers);
 
@@ -40,7 +40,7 @@ class RecommendationService
             $slugs = self::FALLBACK_TOPIC_SLUGS;
         }
 
-        $slugs = array_slice($slugs, 0, self::MAX_TOPICS);
+        $slugs = array_slice($slugs, 0, $limit ?? self::MAX_TOPICS);
         $order = array_flip($slugs);
 
         return Topic::whereIn('slug', $slugs)
@@ -50,7 +50,7 @@ class RecommendationService
     }
 
     /**
-     * People worth following: authors of published articles tagged with one of
+     * Creators worth following: authors of published articles tagged with one of
      * the user's recommended topics, ranked by how much matching content they've
      * published and then by follower count. Falls back to the most-followed
      * authors of any published content when nothing matches.
@@ -59,7 +59,7 @@ class RecommendationService
      *
      * @return Collection<int, User>
      */
-    public function recommendedPeople(User $user, int $limit = 8): Collection
+    public function recommendedCreators(User $user, int $limit = 8): Collection
     {
         $topicIds = $this->recommendedTopics($user)->pluck('id');
         $exclude = $user->following()->pluck('followee_id')->push($user->id);

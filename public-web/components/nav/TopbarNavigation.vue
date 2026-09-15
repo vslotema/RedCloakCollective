@@ -8,7 +8,7 @@ withDefaults(
     writeActions?: boolean;
   }>(),
   {
-    showMenuToggle: true,
+    showMenuToggle: false,
     showGoBackButton: false,
     showSearch: true,
     showWriteButton: true,
@@ -59,8 +59,13 @@ function goBack() {
 </script>
 
 <template>
-  <v-app-bar class="topbar-nav pl-2 pr-4" :class="{'border': showWriteButton}" flat>
-    <div class="d-flex align-center">
+  <v-app-bar
+    class="px-4"
+    color="surface"
+    flat
+    style="border-bottom: thin solid rgb(var(--v-theme-border-strong))"
+  >
+    <div class="d-flex align-center ga-8 ml-2">
       <v-btn
         v-if="showGoBackButton"
         icon
@@ -87,17 +92,15 @@ function goBack() {
         @click="$emit('toggleNavigation')"
       >
       </v-btn>
-      <NuxtLink to="/" class="logo-link">
-        <h1 class="text-h6 font-weight-bold mb-0">
-          <span class="text-primary">R</span>edCloak Collective
-        </h1>
+      <NuxtLink to="/" class="d-flex align-center text-decoration-none">
+        <AppLogo height="35" />
       </NuxtLink>
-      <SearchBar v-if="showSearch" class="ml-6" />
+      <SearchBar v-if="showSearch" />
     </div>
 
     <v-spacer />
 
-    <div class="d-flex align-center" :class="writeActions ? 'ga-4' : 'ga-2'">
+    <div class="d-flex align-center ga-4">
       <template v-if="writeActions">
         <span
           class="text-body-2 text-medium-emphasis d-none d-sm-inline mr-1"
@@ -161,36 +164,25 @@ function goBack() {
       <template v-else>
         <v-btn
           v-if="showWriteButton"
-          icon
           variant="flat"
-          color="white"
-          size="40"
-          class="action-btn border"
+          color="primary"
+          rounded="pill"
+          density="comfortable"
+          class="font-weight-bold"
+          prepend-icon="edit-3"
           to="/write"
         >
-          <v-icon icon="edit" :size="20" />
-          <v-tooltip
-            activator="parent"
-            location="bottom"
-            content-class="navbar-tooltip"
-            text="Write"
-          />
+          Write
         </v-btn>
-        <v-btn
-          icon
-          variant="flat"
-          color="white"
-          size="40"
-          class="action-btn border"
-        >
-          <v-icon icon="bell" :size="20" />
+        <v-badge color="primary" dot location="top end" offset-x="2" offset-y="2">
+          <v-icon icon="bell" :size="20" color="ink" />
           <v-tooltip
             activator="parent"
             location="bottom"
             content-class="navbar-tooltip"
             text="Notifications"
           />
-        </v-btn>
+        </v-badge>
       </template>
       <v-avatar
         size="40"
@@ -203,22 +195,7 @@ function goBack() {
 </template>
 
 <style scoped lang="scss">
-.topbar-nav.v-app-bar.v-toolbar {
-  background-color: rgba($color: var(--v-theme-background), $alpha: 1.0);
-}
-.topbar.border {
-  border-bottom: 1px solid;
-}
 .menu-btn {
   margin-right: 0.375rem;
-}
-.action-btn :deep(.v-icon) {
-  color: rgb(var(--v-theme-on-surface));
-}
-
-.logo-link {
-  margin-left: 1rem;
-  text-decoration: none;
-  cursor: pointer;
 }
 </style>

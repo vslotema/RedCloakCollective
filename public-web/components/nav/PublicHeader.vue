@@ -10,11 +10,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <v-app-bar color="background" flat style="border-bottom: thin solid #d5d5d5">
+  <v-app-bar color="background" flat style="border-bottom: thin solid rgb(var(--v-theme-border-color))">
     <NuxtLink to="/" class="logo text-decoration-none px-4">
-      <h1 class="text-h6 font-weight-bold mb-0">
-        <span class="text-primary">R</span>EDCLOAK COLLECTIVE
-      </h1>
+      <AppLogo />
     </NuxtLink>
 
     <v-spacer />

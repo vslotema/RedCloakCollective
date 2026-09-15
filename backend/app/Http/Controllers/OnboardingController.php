@@ -34,28 +34,38 @@ class OnboardingController extends Controller
     }
 
     /**
-     * Topics and people recommended from the stored onboarding answers, for the
+     * Topics and creators recommended from the stored onboarding answers, for the
      * "Personalize your feed" screen and the home recommendation panel. Purely
      * a suggestion — the caller decides what (if anything) to follow.
+     *
+     * `topics_limit` / `creators_limit` let a caller ask for a smaller slice —
+     * the home recommendation panel requests at most 7 topics and 3 creators so
+     * it doesn't flood the sidebar, while the full "Personalize your feed"
+     * screen omits them and gets the uncapped set.
      */
     public function recommendations(Request $request, RecommendationService $recommendations)
     {
+        $data = $request->validate([
+            'topics_limit' => ['nullable', 'integer', 'min:1'],
+            'creators_limit' => ['nullable', 'integer', 'min:1'],
+        ]);
+
         $user = $request->user();
         $followedTopicIds = $user->followedTopics()->pluck('topics.id');
 
         return response()->json([
-            'topics' => $recommendations->recommendedTopics($user)->map(fn ($topic) => [
+            'topics' => $recommendations->recommendedTopics($user, $data['topics_limit'] ?? null)->map(fn ($topic) => [
                 'id' => $topic->id,
                 'name' => $topic->name,
                 'slug' => $topic->slug,
                 'following' => $followedTopicIds->contains($topic->id),
             ])->values(),
-            'people' => $recommendations->recommendedPeople($user)->map(fn ($person) => [
-                'id' => $person->id,
-                'name' => $person->name,
-                'username' => $person->username,
-                'articles_count' => $person->matching_articles_count ?? 0,
-                'followers_count' => $person->followers_count,
+            'creators' => $recommendations->recommendedCreators($user, $data['creators_limit'] ?? 8)->map(fn ($creator) => [
+                'id' => $creator->id,
+                'name' => $creator->name,
+                'username' => $creator->username,
+                'articles_count' => $creator->matching_articles_count ?? 0,
+                'followers_count' => $creator->followers_count,
             ])->values(),
         ]);
     }
