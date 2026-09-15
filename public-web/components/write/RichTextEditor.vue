@@ -120,7 +120,14 @@ onBeforeUnmount(() => {
       }"
       style="z-index: 20"
     >
-      <TextFormattingTools v-model:link-editing="linkEditing" :editor="editor" color="white" background="black" />
+      <TextFormattingTools
+        v-model:link-editing="linkEditing"
+        :editor="editor"
+        color="white"
+        background="black"
+        base-color="black"
+        active-color="#4f9cf6"
+      />
     </BubbleMenu>
     <editor-content
       :editor="editor"

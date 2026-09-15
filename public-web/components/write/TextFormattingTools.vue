@@ -13,11 +13,17 @@ const {
   color = 'black',
   background = 'white',
   orientation = 'horizontal',
+  toolVariant,
+  baseColor,
+  activeColor = '#4f9cf6',
 } = defineProps<{
   editor: Editor;
   color?: string;
   background?: string;
   orientation?: 'horizontal' | 'vertical';
+  toolVariant?: 'elevated' | 'text';
+  baseColor?: string;
+  activeColor?: string;
 }>();
 
 // Kept in sync with the parent so the BubbleMenu's shouldShow can keep the
@@ -132,6 +138,7 @@ function toolIsActive(label: string): boolean {
         class="write-tools__tool"
         icon
         size="small"
+        :variant="toolVariant"
         aria-label="Apply link"
         @mousedown.prevent
       >
@@ -143,6 +150,7 @@ function toolIsActive(label: string): boolean {
         class="write-tools__tool"
         icon
         size="small"
+        :variant="toolVariant"
         aria-label="Remove link"
         @mousedown.prevent
         @click="removeLink"
@@ -158,10 +166,12 @@ function toolIsActive(label: string): boolean {
         type="button"
         class="write-tools__tool"
         :active="toolIsActive(tool.label)"
-        active-color="#4f9cf6"
-        base-color="black"
+        :active-color="activeColor"
+        :base-color="baseColor"
+        :variant="toolVariant"
         icon
         size="small"
+        :ripple="false"
         @mousedown.prevent
         @click="toggleTool(tool.label)"
       >

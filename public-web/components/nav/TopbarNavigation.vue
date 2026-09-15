@@ -2,14 +2,12 @@
 withDefaults(
   defineProps<{
     showMenuToggle?: boolean;
-    showGoBackButton?: boolean;
     showSearch?: boolean;
     showWriteButton?: boolean;
     writeActions?: boolean;
   }>(),
   {
     showMenuToggle: false,
-    showGoBackButton: false,
     showSearch: true,
     showWriteButton: true,
     writeActions: false,
@@ -19,7 +17,6 @@ withDefaults(
 defineEmits<{
   toggleNavigation: [];
 }>();
-const router = useRouter();
 const editorStore = useEditorStore();
 const publishing = ref(false);
 const publishDialog = ref(false);
@@ -48,14 +45,6 @@ async function onUnpublish() {
     publishing.value = false;
   }
 }
-
-function goBack() {
-  if (window.history.length > 1) {
-    router.back();
-  } else {
-    router.push("/");
-  }
-}
 </script>
 
 <template>
@@ -66,23 +55,6 @@ function goBack() {
     style="border-bottom: thin solid rgb(var(--v-theme-border-strong))"
   >
     <div class="d-flex align-center ga-8 ml-2">
-      <v-btn
-        v-if="showGoBackButton"
-        icon
-        size="small"
-        color="ink"
-        variant="text"
-        aria-label="Go back"
-        @click="goBack"
-      >
-        <v-icon icon="arrow-left" :size="20" />
-        <v-tooltip
-          activator="parent"
-          location="bottom"
-          content-class="navbar-tooltip"
-          text="Go back"
-        />
-      </v-btn>
       <v-btn
         v-if="showMenuToggle"
         class="menu-btn"
