@@ -8,6 +8,7 @@ export const light: ThemeDefinition = {
   dark: false,
   colors: {
     background: "#FbFbFb",
+    "background-darken-1": "#F1F1F1",
     surface: "#FFFFFF",
     "surface-variant": "#F5F5F5",
     "on-background": "#4B5563",
@@ -34,6 +35,7 @@ export const dark: ThemeDefinition = {
   dark: true,
   colors: {
     background: "#1A1A1E",
+    "background-darken-1": "#242428",
     surface: "#242428",
     "surface-variant": "#2E2E33",
     "on-background": "#A3A3AC",

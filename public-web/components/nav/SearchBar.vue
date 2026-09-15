@@ -30,7 +30,7 @@ const foundItems = ref<string[]>([])
 
   :deep(.v-field) {
     box-shadow: none;
-    background: rgb(var(--v-theme-background));
+    background: rgb(var(--v-theme-background-darken-1));
   }
 
   // Match the 40px height of the topbar icon buttons.
