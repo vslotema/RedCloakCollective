@@ -82,6 +82,39 @@ watch(
     }
   },
 )
+
+// The title textarea auto-grows with its content instead of scrolling or
+// offering a manual resize handle — height is JS-driven, not user-draggable.
+const TITLE_MAX_WORDS = 20
+
+const titleRef = useTemplateRef<HTMLTextAreaElement>('titleRef')
+
+function resizeTitle() {
+  const el = titleRef.value
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
+
+function onTitleInput(event: Event) {
+  const el = event.target as HTMLTextAreaElement
+  const words = el.value.split(/\s+/).filter(Boolean)
+  if (words.length > TITLE_MAX_WORDS) {
+    el.value = words.slice(0, TITLE_MAX_WORDS).join(' ')
+  }
+  editorStore.setTitle(el.value)
+  resizeTitle()
+}
+
+// A title is one (wrapping) line of text — block hard line breaks.
+function onTitleKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter') event.preventDefault()
+}
+
+// Height also needs recalculating when the title is set from outside typing
+// (loading a draft, undo, voice dictation).
+watch(() => editorStore.title, () => nextTick(resizeTitle))
+onMounted(() => nextTick(resizeTitle))
 </script>
 
 <template>
@@ -96,14 +129,16 @@ watch(
       >
         Title
       </span>
-      <input
+      <textarea
         id="doc-title"
+        ref="titleRef"
         :value="editorStore.title"
-        type="text"
+        rows="1"
         aria-label="Title"
         class="editor-main__title text-h3"
         placeholder="Title"
-        @input="editorStore.setTitle(($event.target as HTMLInputElement).value)"
+        @input="onTitleInput"
+        @keydown="onTitleKeydown"
       />
     </div>
 
@@ -154,11 +189,14 @@ watch(
 
   &__title {
     display: block;
+    width: 100%;
     font-family: inherit;
     background: transparent;
     border: none;
     padding-left: var(--space-3);
     min-height: var(--control-min-size);
+    resize: none;
+    overflow: hidden;
 
     &::placeholder {
       color: rgb(var(--v-theme-border-color));

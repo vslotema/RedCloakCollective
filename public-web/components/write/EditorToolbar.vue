@@ -3,21 +3,13 @@ import { useDisplay } from "vuetify";
 import TextFormattingTools from "./TextFormattingTools.vue";
 import { toggleBlockNumbers } from "./editor-actions";
 
-// A v-navigation-drawer rail attached to the left edge of the /write page,
-// flush under the topbar — same treatment as SidebarNavigation. Text
-// formatting at the top, block-numbers / help / voice pinned to the bottom.
-// Rendered by the `write` layout; it reads the live editor from
-// `useEditorInstance` (published by RichTextEditor) rather than a prop, and
-// shows nothing until the editor is mounted. Below `sm` it becomes a bottom
-// bar holding just the utility trio.
-
 const editorStore = useEditorStore();
 const { editor } = useEditorInstance();
 const voice = useArticleVoice();
 const { smAndUp } = useDisplay();
 const router = useRouter();
 
-const { enabled, permissionDenied, supported, mode, panelOpen } = voice;
+const { enabled, permissionDenied, supported, mode } = voice;
 
 const drawerLocation = computed(() => (smAndUp.value ? "start" : "bottom"));
 const drawerWidth = computed(() => (smAndUp.value ? 44 : 56));
@@ -96,26 +88,6 @@ function goBack() {
           content-class="navbar-tooltip"
         >
           Block numbers
-        </v-tooltip>
-      </v-btn>
-
-      <v-btn
-        v-if="supported"
-        icon
-        size="small"
-        variant="text"
-        :active="panelOpen"
-        active-color="primary"
-        :aria-label="panelOpen ? 'Hide voice commands' : 'Show voice commands'"
-        @click="panelOpen = !panelOpen"
-      >
-        <v-icon icon="help-circle" :size="18" />
-        <v-tooltip
-          activator="parent"
-          :location="tooltipLocation"
-          content-class="navbar-tooltip"
-        >
-          Voice commands
         </v-tooltip>
       </v-btn>
 
