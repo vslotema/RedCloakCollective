@@ -34,8 +34,7 @@ const showFeed = computed(() => !showQuestionnaire.value && !showPersonalize.val
           <PersonalizeFeed />
         </div>
         <div v-else class="mt-8">
-          <ContentFilterBar followed />
-          <v-divider class="mb-12"></v-divider>
+          <ContentFilterBar followed class="mb-12"/>
           <ContentList :items="mockContentItems" />
         </div>
       </div>

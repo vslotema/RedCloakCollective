@@ -3,7 +3,7 @@
     class="px-4"
     color="background"
     flat
-    style="border-bottom: thin solid rgb(var(--v-theme-border-color))"
+    style="border-bottom: thin solid rgb(var(--v-theme-border-strong))"
   >
     <div class="d-flex align-center ga-6">
       <NuxtLink to="/" class="d-flex align-center text-decoration-none">

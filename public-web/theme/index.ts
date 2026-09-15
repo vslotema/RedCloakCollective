@@ -7,13 +7,14 @@ export { aliases, feather } from "./icons";
 export const light: ThemeDefinition = {
   dark: false,
   colors: {
-    background: "#FCFCFC",
+    background: "#FEFEFE",
     surface: "#FFFFFF",
     "surface-variant": "#F5F5F5",
     "on-background": "#4B5563",
     "on-surface": "#4B5563",
     "on-surface-variant": "#4B5563",
     "border-color": "#E5E7EB",
+    "border-strong": "#626161",
     ink: "#111827",
     primary: "#DD0509",
     "primary-darken-1": "#B70407",
@@ -39,6 +40,7 @@ export const dark: ThemeDefinition = {
     "on-surface": "#A3A3AC",
     "on-surface-variant": "#A3A3AC",
     "border-color": "#333338",
+    "border-strong": "#333338",
     ink: "#FFFFFF",
     primary: "#DD0509",
     "primary-darken-1": "#B70407",

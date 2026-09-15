@@ -13,7 +13,8 @@ defineEmits<{
   <v-chip
     :variant="'flat'"
     :color="selected ? 'ink' : 'surface'"
-    :class="['topic-chip']"
+    rounded="lg"
+    :class="['topic-chip', { 'topic-chip--unselected': !selected }]"
     @click="$emit('click')"
   >
     {{ label }}
@@ -24,10 +25,9 @@ defineEmits<{
 .topic-chip {
   color: rgb(var(--v-theme-background));
 
-  &.v-chip--variant-outlined {
-    background: rgb(var(--v-theme-background));
+  &.topic-chip--unselected {
     color: rgb(var(--v-theme-ink));
-    border-color: rgb(var(--v-theme-ink));
+    border: 1px solid rgb(var(--v-theme-border-strong));
   }
 }
 </style>

@@ -58,7 +58,7 @@ function clearTopics() {
       @all="clearTopics"
     />
 
-    <div class="d-flex align-center justify-space-between mt-4">
+    <div class="d-flex align-center justify-space-between mt-12">
       <ResultsSummary :count="resultsCount" :show-clear-btn="showClearBtn" @clear="clearTopics" />
 
       <div class="d-flex align-center ga-4">

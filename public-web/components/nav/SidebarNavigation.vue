@@ -63,6 +63,7 @@ async function handleLogout() {
     :rail="rail"
     :rail-width="wider ? fullWidthNav : 52"
     permanent
+    style="border-right: thin solid rgb(var(--v-theme-border-strong))"
   >
     <v-list :class="wider ? 'px-4 pt-4' : 'px-1 pt-4 nav-rail'">
       <v-list-item
