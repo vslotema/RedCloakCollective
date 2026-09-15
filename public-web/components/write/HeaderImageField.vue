@@ -146,8 +146,11 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
       @dragleave.prevent="dragging = false"
       @drop.prevent="onDrop"
     >
-      <v-icon icon="image" :size="20" />
-      <span>Add header image</span>
+      <v-icon icon="image" :size="32" color="on-surface" />
+      <span class="header-image__dropzone-title">Add header image</span>
+      <span class="header-image__dropzone-caption">
+        Supports JPG, PNG or WebP (Recommended size: 1200×630)
+      </span>
     </button>
 
     <figure v-else class="header-image__preview">
@@ -226,25 +229,35 @@ onBeforeUnmount(() => window.removeEventListener('resize', measureOverflow))
 
   &__dropzone {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
     width: 100%;
     min-height: 20rem;
     padding: var(--space-4);
-    font-size: var(--text-md);
     font-family: inherit;
-    color: rgb(var(--v-theme-on-surface));
-    background: #e6e6e6;
+    text-align: center;
+    background: rgb(var(--v-theme-background-darken-1));
     border: 1px dashed rgb(var(--v-theme-border-color));
-    border-radius: .25rem;
+    border-radius: 0.5rem;
     cursor: pointer;
 
     &:hover,
     &--dragging {
-      color: rgb(var(--v-theme-ink));
       border-color: rgb(var(--v-theme-primary));
     }
+  }
+
+  &__dropzone-title {
+    font-size: var(--text-md);
+    font-weight: 700;
+    color: rgb(var(--v-theme-ink));
+  }
+
+  &__dropzone-caption {
+    font-size: var(--text-sm);
+    color: rgb(var(--v-theme-on-surface));
   }
 
   &__preview {
