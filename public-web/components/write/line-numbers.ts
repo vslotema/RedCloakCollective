@@ -112,22 +112,25 @@ function buildDecorations(doc: PMNode): DecorationSet {
   return DecorationSet.create(doc, decorations)
 }
 
+export interface LineNumbersStorage {
+  enabled: boolean
+}
+
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     lineNumbers: {
       setLineNumbers: (enabled: boolean) => ReturnType
       toggleLineNumbers: () => ReturnType
-      /**
-       * Move the selection to the Nth block of a given type.
-       * `where` 'before'/'after' land a caret next to it (appending an empty
-       * paragraph if the block is last) so a chained insert command has a home.
-       */
       goToBlock: (
         key: string,
         n: number,
         where?: 'start' | 'end' | 'before' | 'after',
       ) => ReturnType
     }
+  }
+
+  interface Storage {
+    lineNumbers: LineNumbersStorage
   }
 }
 
