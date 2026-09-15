@@ -16,7 +16,7 @@ defineProps<{
 </script>
 
 <template>
-  <v-card flat rounded color="background" class="equipment-list-item">
+  <v-card flat rounded color="surface" class="equipment-list-item">
     <div class="text-x-small pr-4">
       <v-avatar size="24" :image="creator.avatar" class="mr-2" />
       <span class="text-ink">{{ creator.name }}</span
@@ -64,7 +64,7 @@ defineProps<{
 .equipment-list-item {
   border: 1px solid rgb(var(--v-theme-border-strong));
   border-radius: 8px;
-  padding: 1rem;
+  padding: 1.5rem;
 }
 .content {
   .header-container {

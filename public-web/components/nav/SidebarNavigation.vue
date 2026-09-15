@@ -58,7 +58,7 @@ async function handleLogout() {
 <template>
   <v-navigation-drawer
     v-model="drawer"
-    color="background"
+    color="surface"
     :width="fullWidthNav"
     :rail="rail"
     :rail-width="wider ? fullWidthNav : 52"
@@ -161,15 +161,10 @@ async function handleLogout() {
 
 <style scoped lang="scss">
 .nav-list-item {
-  border: 1px solid rgb(var(--v-theme-border-color));
   border-radius: 12px;
   margin-bottom: 8px;
   min-height: 44px;
   color: rgb(var(--v-theme-on-background));
-
-  &.is-active {
-    border-color: rgb(var(--v-theme-ink));
-  }
 
   &.is-active :deep(.v-list-item__overlay),
   &:hover :deep(.v-list-item__overlay) {
@@ -178,7 +173,6 @@ async function handleLogout() {
 
   &:hover {
     color: rgb(var(--v-theme-ink));
-    border-color: rgb(var(--v-theme-ink));
 
     :deep(.v-list-item__prepend > .v-icon) {
       opacity: 1;

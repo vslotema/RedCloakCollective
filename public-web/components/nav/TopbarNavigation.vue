@@ -1,11 +1,11 @@
 <template>
   <v-app-bar
     class="px-4"
-    color="background"
+    color="surface"
     flat
     style="border-bottom: thin solid rgb(var(--v-theme-border-strong))"
   >
-    <div class="d-flex align-center ga-6">
+    <div class="d-flex align-center ga-8 ml-4">
       <NuxtLink to="/" class="d-flex align-center text-decoration-none">
         <AppLogo height="35" />
       </NuxtLink>

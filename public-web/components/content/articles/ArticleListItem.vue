@@ -13,7 +13,7 @@ defineProps<{
 </script>
 
 <template>
-  <v-card flat color="background" class="article-list-item">
+  <v-card flat color="surface" class="article-list-item">
     <div class="text-x-small pr-4">
       <v-avatar size="24" :image="creator.avatar" class="mr-2" />
       <span class="text-ink">{{ creator.name }}</span
@@ -47,7 +47,7 @@ defineProps<{
 .article-list-item {
   border: 1px solid rgb(var(--v-theme-border-strong));
   border-radius: 8px;
-  padding: 1rem;
+  padding: 1.5rem;
 }
 :deep(.v-img__img) {
   height: auto;

@@ -7,7 +7,7 @@ export { aliases, feather } from "./icons";
 export const light: ThemeDefinition = {
   dark: false,
   colors: {
-    background: "#FEFEFE",
+    background: "#FbFbFb",
     surface: "#FFFFFF",
     "surface-variant": "#F5F5F5",
     "on-background": "#4B5563",
