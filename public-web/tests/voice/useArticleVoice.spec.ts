@@ -66,9 +66,23 @@ function resultsEvent(transcript: string, isFinal: boolean) {
 interface Recorded { name: string; args: unknown[] }
 
 function makeEditor(
-  opts: { runResult?: boolean; parentType?: string; parentSize?: number; preceding?: string } = {},
+  opts: {
+    runResult?: boolean
+    parentType?: string
+    parentSize?: number
+    preceding?: string
+    blockText?: string
+    caretOffset?: number
+  } = {},
 ) {
-  const { runResult = true, parentType = 'paragraph', parentSize = 0, preceding = '' } = opts
+  const {
+    runResult = true,
+    parentType = 'paragraph',
+    parentSize = 0,
+    preceding = '',
+    blockText,
+    caretOffset = 0,
+  } = opts
   const chains: Recorded[][] = []
   let cur: Recorded[] = []
   const proxy: unknown = new Proxy(
@@ -107,9 +121,18 @@ function makeEditor(
       selection: {
         from: 1,
         to: 1,
-        $from: { parent: { type: { name: parentType }, content: { size: parentSize } } },
+        $from: {
+          parent: {
+            type: { name: parentType },
+            content: { size: parentSize },
+            isTextblock: ['paragraph', 'heading', 'codeBlock'].includes(parentType),
+          },
+          start: () => 1,
+          end: () => 1 + (blockText?.length ?? 0),
+          parentOffset: caretOffset,
+        },
       },
-      doc: { textBetween: () => preceding },
+      doc: { textBetween: () => (blockText !== undefined ? blockText : preceding) },
     },
     schema: { nodes: {} },
   }
@@ -337,6 +360,36 @@ describe('useArticleVoice — block targeting', () => {
     await setup()
     say('delete paragraph 5')
     expect(store.statusMessage).toBe('No paragraph 5')
+  })
+})
+
+describe('useArticleVoice — word / sentence targeting', () => {
+  it('"select word 3" selects that word in the caret block', async () => {
+    await setup({ blockText: 'The quick brown fox', caretOffset: 0 })
+    say('select word 3')
+    // "brown" is offsets 10..15 in the block → doc 11..16 ($from.start() === 1)
+    expect(editor.argsOf('setTextSelection')?.[0]).toEqual({ from: 11, to: 16 })
+    expect(store.statusMessage).toBe('Selected word 3')
+  })
+
+  it('"delete this sentence" removes the sentence under the caret', async () => {
+    await setup({ blockText: 'One two. Three four.', caretOffset: 2 })
+    say('delete this sentence')
+    expect(editor.argsOf('deleteRange')?.[0]).toEqual({ from: 1, to: 9 }) // "One two."
+    expect(store.statusMessage).toBe('Deleted sentence')
+  })
+
+  it('announces failure when the caret is not in a text block', async () => {
+    await setup({ parentType: 'image' })
+    say('select word 1')
+    expect(store.statusMessage).toBe('No word 1')
+    expect(editor.called('setTextSelection')).toBe(false)
+  })
+
+  it('announces failure when the nth word is out of range', async () => {
+    await setup({ blockText: 'just two', caretOffset: 0 })
+    say('select word 9')
+    expect(store.statusMessage).toBe('No word 9')
   })
 })
 

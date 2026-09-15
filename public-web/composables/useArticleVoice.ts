@@ -5,6 +5,7 @@ import { listBlocks } from '~/components/write/line-numbers'
 import {
   COMMAND_REFERENCE,
   consumeDictationStart,
+  locateTextUnit,
   parseCommand,
   previewDictation,
   spaceAndCapitalize,
@@ -12,6 +13,8 @@ import {
 import type {
   DictationSegment,
   ParsedCommand,
+  TextUnit,
+  UnitRef,
   VoiceMode,
 } from '~/components/write/voice/voice-commands'
 
@@ -146,6 +149,47 @@ function deleteBlock(editor: Editor, key: string, n: number): boolean {
   return true
 }
 
+// --- word / sentence targeting ----------------------------------------
+
+/** Human-readable name for a word/sentence command, for the status line. */
+function unitLabel(unit: TextUnit, ref: UnitRef, n: number | null): string {
+  if (ref === 'nth') return `${unit} ${n}`
+  if (ref === 'last') return `last ${unit}`
+  return unit
+}
+
+/**
+ * Select (or delete) the Nth / current / last word or sentence of the block the
+ * caret is in. Text offsets from `locateTextUnit` map 1:1 to document positions
+ * because `textBetween` is asked to render every inline leaf as a single char.
+ */
+function selectTextUnit(
+  editor: Editor,
+  unit: TextUnit,
+  ref: UnitRef,
+  n: number | null,
+  remove: boolean,
+): boolean {
+  const { $from } = editor.state.selection
+  if (!$from.parent.isTextblock) return false
+
+  const blockStart = $from.start()
+  const blockEnd = $from.end()
+  const text = editor.state.doc.textBetween(blockStart, blockEnd, '\n', '\n')
+
+  const range = locateTextUnit(text, $from.parentOffset, unit, ref, n)
+  if (!range) return false
+
+  const from = blockStart + range.start
+  const to = blockStart + range.end
+  if (remove) {
+    editor.chain().focus().deleteRange({ from, to }).run()
+  } else {
+    editor.chain().focus().setTextSelection({ from, to }).scrollIntoView().run()
+  }
+  return true
+}
+
 // --- dispatch ----------------------------------------------------------
 
 function dispatch(command: ParsedCommand, raw: string) {
@@ -192,6 +236,18 @@ function dispatch(command: ParsedCommand, raw: string) {
     case 'deleteBlock': {
       const ok = deleteBlock(editor!, command.key, command.n)
       announce(ok ? `Deleted ${command.key} ${command.n}` : `No ${command.key} ${command.n}`)
+      return
+    }
+    case 'selectText': {
+      const label = unitLabel(command.unit, command.ref, command.n)
+      const ok = selectTextUnit(editor!, command.unit, command.ref, command.n, false)
+      announce(ok ? `Selected ${label}` : `No ${label}`)
+      return
+    }
+    case 'deleteText': {
+      const label = unitLabel(command.unit, command.ref, command.n)
+      const ok = selectTextUnit(editor!, command.unit, command.ref, command.n, true)
+      announce(ok ? `Deleted ${label}` : `No ${label}`)
       return
     }
     case 'deleteSelection':

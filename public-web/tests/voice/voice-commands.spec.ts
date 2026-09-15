@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   consumeDictationStart,
+  locateTextUnit,
   parseCommand,
   previewDictation,
   spaceAndCapitalize,
@@ -157,6 +158,88 @@ describe('parseCommand — block navigation', () => {
   it('returns null for an unknown block or a missing number', () => {
     expect(idle('go to banana 2')).toBeNull()
     expect(idle('go to paragraph nope')).toBeNull()
+  })
+})
+
+describe('parseCommand — word / sentence targeting', () => {
+  const cases: [string, ParsedCommand][] = [
+    ['select word 3', { kind: 'selectText', unit: 'word', ref: 'nth', n: 3 }],
+    ['select word number three', { kind: 'selectText', unit: 'word', ref: 'nth', n: 3 }],
+    ['select the third word', { kind: 'selectText', unit: 'word', ref: 'nth', n: 3 }],
+    ['select sentence two', { kind: 'selectText', unit: 'sentence', ref: 'nth', n: 2 }],
+    ['select this word', { kind: 'selectText', unit: 'word', ref: 'caret', n: null }],
+    ['select the current sentence', { kind: 'selectText', unit: 'sentence', ref: 'caret', n: null }],
+    ['select word', { kind: 'selectText', unit: 'word', ref: 'caret', n: null }],
+    ['select last word', { kind: 'selectText', unit: 'word', ref: 'last', n: null }],
+    ['select the final sentence', { kind: 'selectText', unit: 'sentence', ref: 'last', n: null }],
+    ['delete word 2', { kind: 'deleteText', unit: 'word', ref: 'nth', n: 2 }],
+    ['delete this word', { kind: 'deleteText', unit: 'word', ref: 'caret', n: null }],
+    ['delete the last sentence', { kind: 'deleteText', unit: 'sentence', ref: 'last', n: null }],
+    ['remove sentence 1', { kind: 'deleteText', unit: 'sentence', ref: 'nth', n: 1 }],
+  ]
+
+  it.each(cases)('%j → %j', (raw, expected) => {
+    expect(idle(raw)).toEqual(expected)
+  })
+
+  it('does not shadow block select/delete', () => {
+    expect(idle('select paragraph 2')).toMatchObject({ kind: 'selectBlock' })
+    expect(idle('delete paragraph 4')).toMatchObject({ kind: 'deleteBlock' })
+  })
+
+  it('"delete this" is still the whole-selection command', () => {
+    expect(idle('delete this')).toEqual({ kind: 'deleteSelection' })
+  })
+
+  it('the "delete last word" undo alias still wins over word targeting', () => {
+    expect(idle('delete last word')).toEqual({ kind: 'history', dir: 'undo' })
+  })
+})
+
+describe('locateTextUnit', () => {
+  const text = 'The quick brown fox. It jumps over the lazy dog.'
+  //            0123456789...          ^ sentence 1 ends at 19
+
+  it('finds the nth word', () => {
+    expect(locateTextUnit(text, 0, 'word', 'nth', 3)).toEqual({ start: 10, end: 15 }) // "brown"
+    expect(text.slice(10, 15)).toBe('brown')
+  })
+
+  it('keeps an internal apostrophe/hyphen but drops trailing punctuation', () => {
+    const t = "It's a well-known fact."
+    const w1 = locateTextUnit(t, 0, 'word', 'nth', 1)!
+    const w3 = locateTextUnit(t, 0, 'word', 'nth', 3)!
+    expect(t.slice(w1.start, w1.end)).toBe("It's")
+    expect(t.slice(w3.start, w3.end)).toBe('well-known')
+  })
+
+  it('finds the nth sentence, trimming the space and keeping the stop', () => {
+    const s1 = locateTextUnit(text, 0, 'sentence', 'nth', 1)!
+    expect(text.slice(s1.start, s1.end)).toBe('The quick brown fox.')
+    const s2 = locateTextUnit(text, 0, 'sentence', 'nth', 2)!
+    expect(text.slice(s2.start, s2.end)).toBe('It jumps over the lazy dog.')
+  })
+
+  it('a block with no terminator is one sentence', () => {
+    const t = 'just a fragment'
+    const s = locateTextUnit(t, 0, 'sentence', 'nth', 1)!
+    expect(t.slice(s.start, s.end)).toBe('just a fragment')
+  })
+
+  it('"this word" is the word the caret sits in', () => {
+    // caret at offset 12 → inside "brown" (10..15)
+    expect(locateTextUnit(text, 12, 'word', 'caret', null)).toEqual({ start: 10, end: 15 })
+  })
+
+  it('"last word" is the word ending at or before the caret', () => {
+    // caret at 15 (end of "brown") → "brown"
+    expect(locateTextUnit(text, 15, 'word', 'last', null)).toEqual({ start: 10, end: 15 })
+  })
+
+  it('out-of-range n and empty text return null', () => {
+    expect(locateTextUnit(text, 0, 'word', 'nth', 99)).toBeNull()
+    expect(locateTextUnit('   ', 0, 'word', 'caret', null)).toBeNull()
+    expect(locateTextUnit('', 0, 'sentence', 'nth', 1)).toBeNull()
   })
 })
 

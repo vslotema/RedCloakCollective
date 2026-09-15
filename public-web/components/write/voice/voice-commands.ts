@@ -12,6 +12,10 @@ export type DictationSegment =
   | { type: 'newline' }
   | { type: 'paragraph' }
 
+export type TextUnit = 'word' | 'sentence'
+/** How a word/sentence command picks its target within the current block. */
+export type UnitRef = 'nth' | 'caret' | 'last'
+
 export type ParsedCommand =
   | { kind: 'enterDictation' }
   | { kind: 'exitDictation' }
@@ -19,6 +23,8 @@ export type ParsedCommand =
   | { kind: 'goToBlock'; key: string; n: number; where: 'start' | 'end' }
   | { kind: 'selectBlock'; key: string; n: number }
   | { kind: 'deleteBlock'; key: string; n: number }
+  | { kind: 'selectText'; unit: TextUnit; ref: UnitRef; n: number | null }
+  | { kind: 'deleteText'; unit: TextUnit; ref: UnitRef; n: number | null }
   | { kind: 'deleteSelection' }
   | { kind: 'format'; name: 'bold' | 'italic' | 'quote' | 'heading1' | 'heading2' }
   | { kind: 'insert'; name: 'codeBlock' | 'image' }
@@ -91,6 +97,11 @@ const NUMBER_WORDS: Record<string, number> = {
   nine: 9, ten: 10, eleven: 11, twelve: 12,
 }
 
+const ORDINAL_WORDS: Record<string, number> = {
+  first: 1, second: 2, third: 3, fourth: 4, fifth: 5, sixth: 6, seventh: 7,
+  eighth: 8, ninth: 9, tenth: 10, eleventh: 11, twelfth: 12,
+}
+
 // --- helpers -------------------------------------------------------------
 
 function normalize(raw: string): string {
@@ -104,7 +115,7 @@ function normalize(raw: string): string {
 function parseCount(token: string | undefined): number | null {
   if (!token) return null
   if (/^\d+$/.test(token)) return Number.parseInt(token, 10)
-  return NUMBER_WORDS[token] ?? null
+  return NUMBER_WORDS[token] ?? ORDINAL_WORDS[token] ?? null
 }
 
 function resolveBlockKey(raw: string): string | null {
@@ -114,6 +125,74 @@ function resolveBlockKey(raw: string): string | null {
   if (BLOCK_SYNONYMS[singular]) return BLOCK_SYNONYMS[singular]
   if ((BLOCK_KEYS as readonly string[]).includes(singular)) return singular
   return null
+}
+
+// --- word / sentence targeting -----------------------------------------
+
+/** A [start, end) character range inside a block's plain text. */
+export interface UnitRange {
+  start: number
+  end: number
+}
+
+// A "word" is a run of letters/digits, keeping internal apostrophes and hyphens
+// ("don't", "well-known") but dropping the surrounding spaces and punctuation.
+const WORD_RE = /[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu
+
+// A "sentence" runs to the next . ! ? (with any trailing quotes/brackets), or to
+// the end of the block. Abbreviations like "Mr." are not special-cased.
+const SENTENCE_RE = /\s*(\S[^.!?]*(?:[.!?]+['"”’)\]]*|$))/g
+
+function wordRanges(text: string): UnitRange[] {
+  return [...text.matchAll(WORD_RE)].map((m) => ({
+    start: m.index ?? 0,
+    end: (m.index ?? 0) + m[0].length,
+  }))
+}
+
+function sentenceRanges(text: string): UnitRange[] {
+  const out: UnitRange[] = []
+  for (const m of text.matchAll(SENTENCE_RE)) {
+    const lead = m[0].length - m[1].length
+    const start = (m.index ?? 0) + lead
+    const end = start + m[1].trimEnd().length
+    if (end > start) out.push({ start, end })
+  }
+  return out
+}
+
+/**
+ * Resolve a spoken "word"/"sentence" reference to a character range inside one
+ * block's plain text. Pure: `blockText` is the block's inline text and
+ * `caretOffset` the caret's offset into it, both in the same units the caller
+ * maps back to document positions. Returns `null` when there is no such unit.
+ */
+export function locateTextUnit(
+  blockText: string,
+  caretOffset: number,
+  unit: TextUnit,
+  ref: UnitRef,
+  n: number | null,
+): UnitRange | null {
+  const ranges = unit === 'word' ? wordRanges(blockText) : sentenceRanges(blockText)
+  if (ranges.length === 0) return null
+
+  if (ref === 'nth') {
+    if (!n || n < 1 || n > ranges.length) return null
+    return ranges[n - 1]
+  }
+
+  if (ref === 'last') {
+    const before = ranges.filter((r) => r.end <= caretOffset)
+    return before.length ? before[before.length - 1] : ranges[ranges.length - 1]
+  }
+
+  // 'caret' — the unit the caret sits in, else the one just before it, else the
+  // first one in the block.
+  const inside = ranges.find((r) => caretOffset >= r.start && caretOffset <= r.end)
+  if (inside) return inside
+  const preceding = ranges.filter((r) => r.end <= caretOffset)
+  return preceding.length ? preceding[preceding.length - 1] : ranges[0]
 }
 
 const PUNCTUATION_RULES: [RegExp, string][] = [
@@ -237,6 +316,23 @@ export function parseCommand(raw: string, mode: VoiceMode): ParsedCommand {
     if (/^(?:small title|subheading)$/.test(target)) return { kind: 'format', name: 'heading2' }
   }
 
+  // select / delete a word or sentence inside the current block:
+  //   "select word 3" · "select the third word" · "select this sentence"
+  //   "select last word" · "delete sentence 2" · "delete last word"
+  match = text.match(
+    /^(select|delete|remove)\s+(?:the\s+)?(?:(this|current|last|final)\s+)?(?:(\d+|\w+)\s+)?(word|sentence)(?:\s+(?:number\s+)?(\d+|\w+))?$/,
+  )
+  if (match) {
+    const unit = match[4] as TextUnit
+    const n = parseCount(match[3]) ?? parseCount(match[5])
+    let ref: UnitRef
+    if (n) ref = 'nth'
+    else if (match[2] === 'last' || match[2] === 'final') ref = 'last'
+    else ref = 'caret'
+    const kind = match[1] === 'select' ? 'selectText' : 'deleteText'
+    return { kind, unit, ref, n: ref === 'nth' ? n : null }
+  }
+
   match = text.match(
     /^(?:go to|goto|move to|jump to)\s+(?:the\s+)?(?:(start|beginning|end|top|bottom)\s+of\s+)?(.+?)\s+(\d+|\w+)$/,
   )
@@ -291,6 +387,8 @@ export const COMMAND_REFERENCE: CommandGroup[] = [
       { say: '“go to paragraph 3”', does: 'put the caret in that block' },
       { say: '“go to end of heading 2”', does: 'caret at the end of that block' },
       { say: '“select paragraph 2”', does: 'select that block' },
+      { say: '“select word 3” / “select this word”', does: 'select a word in the current block' },
+      { say: '“select sentence 2” / “select last sentence”', does: 'select a sentence in the current block' },
       { say: '“show block numbers”', does: 'toggle the numbered gutter' },
     ],
   },
@@ -302,6 +400,7 @@ export const COMMAND_REFERENCE: CommandGroup[] = [
       { say: '“insert code”', does: 'insert a code block' },
       { say: '“insert image”', does: 'place the caret and flag the photo button' },
       { say: '“delete paragraph 4” / “delete that”', does: 'remove a block / the selection' },
+      { say: '“delete word 2” / “delete this sentence”', does: 'remove a word/sentence in the current block' },
       { say: '“undo” / “redo”', does: 'history' },
     ],
   },
