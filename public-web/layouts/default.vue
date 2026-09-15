@@ -1,11 +1,7 @@
-<script setup lang="ts">
-const sidebar = useTemplateRef('sidebar')
-</script>
-
 <template>
   <div class="page">
-    <TopbarNavigation @toggle-navigation="sidebar?.toggleNavigation()" />
-    <SidebarNavigation ref="sidebar" />
+    <TopbarNavigation />
+    <SidebarNavigation />
     <v-main class="content">
       <slot />
     </v-main>
