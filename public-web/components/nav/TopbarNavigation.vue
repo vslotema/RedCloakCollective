@@ -5,7 +5,7 @@ defineEmits<{
 </script>
 
 <template>
-  <v-app-bar class="pl-2 pr-4" color="background" flat style="border-bottom: thin solid #d5d5d5">
+  <v-app-bar class="pl-2 pr-4" color="background" flat style="border-bottom: thin solid rgb(var(--v-theme-border-color))">
     <div class="d-flex align-center">
       <v-btn
         class="menu-btn"
@@ -16,9 +16,7 @@ defineEmits<{
       >
       </v-btn>
       <div class="logo">
-        <h1 class="text-h6 font-weight-bold mb-0">
-          <span class="text-primary">R</span>EDCLOAK COLLECTIVE
-        </h1>
+        <AppLogo height="35" />
       </div>
       <SearchBar class="ml-6" />
     </div>
