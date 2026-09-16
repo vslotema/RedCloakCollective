@@ -17,9 +17,12 @@ const scheduleAt = ref('')
 
 const allTopics = ref<Topic[]>([])
 const topicsLoading = ref(false)
+const topicQuery = ref('')
 const submitting = ref(false)
 const error = ref('')
 const showPublishError = ref(false)
+
+const TOPIC_SEARCH_DEBOUNCE_MS = 250
 
 const missingFieldsLabel = computed(() => {
   const missing: string[] = []
@@ -68,19 +71,31 @@ watch(open, async (isOpen) => {
   scheduleAt.value =
     wasScheduled && editorStore.publishedAt ? toLocalInput(new Date(editorStore.publishedAt)) : ''
   error.value = ''
+  topicQuery.value = ''
   if (!allTopics.value.length) await loadTopics()
 })
 
-async function loadTopics() {
+async function loadTopics(q = '') {
   topicsLoading.value = true
   try {
-    allTopics.value = await api<Topic[]>('/topics')
+    allTopics.value = await api<Topic[]>('/topics', { query: q ? { q } : undefined })
   } catch {
     // The picker still works for typing new topics.
   } finally {
     topicsLoading.value = false
   }
 }
+
+// Server-side search as the user types — the topic list can grow past what's
+// reasonable to ship to the client in full, so matching moves server-side
+// (TopicController::index) instead of filtering a locally cached `allTopics`.
+let topicSearchTimer: ReturnType<typeof setTimeout> | undefined
+watch(topicQuery, (q) => {
+  clearTimeout(topicSearchTimer)
+  topicSearchTimer = setTimeout(() => {
+    void loadTopics(q.trim())
+  }, TOPIC_SEARCH_DEBOUNCE_MS)
+})
 
 // Cap the selection and drop case-insensitive duplicates of typed topics.
 watch(selected, (value) => {
@@ -157,8 +172,10 @@ async function submit() {
       </span>
       <v-combobox
         v-model="selected"
+        v-model:search="topicQuery"
         :items="menuItems"
         :loading="topicsLoading"
+        no-filter
         item-title="name"
         return-object
         multiple
