@@ -217,15 +217,15 @@ function applyPunctuation(part: string): string {
 
 /** Break a spoken chunk into text runs and explicit line / paragraph breaks. */
 function toDictation(raw: string): DictationSegment[] {
-  const parts = raw.split(/\b(new paragraph|new line)\b/i)
+  const parts = raw.split(/\b(next paragraph|next line)\b/i)
   const segments: DictationSegment[] = []
   for (const part of parts) {
     const marker = part.toLowerCase().trim()
-    if (marker === 'new paragraph') {
+    if (marker === 'next paragraph') {
       segments.push({ type: 'paragraph' })
       continue
     }
-    if (marker === 'new line') {
+    if (marker === 'next line') {
       segments.push({ type: 'newline' })
       continue
     }
@@ -259,22 +259,24 @@ export function consumeDictationStart(raw: string): string | null {
  * result via `toDictation`).
  */
 export function previewDictation(raw: string): string {
-  return applyPunctuation(raw.replace(/\b(new paragraph|new line)\b/gi, ' ⏎ '))
+  return applyPunctuation(raw.replace(/\b(next paragraph|next line)\b/gi, ' ⏎ '))
 }
 
 /**
  * Decide the spacing and sentence-start capitalisation for `chunk` given the
  * document text immediately before the caret. Pure so the controller can unit
- * it without an editor.
+ * it without an editor. `capitalize` is disabled for code blocks — auto-
+ * capitalizing the first letter is a prose convention that would mangle
+ * identifiers/keywords.
  */
-export function spaceAndCapitalize(preceding: string, chunk: string): string {
+export function spaceAndCapitalize(preceding: string, chunk: string, capitalize = true): string {
   if (!chunk) return ''
   const needsSpace =
     preceding.length > 0 &&
     !/\s$/.test(preceding) &&
     !/^[.,!?;:)\]”’%]/.test(chunk)
   let result = (needsSpace ? ' ' : '') + chunk
-  const startsSentence = preceding.trim() === '' || /[.!?]["”)]?\s*$/.test(preceding)
+  const startsSentence = capitalize && (preceding.trim() === '' || /[.!?]["”)]?\s*$/.test(preceding))
   if (startsSentence) {
     result = result.replace(/^(\s*)([a-z])/, (_all, ws: string, c: string) => ws + c.toUpperCase())
   }
@@ -376,7 +378,7 @@ export const COMMAND_REFERENCE: CommandGroup[] = [
       { say: '“type” / “start typing”', does: 'enter dictation mode' },
       { say: '“stop” / “done”', does: 'leave dictation mode' },
       { say: '(while dictating) anything', does: 'inserted as text at the caret' },
-      { say: '“new line” / “new paragraph”', does: 'line break / new paragraph' },
+      { say: '“next line” / “next paragraph”', does: 'line break / new paragraph' },
       { say: '“period” “comma” “question mark” …', does: 'that punctuation mark' },
       { say: '“scratch that”', does: 'undo the last change' },
     ],

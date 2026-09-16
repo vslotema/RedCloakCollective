@@ -22,6 +22,7 @@ import type {
 const STORAGE_KEY = 'voice_commands_enabled'
 const IMAGE_PROMPT_MS = 15_000
 const HEARD_CLEAR_MS = 5_000
+const NEXT_WORD_HOLD_MS = 700
 const VOICE_STATUS_CHANNEL = 'redcloak-voice-status'
 
 const enabled = ref(false)
@@ -43,6 +44,8 @@ let imagePromptTimer: ReturnType<typeof setTimeout> | undefined
 let heardClearTimer: ReturnType<typeof setTimeout> | undefined
 let swallowStartWordFinal = false
 let swallowStartTimer: ReturnType<typeof setTimeout> | undefined
+let pendingNextWord = false
+let pendingNextWordTimer: ReturnType<typeof setTimeout> | undefined
 
 function persist(value: boolean) {
   if (!import.meta.client) return
@@ -77,6 +80,11 @@ function clearStartWordSwallow() {
   clearTimeout(swallowStartTimer)
 }
 
+function clearPendingNextWord() {
+  pendingNextWord = false
+  clearTimeout(pendingNextWordTimer)
+}
+
 // Voice commands target blocks by number ("go to paragraph 3"), so the
 // numbered gutter is shown automatically whenever voice is on and hidden again
 // when it goes off. Runs on both `enabled` changes and the editor mounting.
@@ -97,17 +105,30 @@ function syncBlockNumbers() {
 
 function insertSegments(editor: Editor, segments: DictationSegment[]) {
   for (const segment of segments) {
+    // A code block's content model is plain text only (no hardBreak/paragraph
+    // nodes), so the normal prose commands below are schema-invalid there and
+    // silently no-op — checked fresh each iteration since an exitCode() can
+    // move the caret out of the code block partway through a segment list.
+    const inCodeBlock = editor.state.selection.$from.parent.type.name === 'codeBlock'
+
     if (segment.type === 'newline') {
-      editor.chain().focus().setHardBreak().run()
+      if (inCodeBlock) editor.chain().focus().insertContent('\n').run()
+      else editor.chain().focus().setHardBreak().run()
       continue
     }
     if (segment.type === 'paragraph') {
-      editor.chain().focus().splitBlock().run()
+      // Mirrors the keyboard convention (Mod-Enter/triple-Enter): leave the
+      // code block for a fresh paragraph after it, rather than a blank line
+      // within it — that's what "next line" is for.
+      if (inCodeBlock) editor.chain().focus().exitCode().run()
+      else editor.chain().focus().splitBlock().run()
       continue
     }
     const { from } = editor.state.selection
     const preceding = editor.state.doc.textBetween(Math.max(1, from - 60), from, ' ', ' ')
-    const value = spaceAndCapitalize(preceding, segment.value)
+    // Sentence-start capitalization is a prose convention that would mangle
+    // identifiers/keywords, so it's skipped inside a code block.
+    const value = spaceAndCapitalize(preceding, segment.value, !inCodeBlock)
     editor.chain().focus().insertContent(value).run()
   }
 }
@@ -210,6 +231,7 @@ function dispatch(command: ParsedCommand, raw: string) {
     case 'exitDictation':
       mode.value = 'idle'
       clearStartWordSwallow()
+      clearPendingNextWord()
       clearDictationPreview()
       announce('Stopped dictating')
       return
@@ -343,6 +365,39 @@ function handleResult({ transcript, isFinal }: SpeechResult) {
 
   if (!isFinal) return
 
+  // Chrome's continuous recognizer doesn't guarantee "next line"/"next
+  // paragraph" finalize together — it commonly finalizes "next" alone first,
+  // with "line"/"paragraph" arriving as a separate final chunk moments
+  // later. toDictation() only ever sees one chunk at a time, so a lone "next"
+  // would otherwise get typed as literal text before it can ever recombine.
+  // Hold it briefly to see whether the next final chunk completes the phrase.
+  if (mode.value === 'dictation') {
+    const normalized = text.trim().toLowerCase()
+
+    if (pendingNextWord) {
+      clearTimeout(pendingNextWordTimer)
+      pendingNextWord = false
+      const continuesPhrase =
+        normalized === 'line' || normalized.startsWith('line ') ||
+        normalized === 'paragraph' || normalized.startsWith('paragraph ')
+      if (continuesPhrase) {
+        text = `next ${text}`
+      } else {
+        dispatch(parseCommand('next', mode.value), 'next')
+        // falls through to also process *this* chunk normally below
+      }
+    } else if (normalized === 'next') {
+      pendingNextWord = true
+      currentEditor()?.commands.setDictationPreview?.('next')
+      pendingNextWordTimer = setTimeout(() => {
+        pendingNextWord = false
+        currentEditor()?.commands.setDictationPreview?.('')
+        dispatch(parseCommand('next', mode.value), 'next')
+      }, NEXT_WORD_HOLD_MS)
+      return
+    }
+  }
+
   dispatch(parseCommand(text, mode.value), text)
 
   heardClearTimer = setTimeout(() => {
@@ -396,6 +451,7 @@ function disable() {
   clearImagePrompt()
   clearDictationPreview()
   clearStartWordSwallow()
+  clearPendingNextWord()
   enabled.value = false
   mode.value = 'idle'
   persist(false)
@@ -421,6 +477,7 @@ function leaveEditor() {
     clearImagePrompt()
     clearDictationPreview()
     clearStartWordSwallow()
+    clearPendingNextWord()
     enabled.value = false
     mode.value = 'idle'
     useSpeechRecognition().stop()

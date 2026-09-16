@@ -276,13 +276,59 @@ describe('useArticleVoice — dictation', () => {
     expect(editor.argsOf('insertContent')?.[0]).toBe('Hello world.')
   })
 
-  it('"new paragraph" / "new line" become block splits', async () => {
+  it('"next paragraph" / "next line" become block splits', async () => {
     await setup()
     say('type')
-    say('one new paragraph two')
+    say('one next paragraph two')
     expect(editor.called('splitBlock')).toBe(true)
-    say('three new line four')
+    say('three next line four')
     expect(editor.called('setHardBreak')).toBe(true)
+  })
+
+  it('"next line" still works when Chrome finalizes "next" as its own chunk', async () => {
+    await setup()
+    say('type')
+    say('next') // finalizes alone, per Chrome's real continuous-mode behavior
+    say('line two') // finalizes separately, moments later
+    expect(editor.called('setHardBreak')).toBe(true)
+    // "next" must not have been typed literally before "line" arrived.
+    expect(editor.argsOf('insertContent')?.[0]).not.toMatch(/next/i)
+  })
+
+  it('"next paragraph" still works when Chrome finalizes "next" as its own chunk', async () => {
+    await setup()
+    say('type')
+    say('next')
+    say('paragraph')
+    expect(editor.called('splitBlock')).toBe(true)
+    expect(editor.called('insertContent')).toBe(false)
+  })
+
+  it('a standalone "next" with no follow-up is typed as literal text after the hold window', async () => {
+    await setup()
+    say('type')
+    say('next')
+    expect(editor.called('insertContent')).toBe(false)
+    vi.advanceTimersByTime(700)
+    expect(editor.argsOf('insertContent')?.[0]).toBe('Next')
+  })
+
+  it('"next line" inserts a literal newline inside a code block instead of a hard break', async () => {
+    await setup({ parentType: 'codeBlock' })
+    say('type')
+    say('one next line two')
+    expect(editor.called('setHardBreak')).toBe(false)
+    expect(editor.calls().some((c) => c.name === 'insertContent' && c.args[0] === '\n')).toBe(true)
+    // No prose-style sentence capitalization inside code.
+    expect(editor.argsOf('insertContent')?.[0]).toBe('one')
+  })
+
+  it('"next paragraph" exits a code block instead of splitting it', async () => {
+    await setup({ parentType: 'codeBlock' })
+    say('type')
+    say('next paragraph')
+    expect(editor.called('exitCode')).toBe(true)
+    expect(editor.called('splitBlock')).toBe(false)
   })
 
   it('"stop" leaves dictation mode', async () => {

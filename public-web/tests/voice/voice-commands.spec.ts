@@ -284,8 +284,8 @@ describe('parseCommand — dictation mode', () => {
     })
   })
 
-  it('"new line" / "new paragraph" split into break segments', () => {
-    expect(dictating('one new line two')).toEqual({
+  it('"next line" / "next paragraph" split into break segments', () => {
+    expect(dictating('one next line two')).toEqual({
       kind: 'dictate',
       segments: [
         { type: 'text', value: 'one' },
@@ -293,7 +293,7 @@ describe('parseCommand — dictation mode', () => {
         { type: 'text', value: 'two' },
       ],
     })
-    expect(dictating('a new paragraph b')).toEqual({
+    expect(dictating('a next paragraph b')).toEqual({
       kind: 'dictate',
       segments: [
         { type: 'text', value: 'a' },
@@ -336,6 +336,11 @@ describe('spaceAndCapitalize', () => {
   it('empty chunk → empty string', () => {
     expect(spaceAndCapitalize('anything', '')).toBe('')
   })
+
+  it('skips capitalization when capitalize=false, but still spaces', () => {
+    expect(spaceAndCapitalize('', 'hello there', false)).toBe('hello there')
+    expect(spaceAndCapitalize('some', 'more', false)).toBe(' more')
+  })
 })
 
 describe('consumeDictationStart', () => {
@@ -363,8 +368,8 @@ describe('previewDictation', () => {
   })
 
   it('shows block-break markers as a glyph instead of acting on them', () => {
-    expect(previewDictation('one new paragraph two')).toBe('one ⏎ two')
-    expect(previewDictation('a new line b')).toBe('a ⏎ b')
+    expect(previewDictation('one next paragraph two')).toBe('one ⏎ two')
+    expect(previewDictation('a next line b')).toBe('a ⏎ b')
   })
 
   it('empty transcript → empty string', () => {

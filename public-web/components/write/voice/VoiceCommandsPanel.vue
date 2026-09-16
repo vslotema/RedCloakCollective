@@ -25,69 +25,73 @@ defineEmits<{
 
 <template>
   <div class="voice-panel">
-    <div class="voice-panel__head">
-      <div class="voice-panel__title">
-        <strong>Voice Commands</strong>
-      </div>
-      <div class="voice-panel__head-actions">
-        <v-btn
-          v-if="showPopout"
-          icon
-          size="x-small"
-          variant="text"
-          aria-label="Open in a new window"
-          @click="$emit('popout')"
-        >
-          <v-icon icon="external-link" :size="16" />
-        </v-btn>
-        <v-btn
-          v-if="showClose"
-          icon
-          size="x-small"
-          variant="text"
-          aria-label="Close"
-          @click="$emit('close')"
-        >
-          <v-icon icon="x" :size="16" />
-        </v-btn>
-      </div>
-    </div>
-
-    <div
-      class="voice-panel__status"
-      :class="{ 'voice-panel__status--live': enabled }"
-    >
-      <span class="voice-panel__status-dot" aria-hidden="true" />
-      <span class="voice-panel__status-mode">
-        {{ enabled ? (mode === 'dictation' ? 'Dictating' : 'Listening') : 'Off' }}
-      </span>
-      <template v-if="heardText || lastAction">
-        <span class="voice-panel__status-sep" aria-hidden="true">·</span>
-        <span class="voice-panel__status-heard">
-          {{ heardText ? `“${heardText}”` : lastAction }}
-        </span>
-      </template>
-    </div>
-
-    <v-divider class="voice-panel__divider" />
-
-    <div
-      v-for="group in commandReference"
-      :key="group.title"
-      class="voice-panel__group"
-    >
-      <h4>{{ group.title }}</h4>
-      <div class="voice-panel__cards">
-        <div v-for="item in group.items" :key="item.say" class="voice-panel__card">
-          <p class="voice-panel__card-say">{{ item.say }}</p>
-          <p class="voice-panel__card-does">{{ item.does }}</p>
+    <div class="voice-panel__sticky">
+      <div class="voice-panel__head">
+        <div class="voice-panel__title">
+          <strong>Voice Commands</strong>
+        </div>
+        <div class="voice-panel__head-actions">
+          <v-btn
+            v-if="showPopout"
+            icon
+            size="x-small"
+            variant="text"
+            aria-label="Open in a new window"
+            @click="$emit('popout')"
+          >
+            <v-icon icon="external-link" :size="16" />
+          </v-btn>
+          <v-btn
+            v-if="showClose"
+            icon
+            size="x-small"
+            variant="text"
+            aria-label="Close"
+            @click="$emit('close')"
+          >
+            <v-icon icon="x" :size="16" />
+          </v-btn>
         </div>
       </div>
+
+      <div
+        class="voice-panel__status"
+        :class="{ 'voice-panel__status--live': enabled }"
+      >
+        <span class="voice-panel__status-dot" aria-hidden="true" />
+        <span class="voice-panel__status-mode">
+          {{ enabled ? (mode === 'dictation' ? 'Dictating' : 'Listening') : 'Off' }}
+        </span>
+        <template v-if="heardText || lastAction">
+          <span class="voice-panel__status-sep" aria-hidden="true">·</span>
+          <span class="voice-panel__status-heard">
+            {{ heardText ? `“${heardText}”` : lastAction }}
+          </span>
+        </template>
+      </div>
+
+      <v-divider class="voice-panel__divider" />
     </div>
 
-    <p class="voice-panel__note">
-      Speech is processed by your browser’s provider (Google in Chrome).
-    </p>
+    <div class="voice-panel__body">
+      <div
+        v-for="group in commandReference"
+        :key="group.title"
+        class="voice-panel__group"
+      >
+        <h4>{{ group.title }}</h4>
+        <div class="voice-panel__cards">
+          <div v-for="item in group.items" :key="item.say" class="voice-panel__card">
+            <p class="voice-panel__card-say">{{ item.say }}</p>
+            <p class="voice-panel__card-does">{{ item.does }}</p>
+          </div>
+        </div>
+      </div>
+
+      <p class="voice-panel__note">
+        Speech is processed by your browser’s provider (Google in Chrome).
+      </p>
+    </div>
   </div>
 </template>
 
@@ -97,10 +101,26 @@ defineEmits<{
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: var(--space-4);
   overflow-y: auto;
   background: rgb(var(--v-theme-surface));
   font-family: inherit;
+}
+
+// Title, live-status pill and the divider under them stay pinned to the top
+// of the panel's own scroll area (which already sits just under the app
+// topbar — see VoiceStatusPill's v-navigation-drawer) while the command
+// reference scrolls underneath.
+.voice-panel__sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-4) 0;
+  background: rgb(var(--v-theme-surface));
+}
+
+.voice-panel__body {
+  padding: 0 var(--space-4) var(--space-4);
 }
 
 .voice-panel__head {
