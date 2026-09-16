@@ -46,6 +46,48 @@ function goBack() {
     router.push("/");
   }
 }
+
+// Only the two fatal, non-recovering failure modes get a popup. The other
+// SpeechRecognition error codes ('no-speech', 'network', 'aborted', ...) are
+// deliberately transient — useSpeechRecognition auto-restarts after them, so
+// popping a dialog on every blip would fight that self-healing design.
+const voiceErrorReason = ref<"unsupported" | "permission-denied" | null>(null);
+
+const voiceErrorDialog = computed({
+  get: () => voiceErrorReason.value !== null,
+  set: (v: boolean) => {
+    if (!v) voiceErrorReason.value = null;
+  },
+});
+
+const voiceErrorContent = computed(() =>
+  voiceErrorReason.value === "unsupported"
+    ? {
+        title: "Voice Commands Unavailable",
+        message:
+          "Your browser doesn't support voice commands. Please switch to Chrome, Edge, or Safari to use this feature.",
+      }
+    : {
+        title: "Microphone Blocked",
+        message:
+          "Voice commands need microphone access. Please allow microphone access in your browser settings, then try again.",
+      },
+);
+
+function onMicClick() {
+  if (!supported.value) {
+    voiceErrorReason.value = "unsupported";
+    return;
+  }
+  voice.toggle();
+}
+
+// permissionDenied flips asynchronously (after the browser's own permission
+// prompt is answered), not synchronously on click, so it needs its own watch
+// rather than a click-time check.
+watch(permissionDenied, (denied) => {
+  if (denied) voiceErrorReason.value = "permission-denied";
+});
 </script>
 
 <template>
@@ -94,11 +136,10 @@ function goBack() {
         icon
         size="small"
         variant="text"
-        :disabled="!supported"
         :color="enabled && !permissionDenied ? 'primary' : undefined"
         :aria-pressed="enabled"
         :aria-label="voiceLabel"
-        @click="voice.toggle()"
+        @click="onMicClick"
       >
         <v-icon :icon="voiceIcon" :size="18" />
         <v-tooltip
@@ -127,6 +168,15 @@ function goBack() {
         </v-tooltip>
       </v-btn>
     </div>
+
+    <AlertDialog
+      v-model="voiceErrorDialog"
+      icon="mic-off"
+      tone="danger"
+      :title="voiceErrorContent.title"
+      :message="voiceErrorContent.message"
+      confirm-text="Got it"
+    />
   </v-navigation-drawer>
 </template>
 
