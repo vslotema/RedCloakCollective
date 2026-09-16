@@ -19,6 +19,12 @@ export default defineNuxtConfig({
 
   ssr: true,
 
+  app: {
+    head: {
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    },
+  },
+
   // Components are auto-imported by filename only (no directory prefix), so
   // `components/content/filters/ContentFilterBar.vue` is `<ContentFilterBar>`.
   // The filenames are already descriptively prefixed, so the path-based names
