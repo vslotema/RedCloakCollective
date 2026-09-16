@@ -58,10 +58,6 @@ onBeforeUnmount(() => {
 
     <div class="voice-status">
       <div v-if="enabled" class="voice-status__stack">
-        <div v-if="heardText" class="voice-status__heard-bubble">
-          “{{ heardText }}”
-        </div>
-
         <div class="voice-status__pill" role="status" aria-live="polite">
           <span class="sr-only">
             {{ mode === "dictation" ? "Dictating" : "Listening" }}
@@ -121,21 +117,6 @@ onBeforeUnmount(() => {
     // Clear the fixed toolbar footer.
     bottom: calc(56px + var(--space-3));
   }
-}
-
-.voice-status__heard-bubble {
-  max-width: 100%;
-  padding: var(--space-1) var(--space-3);
-  font-size: var(--text-sm);
-  font-style: italic;
-  color: rgb(var(--v-theme-ink));
-  background: rgb(var(--v-theme-background));
-  border: 1px solid rgb(var(--v-theme-border-color));
-  border-radius: 999px;
-  box-shadow: 0 2px 12px rgb(0 0 0 / 0.12);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .voice-status__pill {

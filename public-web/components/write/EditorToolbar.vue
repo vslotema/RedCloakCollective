@@ -74,11 +74,20 @@ const voiceErrorContent = computed(() =>
       },
 );
 
+// useArticleVoice() auto-resumes voice on mount if it was on last reload —
+// that resume happens without a user gesture, so if the browser's mic
+// permission isn't already durably granted, it fails 'not-allowed'
+// immediately (no native prompt ever shows — gesture-less mic requests can't
+// trigger one). That silent failure shouldn't pop this dialog; only a denial
+// that follows an actual click here should.
+let voicePermissionRequestedByUser = false;
+
 function onMicClick() {
   if (!supported.value) {
     voiceErrorReason.value = "unsupported";
     return;
   }
+  if (!enabled.value) voicePermissionRequestedByUser = true;
   voice.toggle();
 }
 
@@ -86,7 +95,10 @@ function onMicClick() {
 // prompt is answered), not synchronously on click, so it needs its own watch
 // rather than a click-time check.
 watch(permissionDenied, (denied) => {
-  if (denied) voiceErrorReason.value = "permission-denied";
+  if (denied && voicePermissionRequestedByUser) {
+    voiceErrorReason.value = "permission-denied";
+  }
+  voicePermissionRequestedByUser = false;
 });
 </script>
 

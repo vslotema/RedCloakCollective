@@ -35,7 +35,7 @@ const selection = defineModel<EditorSelection | null>("selection", {
 
 const linkEditing = ref(false);
 
-const CARET_BOTTOM_MARGIN_REM = 3;
+const CARET_BOTTOM_MARGIN_REM = 5;
 
 function remToPx(rem: number) {
   const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
