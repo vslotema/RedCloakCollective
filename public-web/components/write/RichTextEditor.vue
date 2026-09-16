@@ -8,9 +8,9 @@ import type { EditorView } from "@tiptap/pm/view";
 import type { EditorSelection } from "~/stores/editor";
 import InsertMenu from "./InsertMenu.vue";
 import TextFormattingTools from "./TextFormattingTools.vue";
-import { LinkCard } from "./link-card";
-import { CodeBlock } from "./code-block";
-import { VideoEmbed } from "./video-embed";
+import { LinkCard } from "./nodes/link-card";
+import { CodeBlock } from "./nodes/code-block";
+import { VideoEmbed } from "./nodes/video-embed";
 import { LineNumbers } from "./line-numbers";
 import { DictationPreview } from "./dictation-preview";
 
