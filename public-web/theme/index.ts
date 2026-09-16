@@ -15,7 +15,7 @@ export const light: ThemeDefinition = {
     "on-surface": "#4B5563",
     "on-surface-variant": "#4B5563",
     "border-color": "#E5E7EB",
-    "border-strong": "#626161",
+    "border-strong": "#ababab",
     ink: "#111827",
     primary: "#DD0509",
     "primary-darken-1": "#B70407",

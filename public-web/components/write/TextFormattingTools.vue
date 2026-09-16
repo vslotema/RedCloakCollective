@@ -26,8 +26,6 @@ const {
   activeColor?: string;
 }>();
 
-// Kept in sync with the parent so the BubbleMenu's shouldShow can keep the
-// menu open while the URL field has focus (the editor blurs when it does).
 const linkEditing = defineModel<boolean>("linkEditing", { default: false });
 
 type Tool = {
@@ -49,8 +47,25 @@ const formatTools: Tool[] = [
 const linkInput = ref("");
 const linkFieldRef = useTemplateRef<HTMLInputElement>("linkFieldRef");
 
+// The sidebar rail is far from the text — anchor the link field to the caret
+// instead of the toolbar. The floating (bubble menu) instance already sits
+// next to the selection, so it keeps opening in place.
+const isSidebar = computed(() => orientation === "vertical");
+const linkFieldStyle = ref<{ position: string; top: string; left: string } | undefined>(undefined);
+
+function caretPositionStyle() {
+  const { view } = editor;
+  const coords = view.coordsAtPos(view.state.selection.to);
+  return {
+    position: "fixed",
+    top: `${coords.bottom + 8}px`,
+    left: `${coords.left}px`,
+  };
+}
+
 function openLinkField() {
   linkInput.value = editor.getAttributes("link").href ?? "";
+  linkFieldStyle.value = isSidebar.value ? caretPositionStyle() : undefined;
   linkEditing.value = true;
   nextTick(() => linkFieldRef.value?.focus());
 }
@@ -61,11 +76,9 @@ function closeLinkField() {
   editor.chain().focus().run();
 }
 
-// Focus leaving the field for anything outside the menu (e.g. a click back
-// into the document) dismisses it; moving to the apply/remove button doesn't.
 function onFieldBlur(event: FocusEvent) {
   const next = event.relatedTarget as Node | null;
-  const menu = (event.currentTarget as HTMLElement).closest(".format-tools-menu");
+  const menu = (event.currentTarget as HTMLElement).closest(".format-tools-menu__link");
   if (next && menu?.contains(next)) return;
   linkEditing.value = false;
   linkInput.value = "";
@@ -97,8 +110,8 @@ function toggleTool(label: string) {
   if (label === "Bold") toggleBold(editor);
   if (label === "Italic") toggleItalic(editor);
   if (label === "Quote") toggleQuote(editor);
-  if (label === "Small title") toggleHeading(editor, 2);
-  if (label === "Big title") toggleHeading(editor, 1);
+  if (label === "Small title") toggleHeading(editor, 1);
+  if (label === "Big title") toggleHeading(editor, 2);
 }
 
 function toolIsActive(label: string): boolean {
@@ -106,7 +119,7 @@ function toolIsActive(label: string): boolean {
   if (label === "Italic") return editor.isActive("italic");
   if (label === "Link") return editor.isActive("link");
   if (label === "Quote") return selectionHasBlockquote(editor);
-  if (label === "Small title") return editor.isActive("heading", { level: 3 });
+  if (label === "Small title") return editor.isActive("heading", { level: 1 });
   if (label === "Big title") return editor.isActive("heading", { level: 2 });
   return false;
 }
@@ -118,48 +131,52 @@ function toolIsActive(label: string): boolean {
     :class="`format-tools-menu--${orientation}`"
     :style="{ color, background }"
   >
-    <form
-      v-if="linkEditing"
-      class="format-tools-menu__link"
-      @submit.prevent="applyLink"
-    >
-      <input
-        ref="linkFieldRef"
-        v-model="linkInput"
-        type="url"
-        class="format-tools-menu__link-field"
-        placeholder="Paste or type a link…"
-        aria-label="Link URL"
-        @keydown.esc.prevent="closeLinkField"
-        @blur="onFieldBlur"
-      />
-      <v-btn
-        type="submit"
-        class="write-tools__tool"
-        icon
-        size="small"
-        :variant="toolVariant"
-        aria-label="Apply link"
-        @mousedown.prevent
+    <Teleport to="body" :disabled="!isSidebar">
+      <form
+        v-if="linkEditing"
+        class="format-tools-menu__link"
+        :class="{ 'format-tools-menu__link--floating': isSidebar }"
+        :style="linkFieldStyle"
+        @submit.prevent="applyLink"
       >
-        <v-icon icon="check" :size="18" />
-      </v-btn>
-      <v-btn
-        v-if="editor.isActive('link')"
-        type="button"
-        class="write-tools__tool"
-        icon
-        size="small"
-        :variant="toolVariant"
-        aria-label="Remove link"
-        @mousedown.prevent
-        @click="removeLink"
-      >
-        <v-icon icon="trash-2" :size="18" />
-      </v-btn>
-    </form>
+        <input
+          ref="linkFieldRef"
+          v-model="linkInput"
+          type="url"
+          class="format-tools-menu__link-field"
+          placeholder="Paste or type a link…"
+          aria-label="Link URL"
+          @keydown.esc.prevent="closeLinkField"
+          @blur="onFieldBlur"
+        />
+        <v-btn
+          type="submit"
+          class="write-tools__tool"
+          icon
+          size="small"
+          :variant="toolVariant"
+          aria-label="Apply link"
+          @mousedown.prevent
+        >
+          <v-icon icon="check" :size="18" />
+        </v-btn>
+        <v-btn
+          v-if="editor.isActive('link')"
+          type="button"
+          class="write-tools__tool"
+          icon
+          size="small"
+          :variant="toolVariant"
+          aria-label="Remove link"
+          @mousedown.prevent
+          @click="removeLink"
+        >
+          <v-icon icon="trash-2" :size="18" />
+        </v-btn>
+      </form>
+    </Teleport>
 
-    <template v-else>
+    <template v-if="!linkEditing || isSidebar">
       <v-btn
         v-for="tool in formatTools"
         :key="tool.label"
@@ -207,18 +224,6 @@ function toolIsActive(label: string): boolean {
   &--vertical {
     flex-direction: column;
     position: relative;
-
-    // The link field can't fit a 44px rail — pop it out to the side.
-    .format-tools-menu__link {
-      position: absolute;
-      left: calc(100% + 0.5rem);
-      top: 0;
-      z-index: 5;
-      padding: 0.25rem;
-      background: rgb(var(--v-theme-background));
-      border: 1px solid rgb(var(--v-theme-surface));
-      border-radius: 0.25rem;
-    }
   }
 
   .write-tools__tool {
@@ -229,6 +234,16 @@ function toolIsActive(label: string): boolean {
     display: flex;
     align-items: center;
     gap: 0.25rem;
+  }
+
+  // Sidebar rail: the field is teleported to <body> and anchored to the
+  // caret instead of the rail, so it needs its own chrome.
+  &__link--floating {
+    z-index: 20;
+    padding: 0.25rem;
+    background: black;
+    border-radius: 0.25rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   &__link-field {
