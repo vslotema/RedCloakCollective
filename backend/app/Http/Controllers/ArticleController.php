@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\Topic;
+use App\Rules\ValidArticleContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -50,7 +52,7 @@ class ArticleController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate($this->rules());
+        $data = $this->validatedArticleData($request);
 
         $article = DB::transaction(function () use ($request, $data) {
             $article = $request->user()->articles()->create([
@@ -81,7 +83,7 @@ class ArticleController extends Controller
     {
         Gate::authorize('update', $article);
 
-        $data = $request->validate($this->rules(partial: true));
+        $data = $this->validatedArticleData($request, partial: true);
 
         DB::transaction(function () use ($article, $data) {
             if (array_key_exists('title', $data)) {
@@ -187,7 +189,7 @@ class ArticleController extends Controller
     private const MAX_TOPICS = 5;
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, mixed>>
      */
     private function rules(bool $partial = false): array
     {
@@ -196,7 +198,7 @@ class ArticleController extends Controller
         return [
             'title' => [$titlePresence, 'nullable', 'string', 'max:255'],
             'excerpt' => ['sometimes', 'nullable', 'string', 'max:280'],
-            'content' => [$partial ? 'sometimes' : 'required', 'array'],
+            'content' => [$partial ? 'sometimes' : 'required', 'array', new ValidArticleContent],
             'published' => ['sometimes', 'boolean'],
             // ISO datetime; a past value publishes immediately (clamped below).
             'publish_at' => ['sometimes', 'nullable', 'date'],
@@ -204,10 +206,45 @@ class ArticleController extends Controller
             'topic_ids.*' => ['integer', 'exists:topics,id'],
             'new_topics' => ['sometimes', 'array', 'max:'.self::MAX_TOPICS],
             'new_topics.*' => ['string', 'min:2', 'max:50'],
-            'header_image_position' => ['sometimes', 'nullable', 'array'],
+            'header_image_position' => ['sometimes', 'nullable', 'array', 'required_array_keys:x,y'],
             'header_image_position.x' => ['numeric', 'between:0,100'],
             'header_image_position.y' => ['numeric', 'between:0,100'],
         ];
+    }
+
+    /**
+     * Validate a create/update request: trims `new_topics` before length rules
+     * apply, then adds a cross-field check that `topic_ids` and `new_topics`
+     * together don't exceed the topic cap (each is only bounded individually
+     * by `rules()`).
+     *
+     * @return array<string, mixed>
+     */
+    private function validatedArticleData(Request $request, bool $partial = false): array
+    {
+        if (is_array($request->input('new_topics'))) {
+            $request->merge([
+                'new_topics' => collect($request->input('new_topics'))
+                    ->map(fn ($name) => is_string($name) ? trim($name) : $name)
+                    ->all(),
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), $this->rules($partial));
+
+        $validator->after(function ($validator) use ($request) {
+            $topicIds = $request->input('topic_ids', []);
+            $newTopics = $request->input('new_topics', []);
+            if (is_array($topicIds) && is_array($newTopics)
+                && count($topicIds) + count($newTopics) > self::MAX_TOPICS) {
+                $validator->errors()->add(
+                    'topic_ids',
+                    'You can add at most '.self::MAX_TOPICS.' topics in total.',
+                );
+            }
+        });
+
+        return $validator->validate();
     }
 
     /**

@@ -175,6 +175,18 @@ class ArticleManagementTest extends TestCase
         ])->assertStatus(422)->assertJsonValidationErrors('topic_ids');
     }
 
+    public function test_create_rejects_topic_ids_and_new_topics_that_together_exceed_five(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+        $topics = Topic::factory()->count(3)->create();
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'topic_ids' => $topics->pluck('id')->all(),
+            'new_topics' => ['Feeding tips', 'Mobility aids', 'Sensory play'],
+        ])->assertStatus(422)->assertJsonValidationErrors('topic_ids');
+    }
+
     public function test_create_rejects_an_unknown_topic_id(): void
     {
         Sanctum::actingAs(User::factory()->create());
@@ -234,6 +246,16 @@ class ArticleManagementTest extends TestCase
         ])->assertStatus(422)->assertJsonValidationErrors('header_image_position.y');
     }
 
+    public function test_header_image_position_requires_both_x_and_y(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'header_image_position' => ['x' => 20],
+        ])->assertStatus(422)->assertJsonValidationErrors('header_image_position');
+    }
+
     public function test_a_user_can_schedule_an_article_at_creation_time(): void
     {
         $user = User::factory()->create();
@@ -266,6 +288,52 @@ class ArticleManagementTest extends TestCase
             ->assertJsonValidationErrors('content');
     }
 
+    public function test_create_rejects_an_unknown_node_type_in_content(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => [
+                'type' => 'doc',
+                'content' => [['type' => 'script', 'content' => []]],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors('content');
+    }
+
+    public function test_create_rejects_an_unknown_mark_type_in_content(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => [
+                'type' => 'doc',
+                'content' => [[
+                    'type' => 'paragraph',
+                    'content' => [[
+                        'type' => 'text',
+                        'text' => 'hi',
+                        'marks' => [['type' => 'script']],
+                    ]],
+                ]],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors('content');
+    }
+
+    public function test_create_rejects_an_oversized_content_document(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => [
+                'type' => 'doc',
+                'content' => [[
+                    'type' => 'paragraph',
+                    'content' => [['type' => 'text', 'text' => str_repeat('a', 250_000)]],
+                ]],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors('content');
+    }
+
     public function test_create_rejects_an_over_long_title_and_a_too_short_new_topic(): void
     {
         Sanctum::actingAs(User::factory()->create());
@@ -279,6 +347,28 @@ class ArticleManagementTest extends TestCase
             'content' => $this->doc(),
             'new_topics' => ['a'],
         ])->assertStatus(422)->assertJsonValidationErrors('new_topics.0');
+    }
+
+    public function test_create_rejects_a_whitespace_only_new_topic(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'new_topics' => ['   '],
+        ])->assertStatus(422)->assertJsonValidationErrors('new_topics.0');
+    }
+
+    public function test_create_stores_a_padded_new_topic_trimmed(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/articles', [
+            'content' => $this->doc(),
+            'new_topics' => ['  Feeding tips  '],
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('topics', ['name' => 'Feeding tips', 'slug' => 'feeding-tips']);
     }
 
     public function test_each_draft_gets_a_distinct_slug_even_with_the_same_title(): void
