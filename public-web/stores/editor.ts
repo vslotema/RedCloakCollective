@@ -125,6 +125,13 @@ export const useEditorStore = defineStore('editor', () => {
   // Transient status line for the write page ("Image added", "Paste a link"…).
   const statusMessage = ref('Ready')
 
+  // Publish validation — flips true on the first publish attempt, after which
+  // titleInvalid/bodyInvalid track live (so they clear the moment the author
+  // fixes whichever field was empty, no manual reset needed).
+  const publishAttempted = ref(false)
+  const titleInvalid = computed(() => publishAttempted.value && !title.value.trim())
+  const bodyInvalid = computed(() => publishAttempted.value && wordCount.value === 0)
+
   // Header image. Before upload, `headerImageUrl` is a local `blob:` preview and
   // `headerImageFile` holds the File to upload; after upload it's the server URL
   // and the File is cleared.
@@ -375,6 +382,7 @@ export const useEditorStore = defineStore('editor', () => {
     headerImageFile.value = null
     saving.value = false
     saveError.value = null
+    publishAttempted.value = false
     dropRecovery(LEGACY_DRAFT_KEY)
   }
 
@@ -558,6 +566,9 @@ export const useEditorStore = defineStore('editor', () => {
     savedAt,
     saveError,
     statusMessage,
+    publishAttempted,
+    titleInvalid,
+    bodyInvalid,
     headerImageUrl,
     headerImagePosition,
     wordCount,

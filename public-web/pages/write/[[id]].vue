@@ -136,6 +136,7 @@ onMounted(() => nextTick(resizeTitle))
         rows="1"
         aria-label="Title"
         class="editor-main__title text-h3"
+        :class="{ 'editor-main__title--error': editorStore.titleInvalid }"
         placeholder="Title"
         @input="onTitleInput"
         @keydown="onTitleKeydown"
@@ -202,6 +203,11 @@ onMounted(() => nextTick(resizeTitle))
 
     &:focus-visible {
       outline: none;
+    }
+
+    &--error {
+      border: 2px solid rgb(var(--v-theme-error));
+      border-radius: 0.25rem;
     }
   }
 }

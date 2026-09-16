@@ -47,7 +47,7 @@ function onConfirm() {
         <v-icon :icon="icon" :size="28" />
       </div>
 
-      <h2 class="text-h5 font-weight-bold mt-4 mb-2">{{ title }}</h2>
+      <h2 class="text-body-1 font-weight-bold mt-4 mb-2">{{ title }}</h2>
       <p class="text-body-2 text-medium-emphasis mb-6">{{ message }}</p>
 
       <div class="d-flex ga-3">
@@ -92,12 +92,12 @@ function onConfirm() {
 
   &--danger {
     color: rgb(var(--v-theme-primary));
-    background: rgb(var(--v-theme-primary) / 0.1);
+    background: rgba(var(--v-theme-primary), 0.1);
   }
 
   &--warning {
     color: rgb(var(--v-theme-warning));
-    background: rgb(var(--v-theme-warning) / 0.1);
+    background: rgba(var(--v-theme-warning),  0.1);
   }
 }
 </style>

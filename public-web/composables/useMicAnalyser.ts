@@ -1,9 +1,3 @@
-// A Web Audio tap on the microphone, used only to drive the voice-status
-// waveform. The Web Speech API (`useSpeechRecognition`) does not expose its
-// audio stream, so this opens its own `getUserMedia` stream — the mic grant
-// from turning voice on is remembered for the origin, so this does not prompt
-// again in practice. Module-scoped singleton, client-only.
-
 type AudioContextCtor = typeof AudioContext
 
 const analyser = ref<AnalyserNode | null>(null)

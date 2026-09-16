@@ -19,6 +19,14 @@ const allTopics = ref<Topic[]>([])
 const topicsLoading = ref(false)
 const submitting = ref(false)
 const error = ref('')
+const showPublishError = ref(false)
+
+const missingFieldsLabel = computed(() => {
+  const missing: string[] = []
+  if (editorStore.titleInvalid) missing.push('Title')
+  if (editorStore.bodyInvalid) missing.push('Content')
+  return missing.join(' and ')
+})
 
 const scheduling = computed(() => mode.value === 'schedule')
 const atLimit = computed(() => selected.value.length >= MAX_TOPICS)
@@ -97,6 +105,14 @@ function toDraftTopics(): DraftTopic[] {
 
 async function submit() {
   error.value = ''
+
+  editorStore.publishAttempted = true
+  if (editorStore.titleInvalid || editorStore.bodyInvalid) {
+    open.value = false
+    showPublishError.value = true
+    return
+  }
+
   const topics = toDraftTopics()
   if (topics.length === 0) {
     error.value = 'Add at least one topic.'
@@ -220,6 +236,15 @@ async function submit() {
       </div>
     </v-card>
   </v-dialog>
+
+  <AlertDialog
+    v-model="showPublishError"
+    icon="alert-circle"
+    tone="danger"
+    title="Unable to Publish"
+    :message="`Missing: ${missingFieldsLabel}. Add ${missingFieldsLabel.toLowerCase()} before publishing.`"
+    confirm-text="Got it"
+  />
 </template>
 
 <style scoped lang="scss">

@@ -1,6 +1,6 @@
 export function useHomeFeedState() {
   const authStore = useAuthStore()
-  // Default the flags "done" so a still-loading user never flashes the flow.
+
   const topicsOnboarded = computed(() => authStore.user?.topicsOnboarded ?? true)
   const feedPersonalized = computed(() => authStore.user?.feedPersonalized ?? true)
 

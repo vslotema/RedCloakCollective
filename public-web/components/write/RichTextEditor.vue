@@ -131,7 +131,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="editor" class="rich-text-editor">
+  <div
+    v-if="editor"
+    class="rich-text-editor"
+    :class="{ 'rich-text-editor--error': editorStore.bodyInvalid }"
+  >
     <FloatingMenu
       :editor="editor"
       :tippy-options="{
@@ -172,6 +176,10 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .rich-text-editor {
   border-radius: 4px;
+
+  &--error {
+    border: 2px solid rgb(var(--v-theme-error));
+  }
 
   &__sr-status {
     position: absolute;
