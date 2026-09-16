@@ -50,7 +50,6 @@ function goBack() {
 
 <template>
   <v-navigation-drawer
-    v-if="editor"
     permanent
     :location="drawerLocation"
     :width="drawerWidth"
@@ -59,7 +58,7 @@ function goBack() {
     :class="{ 'editor-toolbar--bottom': !smAndUp }"
   >
     <TextFormattingTools
-      v-if="smAndUp"
+      v-if="editor && smAndUp"
       :editor="editor"
       class="editor-toolbar__format"
       orientation="vertical"
@@ -135,6 +134,12 @@ function goBack() {
 .editor-toolbar {
   color: rgb(var(--v-theme-on-surface));
   border-right: thin solid rgb(var(--v-theme-border-strong));
+  // Permanent means always visible — it never opens/closes, so it should
+  // never animate. Vuetify's own .v-navigation-drawer CSS unconditionally
+  // transitions transform/left/right/top/bottom on every mount, which is
+  // what caused the visible "snap to the left" on reload (its computed
+  // `location` briefly reads "bottom" before settling to "start").
+  transition: none !important;
 
   :deep(.v-navigation-drawer__content) {
     display: flex;

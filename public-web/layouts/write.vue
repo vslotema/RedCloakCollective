@@ -23,6 +23,11 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  // Vuetify's v-main transitions its layout-driven padding on every side by
+  // default. The left rail is permanent (see EditorToolbar.vue) and should
+  // never move, so drop it from the transition — the voice-commands drawer
+  // toggling on the right should still animate smoothly.
+  transition-property: padding-right;
 
   &__main {
     flex: 1 1 auto;
