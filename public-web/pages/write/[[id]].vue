@@ -149,8 +149,6 @@ onMounted(() => nextTick(resizeTitle))
       @update:selection="editorStore.setSelection"
     />
   </section>
-
-  <VoiceStatusPill />
 </template>
 
 <style scoped lang="scss">

@@ -214,6 +214,50 @@ describe('useArticleVoice — enable / disable', () => {
     expect(voice.enabled.value).toBe(false)
     expect(localStorage.getItem('voice_commands_enabled')).toBeNull()
   })
+
+  it('leaveEditor() stops recognition, closes the panel and clears the preference', async () => {
+    await setup()
+    say('help')
+    expect(voice.panelOpen.value).toBe(true)
+
+    voice.leaveEditor()
+
+    expect(FakeRecognition.instances[0].stop).toHaveBeenCalled()
+    expect(voice.enabled.value).toBe(false)
+    expect(voice.panelOpen.value).toBe(false)
+    expect(localStorage.getItem('voice_commands_enabled')).toBeNull()
+  })
+
+  it('resumes immediately on load if voice was on before — no gesture required', async () => {
+    localStorage.setItem('voice_commands_enabled', '1')
+    const { useArticleVoice } = await loadVoice()
+    voice = useArticleVoice()
+
+    expect(voice.enabled.value).toBe(true)
+    expect(FakeRecognition.instances[0].start).toHaveBeenCalled()
+    expect(localStorage.getItem('voice_commands_enabled')).toBe('1')
+  })
+
+  it('leaveEditor() right after an immediate resume still tears down and clears the preference', async () => {
+    localStorage.setItem('voice_commands_enabled', '1')
+    const { useArticleVoice } = await loadVoice()
+    voice = useArticleVoice()
+    expect(voice.enabled.value).toBe(true)
+
+    voice.leaveEditor()
+
+    expect(FakeRecognition.instances[0].stop).toHaveBeenCalled()
+    expect(voice.enabled.value).toBe(false)
+    expect(localStorage.getItem('voice_commands_enabled')).toBeNull()
+  })
+
+  it('does not resume when nothing was persisted', async () => {
+    const { useArticleVoice } = await loadVoice()
+    voice = useArticleVoice()
+
+    expect(voice.enabled.value).toBe(false)
+    expect(FakeRecognition.instances).toHaveLength(0)
+  })
 })
 
 describe('useArticleVoice — dictation', () => {

@@ -18,34 +18,29 @@ import type {
   VoiceMode,
 } from '~/components/write/voice/voice-commands'
 
-// The article voice controller: owns the feature state and routes each
-// recognised utterance to an editor action or the editor store. Singleton —
-// module-scoped refs, wired to the speech wrapper once.
 
 const STORAGE_KEY = 'voice_commands_enabled'
 const IMAGE_PROMPT_MS = 15_000
 const HEARD_CLEAR_MS = 5_000
+const VOICE_STATUS_CHANNEL = 'redcloak-voice-status'
 
 const enabled = ref(false)
 const mode = ref<VoiceMode>('idle')
 const heardText = ref('')
 const lastAction = ref('')
 const permissionDenied = ref(false)
-// Set true by the "insert image" command — the InsertMenu photo button reads
-// this to pulse, since a voice event can't open the file picker itself.
 const imagePrompt = ref(false)
 const panelOpen = ref(false)
 
 let wired = false
 let restoreAttempted = false
 let blockNumbersWatched = false
-// True while the block-number gutter is on *because* voice turned it on, so
-// disabling voice only reverts our own change, not a deliberate user toggle.
+let panelClosesWithVoiceWatched = false
+let broadcastWatched = false
+let statusChannel: BroadcastChannel | undefined
 let voiceShowedBlockNumbers = false
 let imagePromptTimer: ReturnType<typeof setTimeout> | undefined
 let heardClearTimer: ReturnType<typeof setTimeout> | undefined
-// Set when dictation was entered from an interim "type"/"start typing" — the
-// final for that same utterance still carries the word and must not be typed.
 let swallowStartWordFinal = false
 let swallowStartTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -209,8 +204,6 @@ function dispatch(command: ParsedCommand, raw: string) {
   switch (command.kind) {
     case 'enterDictation':
       mode.value = 'dictation'
-      // Put the caret in the body so dictated text — and its live preview —
-      // has a home even if the user never clicked into the editor.
       editor!.chain().focus().run()
       announce('Dictating — say “stop” to finish')
       return
@@ -272,9 +265,7 @@ function dispatch(command: ParsedCommand, raw: string) {
         announce('Code block added')
         return
       }
-      // image — a voice event can't open the OS file picker, so make sure the
-      // caret sits on an empty paragraph (that's where the "+" insert menu
-      // appears) and flag its photo button to pulse for a tap.
+
       {
         const { $from } = editor!.state.selection
         const onEmptyParagraph =
@@ -318,10 +309,6 @@ function handleResult({ transcript, isFinal }: SpeechResult) {
 
   let text = transcript
 
-  // Enter dictation the moment "type" / "start typing" is *heard*, not when it
-  // finalises — Chrome is slow and flaky at ending a lone short word, so waiting
-  // for isFinal leaves you stuck in command mode. The matching final still
-  // carries the word, so swallow it (or strip it if speech ran straight on).
   if (mode.value === 'idle' && !isFinal) {
     if (parseCommand(transcript, 'idle')?.kind === 'enterDictation') {
       dispatch({ kind: 'enterDictation' }, transcript)
@@ -361,6 +348,19 @@ function handleResult({ transcript, isFinal }: SpeechResult) {
   heardClearTimer = setTimeout(() => {
     heardText.value = ''
   }, HEARD_CLEAR_MS)
+}
+
+function ensureStatusBroadcast() {
+  if (broadcastWatched || !import.meta.client || typeof BroadcastChannel === 'undefined') return
+  broadcastWatched = true
+  statusChannel = new BroadcastChannel(VOICE_STATUS_CHANNEL)
+  watch(
+    [enabled, mode, heardText, lastAction],
+    ([e, m, h, l]) => {
+      statusChannel?.postMessage({ enabled: e, mode: m, heardText: h, lastAction: l })
+    },
+    { immediate: true },
+  )
 }
 
 function wire() {
@@ -408,36 +408,63 @@ function toggle() {
   else enable()
 }
 
+/**
+ * Torn down when the write page is left via an in-app navigation (not a
+ * reload — see VoiceStatusPill's onBeforeUnmount). Unlike `disable()`, this
+ * isn't a user action: it turns the mic off without a "Voice off"
+ * announcement to a page that's going away, closes the sidebar, and — the
+ * actual point — clears the persisted preference so the *next* visit to
+ * /write doesn't silently resume listening on its own.
+ */
+function leaveEditor() {
+  if (enabled.value) {
+    clearImagePrompt()
+    clearDictationPreview()
+    clearStartWordSwallow()
+    enabled.value = false
+    mode.value = 'idle'
+    useSpeechRecognition().stop()
+  }
+  panelOpen.value = false
+  persist(false)
+}
+
 export function useArticleVoice() {
   const speech = useSpeechRecognition()
 
+  // Resume immediately on reload if voice was on before — the mic
+  // permission was already granted last time (otherwise it would've been
+  // auto-disabled by the permission-denied handler below), so there's
+  // nothing gating a fresh SpeechRecognition session on a user gesture here.
   if (import.meta.client && !restoreAttempted && !wired) {
     restoreAttempted = true
-    // Restore the preference, but wait for a user gesture before starting the
-    // mic (browsers require one, and a mic that turns itself on at page load
-    // is hostile). Users who never enabled it are unaffected.
     let resume = false
     try {
       resume = localStorage.getItem(STORAGE_KEY) === '1'
     } catch {
       resume = false
     }
-    if (resume && speech.supported.value) {
-      enabled.value = true
-      const kick = () => {
-        window.removeEventListener('pointerdown', kick)
-        window.removeEventListener('keydown', kick)
-        if (enabled.value) enable()
-      }
-      window.addEventListener('pointerdown', kick, { once: true })
-      window.addEventListener('keydown', kick, { once: true })
-    }
+    if (resume && speech.supported.value) enable()
   }
 
   if (import.meta.client && !blockNumbersWatched) {
     blockNumbersWatched = true
     watch([enabled, useEditorInstance().editor], syncBlockNumbers, { immediate: true })
   }
+
+  // The commands sidebar only makes sense while voice is on — close it the
+  // moment voice turns off. The drawer itself is also only mounted while
+  // `enabled` (see VoiceStatusPill's v-if), so there's nothing that can flip
+  // panelOpen true while voice is off in the first place — no need to guard
+  // against that here too.
+  if (import.meta.client && !panelClosesWithVoiceWatched) {
+    panelClosesWithVoiceWatched = true
+    watch(enabled, (isEnabled) => {
+      if (!isEnabled) panelOpen.value = false
+    }, { immediate: true })
+  }
+
+  ensureStatusBroadcast()
 
   if (import.meta.dev && import.meta.client) {
     ;(window as unknown as Record<string, unknown>).__voice = {
@@ -461,6 +488,45 @@ export function useArticleVoice() {
     toggle,
     enable,
     disable,
+    leaveEditor,
     clearImagePrompt,
+  }
+}
+
+/**
+ * Read-only mirror of the live voice status for the popped-out voice-commands
+ * window — that window is a separate tab with its own module graph, so it
+ * can't see the refs above directly, and it never touches the microphone
+ * itself. The static command reference needs no such mirroring.
+ */
+export function useVoiceStatusListener() {
+  const remoteEnabled = ref(false)
+  const remoteMode = ref<VoiceMode>('idle')
+  const remoteHeardText = ref('')
+  const remoteLastAction = ref('')
+
+  if (import.meta.client && typeof BroadcastChannel !== 'undefined') {
+    const channel = new BroadcastChannel(VOICE_STATUS_CHANNEL)
+    channel.onmessage = (event) => {
+      const data = event.data as {
+        enabled: boolean
+        mode: VoiceMode
+        heardText: string
+        lastAction: string
+      }
+      remoteEnabled.value = data.enabled
+      remoteMode.value = data.mode
+      remoteHeardText.value = data.heardText
+      remoteLastAction.value = data.lastAction
+    }
+    onBeforeUnmount(() => channel.close())
+  }
+
+  return {
+    enabled: remoteEnabled,
+    mode: remoteMode,
+    heardText: remoteHeardText,
+    lastAction: remoteLastAction,
+    commandReference: COMMAND_REFERENCE,
   }
 }
