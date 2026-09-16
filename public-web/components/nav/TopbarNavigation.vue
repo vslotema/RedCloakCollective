@@ -131,6 +131,7 @@ async function onUnpublish() {
         >
           {{ editorStore.articleState === "scheduled" ? "Reschedule" : "Publish" }}
         </v-btn>
+        <ThemeToggleButton />
       </template>
 
       <template v-else>
@@ -146,6 +147,7 @@ async function onUnpublish() {
         >
           Write
         </v-btn>
+        <ThemeToggleButton />
         <v-badge color="primary" dot location="top end" offset-x="2" offset-y="2">
           <v-icon icon="bell" :size="20" color="ink" />
           <v-tooltip

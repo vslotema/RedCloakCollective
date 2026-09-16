@@ -11,6 +11,7 @@
 .article-content {
   font-size: var(--text-lg);
   line-height: 1.7;
+  color: rgb(var(--v-theme-ink));
 
   // Vertical rhythm: every top-level block carries its gap on the bottom. The
   // `:not(.line-label)` skips the editor's block-number widgets (never present
