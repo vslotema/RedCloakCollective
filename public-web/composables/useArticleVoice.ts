@@ -32,6 +32,10 @@ const lastAction = ref('')
 const permissionDenied = ref(false)
 const imagePrompt = ref(false)
 const panelOpen = ref(false)
+// Shared with RichTextEditor.vue's BubbleMenu (v-model:link-editing on
+// TextFormattingTools) so a spoken "insert link" opens the same field a click
+// on the Link button does.
+const linkEditing = ref(false)
 
 let wired = false
 let restoreAttempted = false
@@ -131,6 +135,56 @@ function insertSegments(editor: Editor, segments: DictationSegment[]) {
     const value = spaceAndCapitalize(preceding, segment.value, !inCodeBlock)
     editor.chain().focus().insertContent(value).run()
   }
+}
+
+// --- clipboard -----------------------------------------------------------
+
+/**
+ * Copy the current selection as plain text. Blocks join with a blank line,
+ * hard breaks within a block with a single newline — the inverse of how
+ * `pasteClipboard` below splits text back into blocks/lines.
+ */
+async function copySelection(editor: Editor) {
+  const { from, to, empty } = editor.state.selection
+  if (empty) {
+    announce('Nothing selected to copy')
+    return
+  }
+  const text = editor.state.doc.textBetween(from, to, '\n\n', '\n')
+  try {
+    await navigator.clipboard.writeText(text)
+    announce('Copied')
+  } catch {
+    announce("Couldn't copy — check clipboard permission")
+  }
+}
+
+/**
+ * Insert the clipboard's plain text at the caret through ProseMirror's real
+ * paste pipeline (`view.pasteText`), not a plain `insertContent` transaction —
+ * `LinkCard`/`VideoEmbed` auto-detect a pasted URL via their `handlePaste`
+ * prop, which only fires for an event carrying `clipboardData`. A synthetic
+ * `ClipboardEvent` here is what makes voice "paste" turn a pasted link into a
+ * card/embed exactly like Ctrl+V does, instead of dropping in as plain text.
+ */
+async function pasteClipboard(editor: Editor) {
+  let text: string
+  try {
+    text = await navigator.clipboard.readText()
+  } catch {
+    announce("Couldn't read the clipboard — check permission")
+    return
+  }
+  if (!text) {
+    announce('Clipboard is empty')
+    return
+  }
+
+  editor.chain().focus().run()
+  const clipboardData = new DataTransfer()
+  clipboardData.setData('text/plain', text)
+  editor.view.pasteText(text, new ClipboardEvent('paste', { clipboardData }))
+  announce('Pasted')
 }
 
 // --- block targeting ----------------------------------------------------
@@ -269,6 +323,10 @@ function dispatch(command: ParsedCommand, raw: string) {
       editor!.chain().focus().deleteSelection().run()
       announce('Deleted selection')
       return
+    case 'clipboard':
+      if (command.action === 'copy') void copySelection(editor!)
+      else void pasteClipboard(editor!)
+      return
     case 'format': {
       const map: Record<typeof command.name, () => void> = {
         bold: () => editorActions.toggleBold(editor!),
@@ -285,6 +343,26 @@ function dispatch(command: ParsedCommand, raw: string) {
       if (command.name === 'codeBlock') {
         editorActions.insertCodeBlock(editor!)
         announce('Code block added')
+        return
+      }
+      if (command.name === 'linkCard') {
+        editorActions.insertLinkCard(editor!)
+        announce('Paste a link')
+        return
+      }
+      if (command.name === 'video') {
+        editorActions.insertVideoEmbed(editor!)
+        announce('Paste a video link')
+        return
+      }
+      if (command.name === 'link') {
+        // Mirrors the toolbar: the Link button only ever acts on a selection.
+        if (editor!.state.selection.empty) {
+          announce('Select text first, then say “insert link”')
+          return
+        }
+        linkEditing.value = true
+        announce('Type or paste a link')
         return
       }
 
@@ -449,6 +527,7 @@ function enable() {
 
 function disable() {
   clearImagePrompt()
+  linkEditing.value = false
   clearDictationPreview()
   clearStartWordSwallow()
   clearPendingNextWord()
@@ -475,6 +554,7 @@ function toggle() {
 function leaveEditor() {
   if (enabled.value) {
     clearImagePrompt()
+    linkEditing.value = false
     clearDictationPreview()
     clearStartWordSwallow()
     clearPendingNextWord()
@@ -537,6 +617,7 @@ export function useArticleVoice() {
     heardText,
     lastAction,
     imagePrompt,
+    linkEditing,
     panelOpen,
     permissionDenied,
     supported: speech.supported,

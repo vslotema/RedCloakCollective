@@ -36,6 +36,11 @@ describe('parseCommand — idle keywords', () => {
     ['toggle block numbers', { kind: 'blockNumbers' }],
     ['delete that', { kind: 'deleteSelection' }],
     ['delete selection', { kind: 'deleteSelection' }],
+    ['copy', { kind: 'clipboard', action: 'copy' }],
+    ['copy that', { kind: 'clipboard', action: 'copy' }],
+    ['copy selection', { kind: 'clipboard', action: 'copy' }],
+    ['paste', { kind: 'clipboard', action: 'paste' }],
+    ['paste here', { kind: 'clipboard', action: 'paste' }],
   ]
 
   it.each(cases)('%j → %j', (raw, expected) => {
@@ -89,6 +94,12 @@ describe('parseCommand — insert / add / new', () => {
     ['insert big title', { kind: 'format', name: 'heading1' }],
     ['add heading', { kind: 'format', name: 'heading1' }],
     ['insert subheading', { kind: 'format', name: 'heading2' }],
+    ['insert link card', { kind: 'insert', name: 'linkCard' }],
+    ['add link card', { kind: 'insert', name: 'linkCard' }],
+    ['insert video', { kind: 'insert', name: 'video' }],
+    ['new video embed', { kind: 'insert', name: 'video' }],
+    ['insert link', { kind: 'insert', name: 'link' }],
+    ['add link', { kind: 'insert', name: 'link' }],
   ]
 
   it.each(cases)('%j → %j', (raw, expected) => {

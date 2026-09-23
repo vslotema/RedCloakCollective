@@ -70,6 +70,14 @@ export function insertCodeBlock(editor: Editor) {
   editor.chain().focus().setCodeBlock().run()
 }
 
+export function insertLinkCard(editor: Editor) {
+  editor.chain().focus().insertLinkCard().run()
+}
+
+export function insertVideoEmbed(editor: Editor) {
+  editor.chain().focus().insertVideoEmbed().run()
+}
+
 export function toggleBlockNumbers(editor: Editor) {
   editor.chain().focus().toggleLineNumbers().run()
 }

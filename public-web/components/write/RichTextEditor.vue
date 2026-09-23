@@ -33,7 +33,8 @@ const selection = defineModel<EditorSelection | null>("selection", {
   default: null,
 });
 
-const linkEditing = ref(false);
+// Shared with the voice controller — see useArticleVoice.ts's "insert link".
+const { linkEditing } = useArticleVoice();
 
 const CARET_BOTTOM_MARGIN_REM = 5;
 

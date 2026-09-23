@@ -64,11 +64,17 @@ function caretPositionStyle() {
 }
 
 function openLinkField() {
+  linkEditing.value = true;
+}
+
+// Voice ("insert link") flips `linkEditing` the same way a click does, so this
+// runs regardless of who opened the field.
+watch(linkEditing, (open) => {
+  if (!open) return;
   linkInput.value = editor.getAttributes("link").href ?? "";
   linkFieldStyle.value = isSidebar.value ? caretPositionStyle() : undefined;
-  linkEditing.value = true;
   nextTick(() => linkFieldRef.value?.focus());
-}
+});
 
 function closeLinkField() {
   linkEditing.value = false;

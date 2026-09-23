@@ -26,8 +26,9 @@ export type ParsedCommand =
   | { kind: 'selectText'; unit: TextUnit; ref: UnitRef; n: number | null }
   | { kind: 'deleteText'; unit: TextUnit; ref: UnitRef; n: number | null }
   | { kind: 'deleteSelection' }
+  | { kind: 'clipboard'; action: 'copy' | 'paste' }
   | { kind: 'format'; name: 'bold' | 'italic' | 'quote' | 'heading1' | 'heading2' }
-  | { kind: 'insert'; name: 'codeBlock' | 'image' }
+  | { kind: 'insert'; name: 'codeBlock' | 'image' | 'linkCard' | 'video' | 'link' }
   | { kind: 'history'; dir: 'undo' | 'redo' }
   | { kind: 'blockNumbers' }
   | { kind: 'save' }
@@ -63,6 +64,8 @@ const BLOCK_NUMBER_WORDS = new Set([
 const DELETE_SELECTION_WORDS = new Set([
   'delete that', 'delete selection', 'delete this',
 ])
+const COPY_WORDS = new Set(['copy', 'copy that', 'copy this', 'copy selection'])
+const PASTE_WORDS = new Set(['paste', 'paste that', 'paste here'])
 
 const FORMAT_WORDS: Record<string, 'bold' | 'italic' | 'quote' | 'heading1' | 'heading2'> = {
   bold: 'bold',
@@ -304,6 +307,8 @@ export function parseCommand(raw: string, mode: VoiceMode): ParsedCommand {
   if (REDO_WORDS.has(text)) return { kind: 'history', dir: 'redo' }
   if (BLOCK_NUMBER_WORDS.has(text)) return { kind: 'blockNumbers' }
   if (DELETE_SELECTION_WORDS.has(text)) return { kind: 'deleteSelection' }
+  if (COPY_WORDS.has(text)) return { kind: 'clipboard', action: 'copy' }
+  if (PASTE_WORDS.has(text)) return { kind: 'clipboard', action: 'paste' }
 
   const format = FORMAT_WORDS[text]
   if (format) return { kind: 'format', name: format }
@@ -316,6 +321,9 @@ export function parseCommand(raw: string, mode: VoiceMode): ParsedCommand {
     if (/^(?:quote|block ?quote)$/.test(target)) return { kind: 'format', name: 'quote' }
     if (/^(?:big title|title|heading)$/.test(target)) return { kind: 'format', name: 'heading1' }
     if (/^(?:small title|subheading)$/.test(target)) return { kind: 'format', name: 'heading2' }
+    if (/^link ?card$/.test(target)) return { kind: 'insert', name: 'linkCard' }
+    if (/^video(?: embed)?$/.test(target)) return { kind: 'insert', name: 'video' }
+    if (/^link$/.test(target)) return { kind: 'insert', name: 'link' }
   }
 
   // select / delete a word or sentence inside the current block:
@@ -401,8 +409,13 @@ export const COMMAND_REFERENCE: CommandGroup[] = [
       { say: '“big title” / “small title”', does: 'toggle a heading' },
       { say: '“insert code”', does: 'insert a code block' },
       { say: '“insert image”', does: 'place the caret and flag the photo button' },
+      { say: '“insert link card”', does: 'embed a link card — then paste the URL' },
+      { say: '“insert video”', does: 'embed a video — then paste the URL' },
+      { say: '“insert link”', does: 'open the link field for the selected text' },
       { say: '“delete paragraph 4” / “delete that”', does: 'remove a block / the selection' },
       { say: '“delete word 2” / “delete this sentence”', does: 'remove a word/sentence in the current block' },
+      { say: '“copy”', does: 'copy the current selection' },
+      { say: '“paste”', does: 'paste the clipboard at the caret' },
       { say: '“undo” / “redo”', does: 'history' },
     ],
   },

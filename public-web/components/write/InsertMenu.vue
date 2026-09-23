@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Editor } from '@tiptap/vue-3'
-import { insertCodeBlock } from './editor-actions'
+import { insertCodeBlock, insertLinkCard, insertVideoEmbed } from './editor-actions'
 
 const { editor } = defineProps<{ editor: Editor }>()
 
@@ -49,7 +49,7 @@ function choose(label: string) {
     return
   }
   if (label === 'Link card') {
-    editor.chain().focus().insertLinkCard().run()
+    insertLinkCard(editor)
     editorStore.statusMessage = 'Paste a link'
     open.value = false
     return
@@ -61,7 +61,7 @@ function choose(label: string) {
     return
   }
   if (label === 'Video') {
-    editor.chain().focus().insertVideoEmbed().run()
+    insertVideoEmbed(editor)
     editorStore.statusMessage = 'Paste a video link'
     open.value = false
     return
