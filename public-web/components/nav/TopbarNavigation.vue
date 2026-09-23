@@ -92,12 +92,25 @@ async function onUnpublish() {
           {{ editorStore.wordCount }} words
         </span>
         <v-btn
-          v-if="editorStore.published && editorStore.slug"
+          v-if="editorStore.articleState === 'published' && editorStore.slug"
           :to="`/articles/${editorStore.slug}`"
           variant="text"
           size="small"
         >
           View
+        </v-btn>
+        <!-- Same tab on purpose: leaving /write flushes pending edits first,
+             so the preview always shows the latest version. -->
+        <v-btn
+          v-else
+          :to="`/write/${editorStore.articleId}/preview`"
+          :disabled="editorStore.articleId === null"
+          variant="outlined"
+          size="small"
+          rounded="pill"
+          class="preview-btn font-weight-bold"
+        >
+          Preview
         </v-btn>
 
         <v-chip
@@ -171,5 +184,12 @@ async function onUnpublish() {
 <style scoped lang="scss">
 .menu-btn {
   margin-right: 0.375rem;
+}
+
+// Soft outlined pill: light border, muted label (the outline otherwise
+// takes the text colour).
+.preview-btn {
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+  border-color: rgb(var(--v-theme-border-color));
 }
 </style>

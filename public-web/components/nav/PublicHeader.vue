@@ -12,7 +12,7 @@ onMounted(() => {
 <template>
   <v-app-bar color="background" flat style="border-bottom: thin solid rgb(var(--v-theme-border-color))">
     <NuxtLink to="/" class="logo text-decoration-none px-4">
-      <AppLogo />
+      <AppLogo height="35" />
     </NuxtLink>
 
     <v-spacer />
