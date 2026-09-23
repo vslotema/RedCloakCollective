@@ -38,12 +38,7 @@ function docText(node: JSONContent): string {
 
 const AUTOSAVE_DELAY_MS = 2000
 
-// The backend is the source of truth for drafts; localStorage is only a
-// write-through recovery buffer for edits that haven't reached the server yet
-// (a failed / half-finished save, an offline blip). One key per article id, plus
-// `editor_draft:new` for a draft that hasn't been POSTed yet.
 const RECOVERY_PREFIX = 'editor_draft:'
-// Key used by the pre-backend implementation — cleared on the way past.
 const LEGACY_DRAFT_KEY = 'editor_draft'
 
 interface RecoverySnapshot {
@@ -70,42 +65,29 @@ function writeRecovery(key: string, snapshot: RecoverySnapshot) {
   if (!import.meta.client) return
   try {
     localStorage.setItem(key, JSON.stringify(snapshot))
-  } catch {
-    // Quota / private mode — recovery is best-effort.
-  }
+  } catch {}
 }
 
 function dropRecovery(key: string) {
   if (!import.meta.client) return
   try {
     localStorage.removeItem(key)
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
 export const useEditorStore = defineStore('editor', () => {
   const api = useApi()
 
-  // The document body as ProseMirror / TipTap JSON — the single source of
-  // truth the editor reads on mount and writes back to on every update.
   const doc = ref<JSONContent>(emptyDoc())
   const title = ref('')
 
   const selection = ref<EditorSelection | null>(null)
 
-  // Server identity. `articleId` is null until the first successful save creates
-  // the row; the write page then swaps the URL to /write/{id}.
   const articleId = ref<number | null>(null)
   const slug = ref<string | null>(null)
   const published = ref(false)
-  // ISO string once the article has a publish time (past = live, future =
-  // scheduled); null for a draft.
   const publishedAt = ref<string | null>(null)
 
-  // Publish metadata, editable in the publish dialog and persisted with the
-  // draft. `excerpt` is the preview subtitle; `topics` mixes existing topics
-  // (numeric id) with author-typed ones (id null).
   const excerpt = ref('')
   const topics = ref<DraftTopic[]>([])
 
@@ -114,30 +96,19 @@ export const useEditorStore = defineStore('editor', () => {
     return new Date(publishedAt.value).getTime() > Date.now() ? 'scheduled' : 'published'
   })
 
-  // `dirty` flips true on any local edit and back to false once that exact state
-  // has reached the server. `savedAt` is an epoch-ms timestamp of the last
-  // successful server save. `saving` / `saveError` drive the topbar status.
   const dirty = ref(false)
   const savedAt = ref<number | null>(null)
   const saving = ref(false)
   const saveError = ref<string | null>(null)
 
-  // Transient status line for the write page ("Image added", "Paste a link"…).
   const statusMessage = ref('Ready')
 
-  // Publish validation — flips true on the first publish attempt, after which
-  // titleInvalid/bodyInvalid track live (so they clear the moment the author
-  // fixes whichever field was empty, no manual reset needed).
   const publishAttempted = ref(false)
   const titleInvalid = computed(() => publishAttempted.value && !title.value.trim())
   const bodyInvalid = computed(() => publishAttempted.value && wordCount.value === 0)
 
-  // Header image. Before upload, `headerImageUrl` is a local `blob:` preview and
-  // `headerImageFile` holds the File to upload; after upload it's the server URL
-  // and the File is cleared.
   const headerImageUrl = ref<string | null>(null)
   const headerImageFile = ref<File | null>(null)
-  // object-position for the preview, as x/y percentages (0–100).
   const headerImagePosition = ref({ x: 50, y: 50 })
 
   const wordCount = computed(() => {
@@ -145,8 +116,6 @@ export const useEditorStore = defineStore('editor', () => {
     return text ? text.split(/\s+/).length : 0
   })
 
-  // Bumped on every local edit so an in-flight save knows whether the document
-  // moved under it (→ leave `dirty` set, another autosave is already queued).
   let editGen = 0
   let autosaveTimer: ReturnType<typeof setTimeout> | undefined
   let inFlight: Promise<void> | null = null
@@ -291,8 +260,6 @@ export const useEditorStore = defineStore('editor', () => {
         dropRecovery(key)
       }
     } catch {
-      // Autosave must never throw into the UI. Keep the recovery copy and the
-      // dirty flag so the next edit / flush retries.
       saveError.value = 'Couldn’t save — retrying…'
     } finally {
       saving.value = false
@@ -301,8 +268,6 @@ export const useEditorStore = defineStore('editor', () => {
 
   function persist(opts: { keepalive?: boolean } = {}): Promise<void> {
     if (!import.meta.client) return Promise.resolve()
-    // Nothing typed yet — don't create an empty article just because the user
-    // opened /write and navigated away.
     if (!dirty.value) return inFlight ?? Promise.resolve()
     if (inFlight) return inFlight
     inFlight = doPersist(opts).finally(() => {
@@ -316,7 +281,6 @@ export const useEditorStore = defineStore('editor', () => {
     if (!import.meta.client) return
     clearTimeout(autosaveTimer)
     await persist(opts)
-    // An edit landed while the first save was in flight — one more pass.
     if (dirty.value) await persist(opts)
   }
 
@@ -428,8 +392,6 @@ export const useEditorStore = defineStore('editor', () => {
     return true
   }
 
-  // --- header image --------------------------------------------------------
-
   function clearHeaderImageLocal() {
     if (headerImageUrl.value?.startsWith('blob:')) URL.revokeObjectURL(headerImageUrl.value)
     headerImageUrl.value = null
@@ -458,7 +420,6 @@ export const useEditorStore = defineStore('editor', () => {
       headerImageUrl.value = updated.header_image_url
       headerImageFile.value = null
       statusMessage.value = 'Header image added'
-      // Persist the reset focal point.
       scheduleAutosave()
     } catch {
       saveError.value = 'Header image upload failed'
@@ -486,8 +447,6 @@ export const useEditorStore = defineStore('editor', () => {
     scheduleAutosave()
   }
 
-  // --- inline body image --------------------------------------------------
-
   async function uploadBodyImage(file: File): Promise<string> {
     const id = await ensureArticle()
     const form = new FormData()
@@ -495,8 +454,6 @@ export const useEditorStore = defineStore('editor', () => {
     const { url } = await api<{ url: string }>(`/articles/${id}/images`, { method: 'POST', body: form })
     return url
   }
-
-  // --- publish -----------------------------------------------------------
 
   function setExcerpt(next: string) {
     excerpt.value = next

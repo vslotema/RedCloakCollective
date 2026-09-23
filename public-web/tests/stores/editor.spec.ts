@@ -67,8 +67,8 @@ describe('editor store — draft creation', () => {
 
     const posts = callsWith('POST')
     expect(posts).toHaveLength(1)
-    expect(posts[0][0]).toBe('/articles')
-    expect(posts[0][1].body).toEqual({
+    expect(posts[0]?.[0]).toBe('/articles')
+    expect(posts[0]?.[1].body).toEqual({
       title: 'My story',
       excerpt: null,
       content: doc('Hello'),
@@ -92,8 +92,8 @@ describe('editor store — draft creation', () => {
 
     const patches = callsWith('PATCH')
     expect(patches).toHaveLength(1)
-    expect(patches[0][0]).toBe('/articles/1')
-    expect(patches[0][1].body).toMatchObject({ content: doc('b') })
+    expect(patches[0]?.[0]).toBe('/articles/1')
+    expect(patches[0]?.[1].body).toMatchObject({ content: doc('b') })
   })
 
   it('does not create an article when nothing was edited', async () => {

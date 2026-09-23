@@ -78,9 +78,9 @@ describe('useSpeechRecognition — lifecycle', () => {
   it('start() opens a session and onstart flips `listening`', async () => {
     const { start, listening } = await load()
     start()
-    expect(rec().start).toHaveBeenCalledTimes(1)
+    expect(rec()?.start).toHaveBeenCalledTimes(1)
     expect(listening.value).toBe(false)
-    rec().onstart?.()
+    rec()?.onstart?.()
     expect(listening.value).toBe(true)
   })
 
@@ -91,7 +91,7 @@ describe('useSpeechRecognition — lifecycle', () => {
     start()
 
     // Chrome mid-utterance: two still-interim entries at once.
-    rec().onresult?.(
+    rec()?.onresult?.(
       resultsEvent([
         { transcript: 'the quick', isFinal: false },
         { transcript: ' brown fox', isFinal: false },
@@ -107,7 +107,7 @@ describe('useSpeechRecognition — lifecycle', () => {
     onResult((r) => heard.push(r))
     start()
 
-    rec().onresult?.(
+    rec()?.onresult?.(
       resultsEvent([
         { transcript: 'the quick', isFinal: true },
         { transcript: ' brown', isFinal: false },
@@ -126,7 +126,7 @@ describe('useSpeechRecognition — lifecycle', () => {
     onResult((r) => heard.push(r))
     start()
 
-    rec().onresult?.(resultsEvent([{ transcript: '', isFinal: true }]))
+    rec()?.onresult?.(resultsEvent([{ transcript: '', isFinal: true }]))
 
     expect(heard).toEqual([])
   })
@@ -134,46 +134,46 @@ describe('useSpeechRecognition — lifecycle', () => {
   it('auto-restarts ~300ms after the browser ends the session', async () => {
     const { start } = await load()
     start()
-    expect(rec().start).toHaveBeenCalledTimes(1)
+    expect(rec()?.start).toHaveBeenCalledTimes(1)
 
-    rec().onend?.()
+    rec()?.onend?.()
     vi.advanceTimersByTime(299)
-    expect(rec().start).toHaveBeenCalledTimes(1)
+    expect(rec()?.start).toHaveBeenCalledTimes(1)
     vi.advanceTimersByTime(1)
-    expect(rec().start).toHaveBeenCalledTimes(2)
+    expect(rec()?.start).toHaveBeenCalledTimes(2)
   })
 
   it('does not restart after a fatal permission error', async () => {
     const { start, lastError } = await load()
     start()
 
-    rec().onerror?.({ error: 'not-allowed' })
+    rec()?.onerror?.({ error: 'not-allowed' })
     expect(lastError.value).toBe('not-allowed')
 
-    rec().onend?.()
+    rec()?.onend?.()
     vi.advanceTimersByTime(500)
-    expect(rec().start).toHaveBeenCalledTimes(1)
+    expect(rec()?.start).toHaveBeenCalledTimes(1)
   })
 
   it('stop() ends the session and prevents the restart loop', async () => {
     const { start, stop, listening } = await load()
     start()
-    rec().onstart?.()
+    rec()?.onstart?.()
     expect(listening.value).toBe(true)
 
     stop()
-    expect(rec().stop).toHaveBeenCalledTimes(1)
+    expect(rec()?.stop).toHaveBeenCalledTimes(1)
     expect(listening.value).toBe(false)
 
-    rec().onend?.()
+    rec()?.onend?.()
     vi.advanceTimersByTime(500)
-    expect(rec().start).toHaveBeenCalledTimes(1)
+    expect(rec()?.start).toHaveBeenCalledTimes(1)
   })
 
   it('swallows the "already running" throw from start()', async () => {
     const { start } = await load()
     start()
-    rec().start.mockImplementationOnce(() => {
+    rec()?.start.mockImplementationOnce(() => {
       throw new DOMException('already started')
     })
     expect(() => start()).not.toThrow()
