@@ -1,4 +1,5 @@
 <script setup lang="ts">
+withDefaults(defineProps<{ disabled?: boolean }>(), { disabled: false })
 
 const search = ref<string | null>(null)
 const foundItems = ref<string[]>([])
@@ -8,6 +9,7 @@ const foundItems = ref<string[]>([])
   <v-autocomplete
     v-model="search"
     :items="foundItems"
+    :disabled="disabled"
     class="searchbar"
     variant="solo"
     density="compact"

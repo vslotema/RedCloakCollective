@@ -1,37 +1,50 @@
 <script setup lang="ts">
-// This page's HTML can be shared-cached (swr), so login state must never be
-// part of the SSR'd shell — same personalization-island pattern as
-// FollowButton.vue: check localStorage client-side, after hydration.
-const loggedIn = ref(false)
-
-onMounted(() => {
-  loggedIn.value = !!localStorage.getItem('auth_token')
-})
+// Only ever rendered for a signed-out visitor, or (non-interactive) as the
+// article preview's chrome — layouts/public.vue decides whether to mount this
+// or the default layout's chrome based on login state.
+withDefaults(defineProps<{ interactive?: boolean }>(), { interactive: true })
 </script>
 
 <template>
   <v-app-bar color="background" flat style="border-bottom: thin solid rgb(var(--v-theme-border-color))">
-    <NuxtLink to="/" class="logo text-decoration-none px-4">
-      <AppLogo height="35" />
-    </NuxtLink>
+    <div class="d-flex align-center ga-8 ml-4">
+      <NuxtLink
+        v-if="interactive"
+        to="/"
+        class="d-flex align-center text-decoration-none"
+      >
+        <AppLogo height="35" />
+      </NuxtLink>
+      <span v-else class="d-flex align-center">
+        <AppLogo height="35" />
+      </span>
+      <SearchBar :disabled="!interactive" />
+    </div>
 
     <v-spacer />
 
-    <ClientOnly>
-      <div class="d-flex align-center ga-2 pr-4">
-        <template v-if="loggedIn">
-          <v-btn icon variant="flat" color="white" size="40" class="border" to="/write">
-            <v-icon icon="edit" :size="20" />
-          </v-btn>
-          <v-btn variant="text" to="/">Home</v-btn>
-        </template>
-        <template v-else>
-          <v-btn variant="text" to="/onboarding">Sign in</v-btn>
-          <v-btn color="black" rounded="pill" class="font-weight-bold" to="/onboarding">
-            Join the community
-          </v-btn>
-        </template>
-      </div>
-    </ClientOnly>
+    <div class="d-flex align-center ga-2 pr-4">
+      <v-chip
+        v-if="!interactive"
+        color="secondary"
+        variant="flat"
+        size="small"
+        class="font-weight-bold text-uppercase"
+        style="border-radius: 0.5rem"
+      >
+        Preview
+      </v-chip>
+      <v-btn variant="text" to="/onboarding" :disabled="!interactive">Sign in</v-btn>
+      <v-btn
+        color="black"
+        rounded="pill"
+        class="font-weight-bold"
+        to="/onboarding"
+        :disabled="!interactive"
+      >
+        Sign up
+      </v-btn>
+      <ThemeToggleButton />
+    </div>
   </v-app-bar>
 </template>

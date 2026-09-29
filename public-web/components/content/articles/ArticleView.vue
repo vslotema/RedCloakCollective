@@ -14,8 +14,6 @@ const coverPosition = computed(() => {
 
 <template>
   <v-container class="py-8" style="max-width: 720px">
-    <slot name="before" />
-
     <figure v-if="article.header_image_url" class="article-cover">
       <img
         :src="article.header_image_url"

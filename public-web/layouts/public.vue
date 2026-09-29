@@ -1,6 +1,27 @@
+<script setup lang="ts">
+// This page's HTML can be shared-cached (swr), so login state must never be
+// part of the SSR'd shell — same personalization-island pattern as
+// FollowButton.vue: check localStorage client-side, after hydration.
+const loggedIn = ref(false)
+
+onMounted(() => {
+  loggedIn.value = !!localStorage.getItem('auth_token')
+})
+</script>
+
 <template>
   <div class="page">
-    <PublicHeader />
+    <ClientOnly>
+      <template v-if="loggedIn">
+        <TopbarNavigation />
+        <SidebarNavigation />
+      </template>
+      <PublicHeader v-else />
+
+      <template #fallback>
+        <PublicHeader />
+      </template>
+    </ClientOnly>
     <v-main class="content">
       <slot />
     </v-main>

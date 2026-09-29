@@ -4,8 +4,10 @@ import type { Article } from '~/types/article'
 // Author-only preview of an article exactly as readers will see it once
 // published — works for drafts and scheduled articles, which the public
 // /articles/{slug} page 404s on. Loads through the owner-guarded
-// /me/articles/{id} endpoint, so nobody else can open it.
-definePageMeta({ layout: 'public', middleware: 'auth' })
+// /me/articles/{id} endpoint, so nobody else can open it. Its own layout (no
+// site nav) — the only way out of this page should be the "Back to editor"
+// button below, not the app chrome.
+definePageMeta({ layout: 'preview', middleware: 'auth' })
 
 const route = useRoute()
 const api = useApi()
@@ -30,20 +32,6 @@ try {
   })
 }
 
-const stateLabel = computed(() => {
-  const a = article.value
-  if (!a) return ''
-  if (a.state === 'published') return 'Published'
-  if (a.state === 'scheduled' && a.published_at) {
-    const when = new Date(a.published_at).toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    })
-    return `Scheduled for ${when}`
-  }
-  return 'Draft'
-})
-
 useSeoMeta({
   title: () => `Preview: ${article.value?.title ?? ''}`,
   robots: 'noindex, nofollow',
@@ -51,24 +39,31 @@ useSeoMeta({
 </script>
 
 <template>
-  <ArticleView v-if="article" :article="article">
-    <template #before>
-      <v-alert type="info" variant="tonal" density="compact" icon="eye" class="mb-6">
-        <div class="d-flex align-center flex-wrap ga-2">
-          <span>
-            <strong>Preview</strong> · {{ stateLabel }} — only visible to you
-          </span>
-          <v-spacer />
-          <v-btn
-            :to="`/write/${article.id}`"
-            variant="text"
-            size="small"
-            prepend-icon="arrow-left"
-          >
-            Back to editor
-          </v-btn>
-        </div>
-      </v-alert>
-    </template>
-  </ArticleView>
+  <div v-if="article">
+    <!-- Sticky under the app bar, pinned to the top-left of the page rather
+         than inside the article column. The "Preview" badge itself lives in
+         the header (PublicHeader, non-interactive mode). -->
+    <div class="preview-bar px-4 py-2">
+      <v-btn
+        :to="`/write/${article.id}`"
+        variant="text"
+        size="small"
+        prepend-icon="arrow-left"
+      >
+        Back to editor
+      </v-btn>
+    </div>
+    <ArticleView :article="article" />
+  </div>
 </template>
+
+<style lang="scss" scoped>
+.preview-bar {
+  position: sticky;
+  top: var(--v-layout-top, 64px);
+  z-index: 1;
+  width: fit-content;
+  background: rgb(var(--v-theme-background));
+  border-bottom-right-radius: 8px;
+}
+</style>

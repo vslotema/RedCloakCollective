@@ -94,8 +94,10 @@ async function onUnpublish() {
         <v-btn
           v-if="editorStore.articleState === 'published' && editorStore.slug"
           :to="`/articles/${editorStore.slug}`"
-          variant="text"
+          variant="outlined"
           size="small"
+          rounded="pill"
+          class="preview-btn font-weight-bold"
         >
           View
         </v-btn>
@@ -186,8 +188,8 @@ async function onUnpublish() {
   margin-right: 0.375rem;
 }
 
-// Soft outlined pill: light border, muted label (the outline otherwise
-// takes the text colour).
+// Soft outlined pill for Preview / View: light border, muted label (the
+// outline otherwise takes the text colour).
 .preview-btn {
   color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
   border-color: rgb(var(--v-theme-border-color));
