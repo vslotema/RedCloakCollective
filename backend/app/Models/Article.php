@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ReadingTime;
 use Database\Factories\ArticleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -28,10 +29,20 @@ class Article extends Model
      */
     protected $appends = ['header_image_url', 'published', 'state'];
 
+    protected static function booted(): void
+    {
+        static::saving(function (Article $article) {
+            if ($article->isDirty('content')) {
+                $article->reading_minutes = ReadingTime::minutesFor($article->content);
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
             'published_at' => 'datetime',
+            'reading_minutes' => 'integer',
             'content' => 'array',
             'header_image_position' => 'array',
         ];

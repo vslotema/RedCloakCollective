@@ -27,6 +27,7 @@ export interface Article {
   slug: string
   excerpt: string | null
   content: JSONContent
+  reading_minutes: number
   header_image_url: string | null
   header_image_position: HeaderImagePosition | null
   published: boolean

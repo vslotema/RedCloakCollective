@@ -37,7 +37,7 @@ class ArticleController extends Controller
         return $request->user()->articles()
             ->with('topics:id,name,slug')
             ->latest('updated_at')
-            ->get(['id', 'title', 'slug', 'excerpt', 'published_at', 'header_image_path', 'created_at', 'updated_at']);
+            ->get(['id', 'title', 'slug', 'excerpt', 'reading_minutes', 'published_at', 'header_image_path', 'created_at', 'updated_at']);
     }
 
     /**
