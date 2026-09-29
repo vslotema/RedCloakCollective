@@ -48,11 +48,10 @@ async function handleSignIn() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const { token } = await api<{ token: string }>('/login', {
+    await api('/login', {
       method: 'POST',
       body: signInForm.value,
     })
-    authStore.setToken(token)
     await authStore.fetchUser()
     close()
     router.push('/')
@@ -67,7 +66,7 @@ async function handleSignUp() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const { token } = await api<{ token: string }>('/register', {
+    await api('/register', {
       method: 'POST',
       body: {
         name: signUpForm.value.name,
@@ -78,7 +77,6 @@ async function handleSignUp() {
         state: isUs.value ? signUpForm.value.state : null,
       },
     })
-    authStore.setToken(token)
     await authStore.fetchUser()
     close()
     router.push('/')
@@ -93,11 +91,10 @@ async function handleGoogleCredential(credential: string) {
   loading.value = true
   errorMessage.value = ''
   try {
-    const { token } = await api<{ token: string }>('/auth/google', {
+    await api('/auth/google', {
       method: 'POST',
       body: { credential },
     })
-    authStore.setToken(token)
     await authStore.fetchUser()
     close()
     if (authStore.user && authStore.user.country === null) {

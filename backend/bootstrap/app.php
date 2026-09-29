@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\MaintainDeviceSession;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        $middleware->web(append: MaintainDeviceSession::class);
+        $middleware->api(append: MaintainDeviceSession::class);
+        $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: MaintainDeviceSession::class);
 
         // This is an API-only backend with no "login" route. Without this, the
         // Authenticate middleware eagerly resolves route('login') for any guest

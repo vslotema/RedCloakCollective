@@ -14,19 +14,28 @@ export const useAuthStore = defineStore('auth', () => {
   const api = useApi()
 
   const user = ref<User | null>(null)
-  // This store is instantiated on every page (app.vue calls useAuthStore()
-  // unconditionally), including SSR'd public pages where localStorage doesn't
-  // exist — only read/write it client-side.
-  const token = ref<string | null>(import.meta.client ? localStorage.getItem('auth_token') : null)
+  const resolved = ref(false)
+  let pendingUser: Promise<User | null> | null = null
 
   async function fetchUser() {
-    if (!token.value) return
-    user.value = await api<User>('/user')
+    try {
+      user.value = await api<User>('/user')
+    } catch (error) {
+      if ((error as { statusCode?: number }).statusCode !== 401) throw error
+      user.value = null
+    }
+    resolved.value = true
+    return user.value
   }
 
-  function setToken(newToken: string) {
-    token.value = newToken
-    if (import.meta.client) localStorage.setItem('auth_token', newToken)
+  // Auth lives in httpOnly cookies, so the only way to know who's logged in
+  // is to ask the API. Resolves once per page load and is shared by callers.
+  function ensureUser() {
+    if (resolved.value) return Promise.resolve(user.value)
+    pendingUser ??= fetchUser().finally(() => {
+      pendingUser = null
+    })
+    return pendingUser
   }
 
   async function updateLocation(country: string, state: string | null) {
@@ -57,17 +66,16 @@ export const useAuthStore = defineStore('auth', () => {
     return updated
   }
 
-  function logout() {
-    token.value = null
+  async function logout() {
+    await api('/logout', { method: 'POST' })
     user.value = null
-    if (import.meta.client) localStorage.removeItem('auth_token')
   }
 
   return {
     user,
-    token,
+    resolved,
     fetchUser,
-    setToken,
+    ensureUser,
     updateLocation,
     saveOnboardingAnswers,
     personalizeFeed,

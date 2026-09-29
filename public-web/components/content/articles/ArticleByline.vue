@@ -14,12 +14,13 @@ const props = defineProps<{
 }>();
 
 const api = useApi();
+const authStore = useAuthStore();
 
 const viewerRelationship = ref<ViewerRelationship | null>(null);
 const viewerRelationshipLoaded = ref(false);
 
 onMounted(async () => {
-  if (props.interactive && localStorage.getItem("auth_token")) {
+  if (props.interactive && (await authStore.ensureUser())) {
     try {
       viewerRelationship.value = await api<ViewerRelationship>(
         `/users/${props.author.username}`,

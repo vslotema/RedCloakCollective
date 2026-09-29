@@ -8,12 +8,13 @@ const props = defineProps<{
 }>()
 
 const api = useApi()
+const authStore = useAuthStore()
 
 const followedTopicSlugs = ref<Set<string>>(new Set())
 const pendingTopicSlugs = ref<Set<string>>(new Set())
 
 onMounted(async () => {
-  if (!props.interactive || !localStorage.getItem('auth_token')) return
+  if (!props.interactive || !(await authStore.ensureUser())) return
   try {
     const followed = await api<ArticleTopic[]>('/topics/following')
     followedTopicSlugs.value = new Set(followed.map((topic) => topic.slug))
@@ -23,7 +24,7 @@ onMounted(async () => {
 })
 
 async function toggleTopicFollow(slug: string) {
-  if (!localStorage.getItem('auth_token')) {
+  if (!(await authStore.ensureUser())) {
     window.location.href = '/'
     return
   }

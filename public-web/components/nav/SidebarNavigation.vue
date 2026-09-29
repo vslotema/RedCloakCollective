@@ -48,7 +48,7 @@ const toggleNavigation = () => {
 }
 
 async function handleLogout() {
-  authStore.logout()
+  await authStore.logout()
   await navigateTo('/onboarding')
 }
 </script>

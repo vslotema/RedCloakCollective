@@ -11,6 +11,7 @@ const props = withDefaults(
 )
 
 const api = useApi()
+const authStore = useAuthStore()
 const following = ref(props.initialFollowing)
 const loading = ref(false)
 
@@ -22,8 +23,7 @@ const buttonColor = computed(() => {
 const buttonVariant = computed(() => (props.outlined || following.value ? 'outlined' : 'flat'))
 
 async function toggle() {
-  if (!localStorage.getItem('auth_token')) {
-    // No SPA session in this browser — send them to sign in there.
+  if (!(await authStore.ensureUser())) {
     window.location.href = '/'
     return
   }

@@ -68,7 +68,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     // The browser talks to same-origin '/api' and '/sanctum/csrf-cookie'
-    // (bearer-token client, and Sanctum's CSRF priming respectively) — Nitro
+    // (cookie-authenticated client, and Sanctum's CSRF priming respectively) — Nitro
     // forwards both straight through to the separate Laravel process.
     '/api/**': { proxy: `${backendOrigin}/api/**` },
     '/sanctum/**': { proxy: `${backendOrigin}/sanctum/**` },

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\DeviceLoginService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -14,22 +14,14 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function __construct(private DeviceLoginService $deviceLogins) {}
+
     private function locationRules(): array
     {
         return [
             'country' => ['required', 'string', 'size:2'],
             'state' => ['nullable', 'string', 'size:2', 'required_if:country,US'],
         ];
-    }
-
-    /**
-     * Log the user into the "web" session guard (in addition to issuing a
-     * bearer token) so the Nuxt app's SSR can identify the viewer via cookie.
-     */
-    private function startSession(Request $request, User $user): void
-    {
-        Auth::login($user);
-        $request->session()->regenerate();
     }
 
     private function generateUsername(string $name): string
@@ -64,12 +56,9 @@ class AuthController extends Controller
             'state' => $data['state'] ?? null,
         ]);
 
-        $this->startSession($request, $user);
+        $this->deviceLogins->logIn($request, $user);
 
-        return response()->json([
-            'token' => $user->createToken('api')->plainTextToken,
-            'user' => $user,
-        ], 201);
+        return response()->json(['user' => $user], 201);
     }
 
     public function login(Request $request)
@@ -87,21 +76,14 @@ class AuthController extends Controller
             ]);
         }
 
-        $this->startSession($request, $user);
+        $this->deviceLogins->logIn($request, $user);
 
-        return response()->json([
-            'token' => $user->createToken('api')->plainTextToken,
-            'user' => $user,
-        ]);
+        return response()->json(['user' => $user]);
     }
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
-
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $this->deviceLogins->logOut($request);
 
         return response()->noContent();
     }
@@ -149,12 +131,9 @@ class AuthController extends Controller
             ]);
         }
 
-        $this->startSession($request, $user);
+        $this->deviceLogins->logIn($request, $user);
 
-        return response()->json([
-            'token' => $user->createToken('api')->plainTextToken,
-            'user' => $user,
-        ]);
+        return response()->json(['user' => $user]);
     }
 
     public function updateLocation(Request $request)

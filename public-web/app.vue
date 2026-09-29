@@ -5,7 +5,7 @@ const authStore = useAuthStore()
 const theme = useTheme()
 
 onMounted(() => {
-  if (authStore.token) authStore.fetchUser()
+  authStore.ensureUser()
 
   const stored = import.meta.client ? localStorage.getItem('theme') : null
   if (stored === 'dark' || stored === 'light') {
