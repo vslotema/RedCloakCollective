@@ -39,22 +39,20 @@ useSeoMeta({
 </script>
 
 <template>
-  <div v-if="article">
-    <!-- Sticky under the app bar, pinned to the top-left of the page rather
-         than inside the article column. The "Preview" badge itself lives in
-         the header (PublicHeader, non-interactive mode). -->
-    <div class="preview-bar px-4 py-2">
-      <v-btn
-        :to="`/write/${article.id}`"
-        variant="text"
-        size="small"
-        prepend-icon="arrow-left"
-      >
-        Back to editor
-      </v-btn>
-    </div>
-    <ArticleView :article="article" />
-  </div>
+  <ArticleView v-if="article" :article="article" :interactive="false">
+    <template #toolbar>
+      <div class="preview-bar px-4 py-2">
+        <v-btn
+          :to="`/write/${article.id}`"
+          variant="text"
+          size="small"
+          prepend-icon="arrow-left"
+        >
+          Back to editor
+        </v-btn>
+      </div>
+    </template>
+  </ArticleView>
 </template>
 
 <style lang="scss" scoped>
@@ -63,7 +61,7 @@ useSeoMeta({
   top: var(--v-layout-top, 64px);
   z-index: 1;
   width: fit-content;
-  background: rgb(var(--v-theme-background));
+  background: rgb(var(--v-theme-surface));
   border-bottom-right-radius: 8px;
 }
 </style>

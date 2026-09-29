@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { FeedRecommendations } from "~/types/recommendation";
+import { topicColorAt } from "~/lib/topic-colors";
 
 interface Props {
   width?: string;
@@ -37,9 +38,6 @@ const shownTopics = computed(
   () => recs.value?.topics.filter((t) => shownTopicIds.value.has(t.id)) ?? [],
 );
 
-const topicIconColors = ["#8B5CF6", "#F59E0B", "#F97316", "#10B981", "#3B82F6"];
-const topicColor = (index: number) =>
-  topicIconColors[index % topicIconColors.length] ?? '#8B5CF6';
 
 async function toggleTopic(slug: string, following: boolean) {
   if (pending.value.has(slug)) return;
@@ -88,7 +86,7 @@ async function toggleCreator(username: string) {
             :key="topic.id"
             :label="topic.name"
             :added="topic.following"
-            :color="topicColor(index)"
+            :color="topicColorAt(index)"
             @toggle="toggleTopic(topic.slug, topic.following)"
           />
         </div>

@@ -11,7 +11,7 @@ class ProfileController extends Controller
 {
     public function show(Request $request, User $user)
     {
-        $viewer = $request->user();
+        $viewer = $request->user('sanctum');
 
         return response()->json([
             'id' => $user->id,
@@ -20,6 +20,7 @@ class ProfileController extends Controller
             'articles_count' => $user->articles()->whereNotNull('published_at')->count(),
             'lists_count' => $user->lists()->where('visibility', ListVisibility::Public)->count(),
             'followers_count' => $user->followers()->count(),
+            'viewer_is_self' => $viewer?->is($user) ?? false,
             'viewer_is_following' => $viewer
                 ? $viewer->following()->where('followee_id', $user->id)->exists()
                 : false,

@@ -57,6 +57,15 @@ export default defineNuxtConfig({
     },
   },
 
+  $development: {
+    routeRules: {
+      '/articles/**': { swr: false },
+      '/equipment': { swr: false },
+      '/u/**': { swr: false },
+      '/explore': { swr: false },
+    },
+  },
+
   routeRules: {
     // The browser talks to same-origin '/api' and '/sanctum/csrf-cookie'
     // (bearer-token client, and Sanctum's CSRF priming respectively) — Nitro
