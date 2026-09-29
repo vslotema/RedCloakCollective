@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Str;
 
 #[Fillable(['name', 'slug', 'curated'])]
 class Topic extends Model
@@ -30,7 +31,7 @@ class Topic extends Model
      */
     public static function slugFor(string $name): string
     {
-        return \Illuminate\Support\Str::slug($name);
+        return Str::slug($name);
     }
 
     public function followers(): BelongsToMany
