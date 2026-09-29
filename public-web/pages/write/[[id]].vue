@@ -89,11 +89,22 @@ const TITLE_MAX_WORDS = 20
 
 const titleRef = useTemplateRef<HTMLTextAreaElement>('titleRef')
 
-function resizeTitle() {
-  const el = titleRef.value
+const SUBTITLE_MAX_LENGTH = 280
+
+const subtitleRef = useTemplateRef<HTMLTextAreaElement>('subtitleRef')
+
+function resizeToContent(el: HTMLTextAreaElement | null) {
   if (!el) return
   el.style.height = 'auto'
   el.style.height = `${el.scrollHeight}px`
+}
+
+function resizeTitle() {
+  resizeToContent(titleRef.value)
+}
+
+function resizeSubtitle() {
+  resizeToContent(subtitleRef.value)
 }
 
 function onTitleInput(event: Event) {
@@ -106,21 +117,27 @@ function onTitleInput(event: Event) {
   resizeTitle()
 }
 
-// A title is one (wrapping) line of text — block hard line breaks.
-function onTitleKeydown(event: KeyboardEvent) {
+function onSubtitleInput(event: Event) {
+  editorStore.setExcerpt((event.target as HTMLTextAreaElement).value)
+  resizeSubtitle()
+}
+
+function preventLineBreak(event: KeyboardEvent) {
   if (event.key === 'Enter') event.preventDefault()
 }
 
 // Height also needs recalculating when the title is set from outside typing
 // (loading a draft, undo, voice dictation).
 watch(() => editorStore.title, () => nextTick(resizeTitle))
-onMounted(() => nextTick(resizeTitle))
+watch(() => editorStore.excerpt, () => nextTick(resizeSubtitle))
+onMounted(() => nextTick(() => {
+  resizeTitle()
+  resizeSubtitle()
+}))
 </script>
 
 <template>
   <section aria-label="Document editor" class="editor-main">
-    <HeaderImageField />
-
     <div class="editor-main__title-row">
       <span
         class="editor-main__title-caption"
@@ -139,9 +156,33 @@ onMounted(() => nextTick(resizeTitle))
         :class="{ 'editor-main__title--error': editorStore.titleInvalid }"
         placeholder="Title"
         @input="onTitleInput"
-        @keydown="onTitleKeydown"
+        @keydown="preventLineBreak"
       />
     </div>
+
+    <div class="editor-main__title-row editor-main__title-row--subtitle">
+      <span
+        class="editor-main__title-caption"
+        :class="{ 'editor-main__title-caption--hidden': !editorStore.excerpt }"
+        aria-hidden="true"
+      >
+        Subtitle
+      </span>
+      <textarea
+        id="doc-subtitle"
+        ref="subtitleRef"
+        :value="editorStore.excerpt"
+        rows="1"
+        :maxlength="SUBTITLE_MAX_LENGTH"
+        aria-label="Subtitle"
+        class="editor-main__title editor-main__subtitle text-h6 font-weight-regular"
+        placeholder="Subtitle"
+        @input="onSubtitleInput"
+        @keydown="preventLineBreak"
+      />
+    </div>
+
+    <HeaderImageField />
 
     <RichTextEditor
       :model-value="editorStore.doc"
@@ -209,6 +250,15 @@ onMounted(() => nextTick(resizeTitle))
       border: 2px solid rgb(var(--v-theme-error));
       border-radius: 0.25rem;
     }
+  }
+
+  &__title-row--subtitle {
+    padding: 0.25rem 0;
+  }
+
+  &__subtitle {
+    min-height: 2rem;
+    color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
   }
 }
 </style>
