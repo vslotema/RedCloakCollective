@@ -16,7 +16,7 @@ class MaintainDeviceSession
     {
         if ($request->hasSession()) {
             Auth::guard('web')->check()
-                ? $this->deviceLogins->rotateIfDue($request)
+                ? $this->deviceLogins->verifySession($request)
                 : $this->deviceLogins->restore($request);
         }
 

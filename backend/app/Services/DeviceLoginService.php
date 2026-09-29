@@ -12,7 +12,8 @@ use Symfony\Component\HttpFoundation\Cookie as SymfonyCookie;
 
 /**
  * Keeps a user logged in on one device until they log out there. The session
- * cookie stays short-lived and its ID is rotated every two hours; a separate
+ * cookie stays short-lived, its ID is rotated every two hours, and it is only
+ * valid while its device login exists; a separate
  * httpOnly device cookie, backed by a device_logins row, silently starts a
  * fresh session whenever the old one has expired. Each restore swaps the
  * device token for a new one; the previous token keeps working for a short
@@ -79,21 +80,22 @@ class DeviceLoginService
     }
 
     /**
-     * A device login deleted elsewhere (or a session from before device logins
-     * existed) ends the session here instead of being rotated.
+     * Runs on every authenticated request: once the device login is revoked
+     * (logout elsewhere, reuse detection, pruning) any session it started ends
+     * immediately. Sessions from before device logins existed end here too.
      */
-    public function rotateIfDue(Request $request): void
+    public function verifySession(Request $request): void
     {
         $session = $request->session();
-        $rotatedAt = (int) $session->get(self::SESSION_ROTATED_AT, 0);
-        if (now()->timestamp - $rotatedAt < self::ROTATE_AFTER_SECONDS) {
-            return;
-        }
-
         $deviceLogin = DeviceLogin::find($session->get(self::SESSION_DEVICE_LOGIN_ID));
         if (! $deviceLogin || $deviceLogin->user_id !== Auth::guard('web')->id()) {
             $this->endSession($request);
 
+            return;
+        }
+
+        $rotatedAt = (int) $session->get(self::SESSION_ROTATED_AT, 0);
+        if (now()->timestamp - $rotatedAt < self::ROTATE_AFTER_SECONDS) {
             return;
         }
 

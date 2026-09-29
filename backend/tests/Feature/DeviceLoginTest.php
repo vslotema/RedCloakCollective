@@ -170,15 +170,35 @@ class DeviceLoginTest extends TestCase
         $this->assertNotNull($deviceLogin->fresh()->last_used_at);
     }
 
-    public function test_session_ends_at_rotation_when_the_device_login_was_revoked(): void
+    public function test_revoking_the_device_ends_its_existing_session_on_the_next_request(): void
+    {
+        $user = User::factory()->create();
+        $deviceLogin = $user->deviceLogins()->create(['token_hash' => str_repeat('a', 64)]);
+        $session = [
+            'device_login_id' => $deviceLogin->id,
+            'device_login_rotated_at' => now()->timestamp,
+        ];
+
+        $this->actingAs($user, 'web')
+            ->withSession($session)
+            ->getJson('/api/user', self::FRONTEND)
+            ->assertOk();
+        $this->forgetRequestState();
+
+        $deviceLogin->delete();
+
+        $this->actingAs($user, 'web')
+            ->withSession($session)
+            ->getJson('/api/user', self::FRONTEND)
+            ->assertUnauthorized();
+    }
+
+    public function test_session_without_a_device_login_is_ended(): void
     {
         $user = User::factory()->create();
 
         $this->actingAs($user, 'web')
-            ->withSession([
-                'device_login_id' => 999,
-                'device_login_rotated_at' => now()->subHours(3)->timestamp,
-            ])
+            ->withSession(['device_login_rotated_at' => now()->timestamp])
             ->getJson('/api/user', self::FRONTEND)
             ->assertUnauthorized();
     }
