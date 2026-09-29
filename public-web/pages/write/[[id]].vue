@@ -85,7 +85,7 @@ watch(
 
 // The title textarea auto-grows with its content instead of scrolling or
 // offering a manual resize handle — height is JS-driven, not user-draggable.
-const TITLE_MAX_WORDS = 20
+const TITLE_MAX_LENGTH = 255
 
 const titleRef = useTemplateRef<HTMLTextAreaElement>('titleRef')
 
@@ -108,12 +108,7 @@ function resizeSubtitle() {
 }
 
 function onTitleInput(event: Event) {
-  const el = event.target as HTMLTextAreaElement
-  const words = el.value.split(/\s+/).filter(Boolean)
-  if (words.length > TITLE_MAX_WORDS) {
-    el.value = words.slice(0, TITLE_MAX_WORDS).join(' ')
-  }
-  editorStore.setTitle(el.value)
+  editorStore.setTitle((event.target as HTMLTextAreaElement).value)
   resizeTitle()
 }
 
@@ -151,6 +146,7 @@ onMounted(() => nextTick(() => {
         ref="titleRef"
         :value="editorStore.title"
         rows="1"
+        :maxlength="TITLE_MAX_LENGTH"
         aria-label="Title"
         class="editor-main__title text-h3"
         :class="{ 'editor-main__title--error': editorStore.titleInvalid }"
