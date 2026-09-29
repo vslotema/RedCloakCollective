@@ -39,22 +39,29 @@ class OnboardingController extends Controller
      * a suggestion — the caller decides what (if anything) to follow.
      *
      * `topics_limit` / `creators_limit` let a caller ask for a smaller slice —
-     * the home recommendation panel requests at most 7 topics and 3 creators so
-     * it doesn't flood the sidebar, while the full "Personalize your feed"
-     * screen omits them and gets the uncapped set.
+     * the home recommendation panel requests 5 topics and 3 creators so it
+     * doesn't flood the sidebar, while the full "Personalize your feed" screen
+     * omits them and gets the uncapped set. With `unfollowed_only`, topics the
+     * user already follows are skipped and the list is topped up with popular
+     * topics so it still reaches `topics_limit`.
      */
     public function recommendations(Request $request, RecommendationService $recommendations)
     {
         $data = $request->validate([
             'topics_limit' => ['nullable', 'integer', 'min:1'],
             'creators_limit' => ['nullable', 'integer', 'min:1'],
+            'unfollowed_only' => ['nullable', 'boolean'],
         ]);
 
         $user = $request->user();
         $followedTopicIds = $user->followedTopics()->pluck('topics.id');
 
+        $topics = $request->boolean('unfollowed_only')
+            ? $recommendations->unfollowedTopics($user, $data['topics_limit'] ?? 5)
+            : $recommendations->recommendedTopics($user, $data['topics_limit'] ?? null);
+
         return response()->json([
-            'topics' => $recommendations->recommendedTopics($user, $data['topics_limit'] ?? null)->map(fn ($topic) => [
+            'topics' => $topics->map(fn ($topic) => [
                 'id' => $topic->id,
                 'name' => $topic->name,
                 'slug' => $topic->slug,

@@ -23,11 +23,9 @@ const pending = ref<Set<string | number>>(new Set());
 onMounted(async () => {
   try {
     recs.value = await api<FeedRecommendations>("/onboarding/recommendations", {
-      query: { topics_limit: 7, creators_limit: 3 },
+      query: { topics_limit: 5, creators_limit: 3, unfollowed_only: 1 },
     });
-    shownTopicIds.value = new Set(
-      recs.value.topics.filter((t) => !t.following).map((t) => t.id),
-    );
+    shownTopicIds.value = new Set(recs.value.topics.map((t) => t.id));
   } finally {
     loading.value = false;
   }

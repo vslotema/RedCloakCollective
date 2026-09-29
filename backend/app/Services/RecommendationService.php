@@ -50,6 +50,40 @@ class RecommendationService
     }
 
     /**
+     * Recommended topics the user doesn't follow yet, topped up with the most
+     * followed curated topics when the onboarding answers run out, so the
+     * caller gets `$limit` topics unless fewer unfollowed topics exist.
+     *
+     * @return Collection<int, Topic>
+     */
+    public function unfollowedTopics(User $user, int $limit): Collection
+    {
+        $followedTopicIds = $user->followedTopics()->pluck('topics.id');
+
+        $recommended = $this->recommendedTopics($user)
+            ->reject(fn (Topic $topic) => $followedTopicIds->contains($topic->id))
+            ->take($limit)
+            ->values();
+
+        $missingCount = $limit - $recommended->count();
+
+        if ($missingCount <= 0) {
+            return $recommended;
+        }
+
+        $popular = Topic::query()
+            ->where('curated', true)
+            ->whereNotIn('id', $followedTopicIds->merge($recommended->pluck('id')))
+            ->withCount('followers')
+            ->orderByDesc('followers_count')
+            ->orderBy('name')
+            ->limit($missingCount)
+            ->get();
+
+        return $recommended->concat($popular)->values();
+    }
+
+    /**
      * Creators worth following: authors of published articles tagged with one of
      * the user's recommended topics, ranked by how much matching content they've
      * published and then by follower count. Falls back to the most-followed

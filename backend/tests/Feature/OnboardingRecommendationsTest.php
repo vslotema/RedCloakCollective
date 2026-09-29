@@ -152,4 +152,34 @@ class OnboardingRecommendationsTest extends TestCase
 
         $this->assertSame([$popular->username, $quiet->username], $usernames);
     }
+
+    public function test_unfollowed_only_skips_followed_topics_and_tops_up_to_the_limit(): void
+    {
+        $user = $this->userWithAnswers(['content_interests' => ['feeding_swallowing_nutrition']]);
+        Sanctum::actingAs($user);
+        $answerSlugs = $this->getJson('/api/onboarding/recommendations')->json('topics.*.slug');
+
+        $followed = Topic::whereIn('slug', $answerSlugs)->get();
+        $user->followedTopics()->attach($followed);
+
+        $slugs = $this->getJson('/api/onboarding/recommendations?unfollowed_only=1&topics_limit=5')
+            ->json('topics.*.slug');
+
+        $this->assertCount(5, $slugs);
+        $this->assertEmpty(array_intersect($slugs, $answerSlugs));
+    }
+
+    public function test_unfollowed_only_returns_the_remainder_when_fewer_topics_are_left(): void
+    {
+        $user = $this->userWithAnswers(['content_interests' => ['feeding_swallowing_nutrition']]);
+        $allButTwo = Topic::where('curated', true)->orderBy('id')->get()->slice(2);
+        $user->followedTopics()->attach($allButTwo);
+
+        Sanctum::actingAs($user);
+        $topics = $this->getJson('/api/onboarding/recommendations?unfollowed_only=1&topics_limit=5')
+            ->json('topics');
+
+        $this->assertCount(2, $topics);
+        $this->assertFalse(collect($topics)->contains('following', true));
+    }
 }
