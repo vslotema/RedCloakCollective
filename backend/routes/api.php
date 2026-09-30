@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ArticleController as AuthoredArticleController;
+use App\Http\Controllers\ArticleLikeController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\OnboardingController;
@@ -47,6 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/articles/{article}/header-image', [AuthoredArticleController::class, 'uploadHeaderImage']);
     Route::delete('/articles/{article}/header-image', [AuthoredArticleController::class, 'destroyHeaderImage']);
     Route::post('/articles/{article}/images', [AuthoredArticleController::class, 'uploadBodyImage']);
+    Route::put('/articles/{article}/like', [ArticleLikeController::class, 'like']);
+    Route::delete('/articles/{article}/like', [ArticleLikeController::class], 'unlike');
 
     Route::post('/users/{user:username}/follow', [FollowController::class, 'store']);
     Route::delete('/users/{user:username}/follow', [FollowController::class, 'destroy']);

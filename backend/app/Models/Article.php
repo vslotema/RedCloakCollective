@@ -92,4 +92,9 @@ class Article extends Model
         return $this->belongsToMany(Topic::class, 'article_topic')
             ->withTimestamps();
     }
+
+    public function likers(): BelongsToMany  
+    {
+        return $this->belongsToMany(User::class, 'article_likes');
+    }
 }
