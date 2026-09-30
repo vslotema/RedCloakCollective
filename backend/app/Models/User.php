@@ -90,7 +90,7 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    public function likedArticles(): BelongsToMany 
+    public function likedArticles(): BelongsToMany
     {
         return $this->belongsToMany(Article::class, 'article_likes');
     }

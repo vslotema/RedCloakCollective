@@ -27,6 +27,7 @@ Route::post('/auth/google', [AuthController::class, 'loginWithGoogle']);
 // statefulApi() still lets $request->user() resolve for logged-in viewers.
 Route::get('/articles', [ArticleController::class, 'index']);
 Route::get('/articles/{article:slug}', [ArticleController::class, 'show']);
+Route::get('/articles/{article}/like', [ArticleLikeController::class, 'show']);
 Route::get('/lists', [EquipmentListController::class, 'index']);
 Route::get('/lists/{list}', [EquipmentListController::class, 'show']);
 Route::get('/users/{user:username}', [ProfileController::class, 'show']);
@@ -49,7 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/articles/{article}/header-image', [AuthoredArticleController::class, 'destroyHeaderImage']);
     Route::post('/articles/{article}/images', [AuthoredArticleController::class, 'uploadBodyImage']);
     Route::put('/articles/{article}/like', [ArticleLikeController::class, 'like']);
-    Route::delete('/articles/{article}/like', [ArticleLikeController::class], 'unlike');
+    Route::delete('/articles/{article}/like', [ArticleLikeController::class, 'unlike']);
 
     Route::post('/users/{user:username}/follow', [FollowController::class, 'store']);
     Route::delete('/users/{user:username}/follow', [FollowController::class, 'destroy']);

@@ -93,7 +93,7 @@ class Article extends Model
             ->withTimestamps();
     }
 
-    public function likers(): BelongsToMany  
+    public function likers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'article_likes');
     }
