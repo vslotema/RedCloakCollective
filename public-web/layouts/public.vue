@@ -33,5 +33,6 @@ const authStore = useAuthStore()
 }
 .content {
   flex: 1;
+  padding-top: max(var(--v-layout-top), 64px);
 }
 </style>
