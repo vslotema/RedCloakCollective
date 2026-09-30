@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const props = defineProps<{
+  articleId: number
   title: string
   shareUrl: string
   listenText: string
@@ -47,7 +48,9 @@ function toggleListening() {
 </script>
 
 <template>
-  <div class="action-bar d-flex align-center justify-end ga-2">
+  <div class="action-bar d-flex align-center ga-2">
+    <LikeToggle :endpoint="`/articles/${articleId}/like`" :disabled="!interactive" />
+    <v-spacer />
     <v-btn
       icon="share-2"
       variant="text"

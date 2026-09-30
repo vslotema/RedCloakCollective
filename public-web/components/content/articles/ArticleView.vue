@@ -44,6 +44,7 @@ const coverPosition = computed(() => {
       />
 
       <ArticleActionBar
+        :article-id="article.id"
         :title="article.title"
         :share-url="shareUrl"
         :listen-text="articlePlainText"

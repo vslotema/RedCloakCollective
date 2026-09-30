@@ -4,13 +4,7 @@
 // or the default layout's chrome based on login state.
 withDefaults(defineProps<{ interactive?: boolean }>(), { interactive: true })
 
-const authDialog = ref(false)
-const authMode = ref<'signin' | 'signup'>('signup')
-
-function openAuth(mode: 'signin' | 'signup') {
-  authMode.value = mode
-  authDialog.value = true
-}
+const { isOpen: authDialog, mode: authMode, open: openAuth } = useAuthDialog()
 </script>
 
 <template>
