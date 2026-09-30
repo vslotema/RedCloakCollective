@@ -3,10 +3,18 @@
 // article preview's chrome — layouts/public.vue decides whether to mount this
 // or the default layout's chrome based on login state.
 withDefaults(defineProps<{ interactive?: boolean }>(), { interactive: true })
+
+const authDialog = ref(false)
+const authMode = ref<'signin' | 'signup'>('signup')
+
+function openAuth(mode: 'signin' | 'signup') {
+  authMode.value = mode
+  authDialog.value = true
+}
 </script>
 
 <template>
-  <v-app-bar color="background" flat style="border-bottom: thin solid rgb(var(--v-theme-border-color))">
+  <v-app-bar color="surface" flat style="border-bottom: thin solid rgb(var(--v-theme-border-color))">
     <div class="d-flex align-center ga-8 ml-4">
       <NuxtLink
         v-if="interactive"
@@ -27,6 +35,7 @@ withDefaults(defineProps<{ interactive?: boolean }>(), { interactive: true })
       <v-chip
         v-if="!interactive"
         color="secondary"
+        rounded="pill"
         variant="flat"
         size="small"
         class="font-weight-bold text-uppercase"
@@ -34,17 +43,20 @@ withDefaults(defineProps<{ interactive?: boolean }>(), { interactive: true })
       >
         Preview
       </v-chip>
-      <v-btn variant="text" to="/onboarding" :disabled="!interactive">Sign in</v-btn>
+      <v-btn variant="text" :disabled="!interactive" @click="openAuth('signin')">Sign in</v-btn>
       <v-btn
-        color="black"
+        color="primary"
         rounded="pill"
         class="font-weight-bold"
-        to="/onboarding"
+        variant="outlined"
         :disabled="!interactive"
+        @click="openAuth('signup')"
       >
         Sign up
       </v-btn>
       <ThemeToggleButton />
     </div>
+
+    <AuthDialog v-if="interactive" v-model="authDialog" v-model:mode="authMode" />
   </v-app-bar>
 </template>
