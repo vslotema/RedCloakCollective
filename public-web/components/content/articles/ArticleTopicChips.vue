@@ -10,6 +10,7 @@ const props = defineProps<{
 const api = useApi()
 const authStore = useAuthStore()
 
+
 const followedTopicSlugs = ref<Set<string>>(new Set())
 const pendingTopicSlugs = ref<Set<string>>(new Set())
 
@@ -51,6 +52,7 @@ async function toggleTopicFollow(slug: string) {
       :key="topic.id"
       :color="topicColorAt(index)"
       variant="tonal"
+      size="small"
       :prepend-icon="followedTopicSlugs.has(topic.slug) ? 'check' : 'plus'"
       :disabled="!interactive || pendingTopicSlugs.has(topic.slug)"
       class="topic-chip font-weight-medium"
