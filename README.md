@@ -1,6 +1,10 @@
 # RedCloak Collective
 
-A Medium-style blogging platform for special needs caregivers and special needs people to share their stories.
+RedCloak Collective is a blogging platform where people with special needs, as well as their families and caregivers, can share their stories and read about the experiences of others. The platform will focus on topics and interests related to disability and caregiving, with filters tailored to specific conditions, personal interests, and resources that may support users’ development and daily lives.
+
+It will also feature an equipment page where users can share the products and tools that have helped them or their children. This could provide a valuable community resource for discovering assistive equipment through real-life experiences.
+
+Accessibility is a core part of the platform’s design. Since it is intended to be used by people with a wide range of abilities, it will include features such as enlarged controls and voice commands. For example, someone with cerebral palsy who has limited hand movement should still be able to navigate the platform and participate independently.
 
 ## Stack
 
